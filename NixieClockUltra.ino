@@ -263,22 +263,6 @@ void updateButton(Button &b) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  RTC HILFSFUNKTIONEN
-// ═══════════════════════════════════════════════════════════
-void readRTC() {
-  if (!Rtc.IsDateTimeValid()) return;
-  RtcDateTime now = Rtc.GetDateTime();
-  curHour = now.Hour();
-  curMin  = now.Minute();
-  curSec  = now.Second();
-}
-
-void writeRTC() {
-  RtcDateTime dt(2024, 1, 1, curHour, curMin, curSec);
-  Rtc.SetDateTime(dt);
-}
-
-// ═══════════════════════════════════════════════════════════
 //  DISPLAY-UPDATE (aus displayDigits befüllen)
 // ═══════════════════════════════════════════════════════════
 void setDisplayTime(uint8_t h, uint8_t m, uint8_t s) {
