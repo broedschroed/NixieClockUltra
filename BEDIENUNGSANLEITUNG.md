@@ -2,7 +2,7 @@
 
 ## Übersicht
 
-Die Nixie Clock Ultra ist eine Röhrenuhr auf Basis des ESP32-S3 mit 6 Nixie-Röhren, 10 NeoPixel-LEDs und einem Web-Interface zur Fernbedienung.
+Die Nixie Clock Ultra ist eine Röhrenuhr auf Basis des ESP32-S3 mit 6 Nixie-Röhren, 10 NeoPixel-LEDs, einem Web-Interface zur Fernbedienung sowie einem IR-Empfänger für die Steuerung per Infrarot-Fernbedienung.
 
 ---
 
@@ -26,6 +26,26 @@ Das Gerät besitzt vier Tasten:
 | UP      | Wert erhöhen (mit Auto-Repeat bei Dauerdruck) |
 | DOWN    | Wert verringern (mit Auto-Repeat bei Dauerdruck) |
 | LIGHT   | Helligkeit umschalten (4 Stufen)              |
+
+---
+
+## IR-Fernbedienung
+
+Die Uhr kann mit einer beliebigen Infrarot-Fernbedienung gesteuert werden. Jede Taste der Fernbedienung kann einer Funktion zugewiesen werden (siehe [Fernbedienung anlernen](#fernbedienung-anlernen) im Web-Interface).
+
+### Verfügbare IR-Funktionen
+
+| Funktion            | Beschreibung                                              |
+|---------------------|-----------------------------------------------------------|
+| SET                 | Einstellmodus starten / nächste Stelle / Zeit speichern  |
+| UP                  | Wert erhöhen im Einstellmodus                            |
+| DOWN                | Wert verringern im Einstellmodus                         |
+| BRIGHTNESS          | Helligkeit umschalten (4 Stufen)                         |
+| ANIM_NEXT           | Nächsten Animationsmodus aktivieren                      |
+| SLOT                | Slot-Machine-Animation auslösen                          |
+| POWER_SAVE_TOGGLE   | Power-Save-Modus ein- oder ausschalten                   |
+
+Nicht belegte Funktionen werden ignoriert. Repeat-Codes (Auto-Repeat der Fernbedienung) werden beim Empfang herausgefiltert.
 
 ---
 
@@ -60,7 +80,9 @@ Die gewählte Stufe wird dauerhaft gespeichert.
 
 ## Power-Save
 
-Nach **120 Sekunden** ohne Tastendruck dimmt die NeoPixel-Beleuchtung automatisch auf ein Viertel der eingestellten Helligkeit. Jeder Tastendruck weckt die Uhr wieder auf volle Helligkeit.
+Nach **120 Sekunden** ohne Tastendruck dimmt die NeoPixel-Beleuchtung automatisch auf ein Viertel der eingestellten Helligkeit. Jeder Tasten- oder Fernbedienungsdruck weckt die Uhr wieder auf volle Helligkeit.
+
+Der Power-Save-Modus kann dauerhaft deaktiviert werden – entweder über den **Power-Save-Toggle** im Web-Interface (Karte „Helligkeit & Animation") oder über die zugewiesene IR-Taste (`POWER_SAVE_TOGGLE`). Die Einstellung wird gespeichert und bleibt nach einem Neustart erhalten.
 
 ---
 
@@ -113,6 +135,7 @@ Sobald die Uhr mit dem Heimnetz verbunden ist, synchronisiert sie die Zeit autom
 | NeoPixel-Helligkeit   | Schieberegler 10–255                              |
 | Animation             | Animationsmodus wählen (siehe unten)              |
 | NeoPixel-Farbe (Hue)  | Grundfarbe für statische Modi und Puls            |
+| Power-Save            | Auto-Dimmen nach 120 s ein- oder ausschalten      |
 
 ### Animationsmodi
 
@@ -131,6 +154,20 @@ Klick auf **Slot-Machine!** lässt alle 6 Röhren ihre Ziffer schnell durchrolle
 
 Im Modus *Slot-Machine* wird die Animation außerdem automatisch **alle 10 Sekunden** ausgelöst.
 
+### Fernbedienung anlernen
+
+In der Karte **IR-Fernbedienung** werden alle 7 Funktionen als Tabelle dargestellt. Neben jeder Funktion steht der aktuell gespeicherte Code (z. B. `0xFFA25D`) oder `—` wenn noch kein Code hinterlegt ist.
+
+**Anlernen:**
+1. Auf **Anlernen** neben der gewünschten Funktion klicken
+2. Die Zeile blinkt orange und zeigt „Taste auf Fernbedienung drücken…"
+3. Beliebige Taste auf der Fernbedienung drücken → Code wird sofort gespeichert
+4. Nach **10 Sekunden** ohne Eingabe bricht der Anlernmodus automatisch ab
+
+**Code löschen:** Auf **✕** neben der Funktion klicken.
+
+Es können beliebige IR-Fernbedienungen verwendet werden (NEC, Samsung, Sony, RC5 u. v. m.). Jede Funktion kann unabhängig belegt werden.
+
 ---
 
 ## Einstellungen-Persistenz
@@ -141,6 +178,8 @@ Folgende Einstellungen werden dauerhaft im Flash-Speicher gespeichert und nach e
 - NeoPixel-Helligkeit
 - Animationsmodus
 - WLAN-Zugangsdaten
+- IR-Codes (alle 7 Funktionen)
+- Power-Save aktiviert/deaktiviert
 
 ---
 
@@ -148,11 +187,12 @@ Folgende Einstellungen werden dauerhaft im Flash-Speicher gespeichert und nach e
 
 | Eigenschaft         | Wert                          |
 |---------------------|-------------------------------|
-| Mikrocontroller     | ESP32-S3                      |
-| Nixie-Röhren        | 6 Stück (Multiplexing)        |
-| NeoPixel            | 10x WS2812B                   |
-| Echtzeituhr         | DS1302                        |
-| Versorgungsspannung | 5 V (Logik) + HV für Nixies   |
-| Nixie-Hochspannung  | 170–180 V DC                  |
-| Web-Interface       | Port 80, HTTP                 |
-| NTP-Zeitzone        | CET-1CEST (Mitteleuropa)      |
+| Mikrocontroller     | ESP32-S3                          |
+| Nixie-Röhren        | 6 Stück (Multiplexing)            |
+| NeoPixel            | 10x WS2812B                       |
+| Echtzeituhr         | DS1302                            |
+| IR-Empfänger        | VS1838 (38 kHz), Pin IO48         |
+| Versorgungsspannung | 5 V (Logik) + HV für Nixies       |
+| Nixie-Hochspannung  | 170–180 V DC                      |
+| Web-Interface       | Port 80, HTTP                     |
+| NTP-Zeitzone        | CET-1CEST (Mitteleuropa)          |
