@@ -36,6 +36,10 @@
 #include <ArduinoJson.h>
 #include <Preferences.h>
 
+// IR-Empfänger
+#include <IRremoteESP8266.h>
+#include <IRrecv.h>
+
 // ═══════════════════════════════════════════════════════════
 //  PIN-DEFINITIONEN
 // ═══════════════════════════════════════════════════════════
@@ -61,6 +65,9 @@ const uint8_t ANODE_PIN[6]    = {16, 15, 14, 13, 12, 11};
 // NeoPixel
 #define NEO_PIN      21
 #define NEO_COUNT    10   // 6 Hintergrund + 4 Doppelpunkte
+
+// IR-Empfänger
+#define IR_RECV_PIN  48
 
 // ═══════════════════════════════════════════════════════════
 //  KONSTANTEN & KONFIGURATION
@@ -166,6 +173,43 @@ uint8_t startFadeStep = 0;
 // Hardware-Timer
 hw_timer_t *muxTimer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+
+// ═══════════════════════════════════════════════════════════
+//  IR-FERNBEDIENUNG
+// ═══════════════════════════════════════════════════════════
+enum IrAction {
+  IR_LEARN_NONE           = -1,
+  IR_ACTION_SET           = 0,
+  IR_ACTION_UP            = 1,
+  IR_ACTION_DOWN          = 2,
+  IR_ACTION_BRIGHTNESS    = 3,
+  IR_ACTION_ANIM_NEXT     = 4,
+  IR_ACTION_SLOT          = 5,
+  IR_ACTION_POWER_SAVE_TOGGLE = 6,
+  IR_ACTION_COUNT         = 7
+};
+
+const char* IR_ACTION_KEYS[IR_ACTION_COUNT] = {
+  "ir_SET", "ir_UP", "ir_DOWN", "ir_BRIGHTNESS",
+  "ir_ANIM_NEXT", "ir_SLOT", "ir_PSTOGGLE"
+};
+
+const char* IR_ACTION_LABELS[IR_ACTION_COUNT] = {
+  "SET", "UP", "DOWN", "BRIGHTNESS",
+  "ANIM_NEXT", "SLOT", "POWER_SAVE_TOGGLE"
+};
+
+IRrecv   irrecv(IR_RECV_PIN);
+decode_results irResults;
+
+uint64_t irCodes[IR_ACTION_COUNT] = {0};
+IrAction irLearnTarget  = IR_LEARN_NONE;
+unsigned long irLearnStartMs = 0;
+#define IR_LEARN_TIMEOUT_MS 10000
+portMUX_TYPE irMux = portMUX_INITIALIZER_UNLOCKED;
+
+// Power-Save dauerhaft aktiviert/deaktiviert
+bool powerSaveEnabled = true;
 
 // ═══════════════════════════════════════════════════════════
 //  TASTER-STRUKTUR (muss vor auto-generierten Prototypen stehen)
@@ -410,7 +454,9 @@ void updateNeoPixel() {
     default: break;
   }
 
+  irrecv.pause();
   strip.show();
+  irrecv.resume();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -499,12 +545,117 @@ void handleBrightness() {
 //  POWER-SAVE
 // ═══════════════════════════════════════════════════════════
 void handlePowerSave() {
+  if (!powerSaveEnabled) {
+    if (powerSaveActive) powerSaveActive = false;
+    return;
+  }
   unsigned long idleSec = (millis() - lastInteractionMs) / 1000;
   if (idleSec >= POWER_SAVE_TIMEOUT_S && !powerSaveActive) {
     powerSaveActive = true;
-    // NeoPixel dimmen (wird in updateNeoPixel berücksichtigt)
   } else if (idleSec < POWER_SAVE_TIMEOUT_S && powerSaveActive) {
     powerSaveActive = false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  IR-AKTIONEN
+// ═══════════════════════════════════════════════════════════
+void executeAction(IrAction action) {
+  switch (action) {
+    case IR_ACTION_SET:
+      if (editState == EDIT_NONE) {
+        editState = EDIT_HOUR;
+        editEnterTime = millis();
+      } else if (editState == EDIT_HOUR) {
+        editState = EDIT_MIN;
+        editEnterTime = millis();
+      } else if (editState == EDIT_MIN) {
+        editState = EDIT_SEC;
+        editEnterTime = millis();
+      } else {
+        writeRTC();
+        editState = EDIT_NONE;
+      }
+      break;
+
+    case IR_ACTION_UP:
+      if (editState == EDIT_HOUR) { curHour = (curHour + 1) % 24; editEnterTime = millis(); }
+      else if (editState == EDIT_MIN) { curMin = (curMin + 1) % 60; editEnterTime = millis(); }
+      else if (editState == EDIT_SEC) { curSec = (curSec + 1) % 60; editEnterTime = millis(); }
+      break;
+
+    case IR_ACTION_DOWN:
+      if (editState == EDIT_HOUR) { curHour = (curHour + 23) % 24; editEnterTime = millis(); }
+      else if (editState == EDIT_MIN) { curMin = (curMin + 59) % 60; editEnterTime = millis(); }
+      else if (editState == EDIT_SEC) { curSec = (curSec + 59) % 60; editEnterTime = millis(); }
+      break;
+
+    case IR_ACTION_BRIGHTNESS:
+      brightLevel = (brightLevel + 1) % 4;
+      neoBright   = BRIGHTNESS_LEVELS[brightLevel];
+      prefs.putUChar("bright", brightLevel);
+      prefs.putUChar("neoBright", neoBright);
+      break;
+
+    case IR_ACTION_ANIM_NEXT:
+      animMode = (AnimMode)((int(animMode) + 1) % ANIM_COUNT);
+      prefs.putUChar("animMode", (uint8_t)animMode);
+      break;
+
+    case IR_ACTION_SLOT:
+      startSlotAnimation(curHour, curMin, curSec);
+      break;
+
+    case IR_ACTION_POWER_SAVE_TOGGLE:
+      powerSaveEnabled = !powerSaveEnabled;
+      prefs.putBool("psEnabled", powerSaveEnabled);
+      if (!powerSaveEnabled) powerSaveActive = false;
+      break;
+
+    default: break;
+  }
+}
+
+void dispatchIRAction(uint64_t code) {
+  for (int i = 0; i < IR_ACTION_COUNT; i++) {
+    portENTER_CRITICAL(&irMux);
+    bool match = (irCodes[i] != 0 && irCodes[i] == code);
+    portEXIT_CRITICAL(&irMux);
+    if (match) {
+      executeAction((IrAction)i);
+      lastInteractionMs = millis();
+      return;
+    }
+  }
+}
+
+void handleIR() {
+  // Lernmodus-Timeout
+  if (irLearnTarget != IR_LEARN_NONE &&
+      millis() - irLearnStartMs > IR_LEARN_TIMEOUT_MS) {
+    irLearnTarget = IR_LEARN_NONE;
+  }
+
+  if (!irrecv.decode(&irResults)) return;
+
+  uint64_t code = irResults.value;
+  irrecv.resume();
+
+  // Repeat-Codes ignorieren (NEC sendet 0xFFFFFFFF als Repeat)
+  if (code == 0xFFFFFFFFULL || code == 0xFFFFFFFFFFFFFFFFULL) return;
+
+  portENTER_CRITICAL(&irMux);
+  if (irLearnTarget != IR_LEARN_NONE) {
+    int target = (int)irLearnTarget;
+    irCodes[target] = code;
+    irLearnTarget = IR_LEARN_NONE;
+    portEXIT_CRITICAL(&irMux);
+    prefs.putULong64(IR_ACTION_KEYS[target], code);
+    Serial.printf("[IR] Gelernt: %s = 0x%016llX\n",
+      IR_ACTION_LABELS[target], (unsigned long long)code);
+  } else {
+    portEXIT_CRITICAL(&irMux);
+    dispatchIRAction(code);
   }
 }
 
@@ -537,6 +688,13 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
   button.sec{background:#333;color:var(--text)}
   .status{font-size:.75em;color:var(--dim);text-align:center;margin-top:8px}
   .badge{display:inline-block;background:#ff8c0022;border:1px solid var(--accent);border-radius:4px;padding:2px 8px;font-size:.75em;color:var(--accent)}
+  @keyframes blink{0%,100%{background:var(--card)}50%{background:#3a2800}}
+  .toggle{position:relative;display:inline-block;width:42px;height:24px}
+  .toggle input{opacity:0;width:0;height:0}
+  .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#333;border-radius:24px;transition:.3s}
+  .slider:before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#666;border-radius:50%;transition:.3s}
+  .toggle input:checked+.slider{background:var(--accent)}
+  .toggle input:checked+.slider:before{transform:translateX(18px);background:#000}
 </style>
 </head>
 <body>
@@ -584,6 +742,10 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
     <input type="range" id="neoHue" min="0" max="255" value="0" oninput="setNeoHue(this.value)">
     <span id="neoHueVal">0</span>
   </div>
+  <div class="row">
+    <label>Power-Save (Auto-Dimmen)</label>
+    <label class="toggle"><input type="checkbox" id="psEnabled" onchange="setPowerSave(this.checked)"><span class="slider"></span></label>
+  </div>
 </div>
 
 <div class="card">
@@ -592,6 +754,19 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
     <button onclick="triggerSlot()">Slot-Machine!</button>
     <span class="badge" id="slotStatus">bereit</span>
   </div>
+</div>
+
+<div class="card">
+  <h2>📡 IR-Fernbedienung</h2>
+  <table style="width:100%;border-collapse:collapse">
+    <thead><tr>
+      <th style="text-align:left;color:var(--dim);font-size:.8em;padding:4px 0;width:45%">Funktion</th>
+      <th style="text-align:left;color:var(--dim);font-size:.8em;padding:4px 0">Code</th>
+      <th></th>
+    </tr></thead>
+    <tbody id="irRows"></tbody>
+  </table>
+  <p id="irMsg" style="font-size:.75em;color:var(--dim);margin-top:8px;min-height:1.2em"></p>
 </div>
 
 <div class="card">
@@ -627,6 +802,7 @@ async function refreshClock(){
   if(d.bright!==undefined) document.getElementById('bright').value=d.bright;
   if(d.neoBright!==undefined){document.getElementById('neoBright').value=d.neoBright;document.getElementById('neoBrightVal').textContent=d.neoBright;}
   if(d.anim!==undefined) document.getElementById('anim').value=d.anim;
+  if(d.psEnabled!==undefined)document.getElementById('psEnabled').checked=d.psEnabled;
   if(d.slot!==undefined) document.getElementById('slotStatus').textContent=d.slot?'läuft…':'bereit';
 }
 
@@ -700,9 +876,56 @@ async function wScan(){
   });
 }
 
+const IR_ACTIONS=['SET','UP','DOWN','BRIGHTNESS','ANIM_NEXT','SLOT','POWER_SAVE_TOGGLE'];
+const IR_LABELS={'SET':'SET &#x2013; Einstellmodus','UP':'UP &#x2013; Erh&ouml;hen','DOWN':'DOWN &#x2013; Verringern',
+  'BRIGHTNESS':'BRIGHTNESS &#x2013; Helligkeit','ANIM_NEXT':'ANIM &#x2013; n&auml;chste Animation',
+  'SLOT':'SLOT &#x2013; Slot-Maschine','POWER_SAVE_TOGGLE':'POWER SAVE &#x2013; Toggle'};
+let irPollTimer=null;
+
+async function refreshIR(){
+  let d=await get('/api/ir/status');
+  if(!d.codes)return;
+  let tbody=document.getElementById('irRows');
+  tbody.innerHTML='';
+  IR_ACTIONS.forEach(a=>{
+    let code=d.codes[a]||'';
+    let learning=(d.learning===a);
+    let tr=document.createElement('tr');
+    tr.id='irr-'+a;
+    if(learning)tr.style.animation='blink 0.6s infinite';
+    let td1=document.createElement('td');td1.style.cssText='padding:4px 8px 4px 0;font-size:.82em';td1.textContent=IR_LABELS[a];
+    let td2=document.createElement('td');td2.style.cssText='padding:4px 8px;font-size:.8em;color:'+(code?'var(--accent)':'var(--dim)');td2.textContent=code||'—';
+    let td3=document.createElement('td');td3.style.cssText='white-space:nowrap';
+    td3.innerHTML='<button class="sec" style="padding:3px 9px;font-size:.78em" onclick="irLearn(\''+a+'\')">'+( learning?'warte&#x2026;':'Anlernen')+'</button> '+
+      '<button class="sec" style="padding:3px 8px;font-size:.78em" onclick="irClear(\''+a+'\')">&#x2715;</button>';
+    tr.appendChild(td1);tr.appendChild(td2);tr.appendChild(td3);
+    tbody.appendChild(tr);
+  });
+  if(d.learning){
+    document.getElementById('irMsg').textContent='Taste auf Fernbedienung drücken… (10 s Timeout)';
+    if(!irPollTimer)irPollTimer=setInterval(async()=>{let s=await get('/api/ir/status');refreshIR();if(!s.learning){clearInterval(irPollTimer);irPollTimer=null;}},500);
+  }else{
+    document.getElementById('irMsg').textContent='';
+    if(irPollTimer){clearInterval(irPollTimer);irPollTimer=null;}
+  }
+}
+
+async function irLearn(action){
+  await api('/api/ir/learn',{action});
+  refreshIR();
+}
+async function irClear(action){
+  await api('/api/ir/clear',{action});
+  refreshIR();
+}
+async function setPowerSave(enabled){
+  await api('/api/powersave',{enabled});
+}
+
 setInterval(refreshClock,1000);
 refreshClock();
 refreshWifi();
+refreshIR();
 </script>
 </body>
 </html>
@@ -745,7 +968,7 @@ void setupWebServer() {
   });
 
   server.on("/api/status", HTTP_GET, [](AsyncWebServerRequest *req) {
-    StaticJsonDocument<200> doc;
+    StaticJsonDocument<256> doc;
     char buf[10];
     snprintf(buf, sizeof(buf), "%02d:%02d:%02d", curHour, curMin, curSec);
     doc["time"]      = buf;
@@ -753,6 +976,7 @@ void setupWebServer() {
     doc["neoBright"] = neoBright;
     doc["anim"]      = (int)animMode;
     doc["slot"]      = slotActive;
+    doc["psEnabled"] = powerSaveEnabled;
     String out; serializeJson(doc, out);
     req->send(200, "application/json", out);
   });
@@ -884,6 +1108,88 @@ void setupWebServer() {
     req->send(200, "application/json", out);
   });
 
+  // --- IR: Status ---
+  server.on("/api/ir/status", HTTP_GET, [](AsyncWebServerRequest *req) {
+    StaticJsonDocument<512> doc;
+    if (irLearnTarget != IR_LEARN_NONE) {
+      doc["learning"] = IR_ACTION_LABELS[(int)irLearnTarget];
+    } else {
+      doc["learning"] = "";
+    }
+    JsonObject codes = doc.createNestedObject("codes");
+    for (int i = 0; i < IR_ACTION_COUNT; i++) {
+      if (irCodes[i] != 0) {
+        char buf[12];
+        snprintf(buf, sizeof(buf), "0x%08X", (uint32_t)irCodes[i]);
+        codes[IR_ACTION_LABELS[i]] = buf;
+      } else {
+        codes[IR_ACTION_LABELS[i]] = "";
+      }
+    }
+    String out; serializeJson(doc, out);
+    req->send(200, "application/json", out);
+  });
+
+  // --- IR: Anlernen starten ---
+  server.on("/api/ir/learn", HTTP_POST, [](AsyncWebServerRequest *req){},
+    nullptr,
+    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
+      StaticJsonDocument<64> doc;
+      if (!deserializeJson(doc, data, len)) {
+        String action = doc["action"].as<String>();
+        for (int i = 0; i < IR_ACTION_COUNT; i++) {
+          if (action == IR_ACTION_LABELS[i]) {
+            portENTER_CRITICAL(&irMux);
+            irLearnTarget  = (IrAction)i;
+            irLearnStartMs = millis();
+            portEXIT_CRITICAL(&irMux);
+            req->send(200, "application/json", "{\"ok\":true}");
+            return;
+          }
+        }
+      }
+      req->send(400, "application/json", "{\"ok\":false}");
+    }
+  );
+
+  // --- IR: Code löschen ---
+  server.on("/api/ir/clear", HTTP_POST, [](AsyncWebServerRequest *req){},
+    nullptr,
+    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
+      StaticJsonDocument<64> doc;
+      if (!deserializeJson(doc, data, len)) {
+        String action = doc["action"].as<String>();
+        for (int i = 0; i < IR_ACTION_COUNT; i++) {
+          if (action == IR_ACTION_LABELS[i]) {
+            portENTER_CRITICAL(&irMux);
+            irCodes[i] = 0;
+            portEXIT_CRITICAL(&irMux);
+            prefs.putULong64(IR_ACTION_KEYS[i], 0);
+            req->send(200, "application/json", "{\"ok\":true}");
+            return;
+          }
+        }
+      }
+      req->send(400, "application/json", "{\"ok\":false}");
+    }
+  );
+
+  // --- Power-Save Toggle ---
+  server.on("/api/powersave", HTTP_POST, [](AsyncWebServerRequest *req){},
+    nullptr,
+    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
+      StaticJsonDocument<64> doc;
+      if (!deserializeJson(doc, data, len)) {
+        powerSaveEnabled = (bool)doc["enabled"];
+        prefs.putBool("psEnabled", powerSaveEnabled);
+        if (!powerSaveEnabled) powerSaveActive = false;
+        req->send(200, "application/json", "{\"ok\":true}");
+      } else {
+        req->send(400, "application/json", "{\"ok\":false}");
+      }
+    }
+  );
+
   server.begin();
 }
 
@@ -924,6 +1230,11 @@ void setup() {
   neoBright   = prefs.getUChar("neoBright", 80);
   animMode    = (AnimMode)prefs.getUChar("animMode", 0);
 
+  for (int i = 0; i < IR_ACTION_COUNT; i++) {
+    irCodes[i] = prefs.getULong64(IR_ACTION_KEYS[i], 0);
+  }
+  powerSaveEnabled = prefs.getBool("psEnabled", true);
+
   // --- RTC ---
   Rtc.Begin();
   if (!Rtc.IsDateTimeValid()) {
@@ -944,6 +1255,10 @@ void setup() {
   // --- WiFi + Web-Server ---
   setupWifi();
   setupWebServer();
+
+  // --- IR-Empfänger ---
+  irrecv.enableIRIn();
+  Serial.printf("[IR] Empfänger gestartet auf Pin %d\n", IR_RECV_PIN);
 
   // --- Fade-In Vorbereitung ---
   startFadeIn   = true;
@@ -982,6 +1297,9 @@ void loop() {
   updateButton(btnUp);
   updateButton(btnDown);
   updateButton(btnLight);
+
+  // --- IR ---
+  handleIR();
 
   // --- Helligkeitssteuerung ---
   handleBrightness();
