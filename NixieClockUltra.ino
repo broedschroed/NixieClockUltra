@@ -231,6 +231,12 @@ Button btnUp    = {BTN_UP,    HIGH, false, false, 0, 0, 30, 200};
 Button btnDown  = {BTN_DOWN,  HIGH, false, false, 0, 0, 30, 200};
 Button btnLight = {BTN_LIGHT, HIGH, false, false, 0, 0, 30, 500};
 
+// Forward-Deklarationen für Funktionen, die der Arduino-Präprozessor
+// nicht automatisch erkennt (IRAM_ATTR bzw. Raw-String-Literal in web_server.ino)
+void IRAM_ATTR onMuxTimer();
+void setupWifi();
+void setupWebServer();
+
 // ═══════════════════════════════════════════════════════════
 //  SETUP
 // ═══════════════════════════════════════════════════════════
