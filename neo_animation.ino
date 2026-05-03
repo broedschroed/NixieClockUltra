@@ -86,6 +86,13 @@ void updateNeoPixel() {
     default: break;
   }
 
+  // Statischer Modus: Trennpunkte unabhängig von Animation warmweiß überschreiben
+  if (colonStatic) {
+    uint32_t warmwhite = strip.Color(255, 100, 0);
+    for (int i = 6; i < 10; i++)
+      strip.setPixelColor(i, rgbSwap(scaleColor(warmwhite, colonBright)));
+  }
+
   irrecv.pause();
   strip.show();
   irrecv.resume();

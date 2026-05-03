@@ -85,6 +85,10 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
     <label>Trennpunkte dauerhaft an</label>
     <label class="toggle"><input type="checkbox" id="colonOn" onchange="setColonOn(this.checked)"><span class="slider"></span></label>
   </div>
+  <div class="row">
+    <label>Trennpunkte statisch (Warmweiß)</label>
+    <label class="toggle"><input type="checkbox" id="colonStatic" onchange="setColonStatic(this.checked)"><span class="slider"></span></label>
+  </div>
 
 </div>
 
@@ -143,6 +147,7 @@ async function refreshClock(){
   if(d.neoBright!==undefined){document.getElementById('neoBright').value=d.neoBright;document.getElementById('neoBrightVal').textContent=d.neoBright;}
   if(d.anim!==undefined) document.getElementById('anim').value=d.anim;
   if(d.colonOn!==undefined)document.getElementById('colonOn').checked=d.colonOn;
+  if(d.colonStatic!==undefined)document.getElementById('colonStatic').checked=d.colonStatic;
   if(d.colonBright!==undefined){document.getElementById('colonBright').value=d.colonBright;document.getElementById('colonBrightVal').textContent=d.colonBright;}
   if(d.slot!==undefined) document.getElementById('slotStatus').textContent=d.slot?'läuft…':'bereit';
 }
@@ -262,6 +267,9 @@ async function irClear(action){
 async function setColonOn(enabled){
   await api('/api/colonon',{enabled});
 }
+async function setColonStatic(enabled){
+  await api('/api/colonstatic',{enabled});
+}
 
 setInterval(refreshClock,1000);
 refreshClock();
@@ -318,6 +326,7 @@ void setupWebServer() {
     doc["anim"]      = (int)animMode;
     doc["slot"]      = slotActive;
     doc["colonOn"]     = colonAlwaysOn;
+    doc["colonStatic"] = colonStatic;
     doc["colonBright"] = colonBright;
     String out; serializeJson(doc, out);
     req->send(200, "application/json", out);
@@ -525,6 +534,20 @@ void setupWebServer() {
       if (!deserializeJson(doc, data, len)) {
         colonAlwaysOn = (bool)doc["enabled"];
         prefs.putBool("colonOn", colonAlwaysOn);
+        req->send(200, "application/json", "{\"ok\":true}");
+      } else {
+        req->send(400, "application/json", "{\"ok\":false}");
+      }
+    }
+  );
+
+  server.on("/api/colonstatic", HTTP_POST, [](AsyncWebServerRequest *req){},
+    nullptr,
+    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
+      StaticJsonDocument<64> doc;
+      if (!deserializeJson(doc, data, len)) {
+        colonStatic = (bool)doc["enabled"];
+        prefs.putBool("colonStatic", colonStatic);
         req->send(200, "application/json", "{\"ok\":true}");
       } else {
         req->send(400, "application/json", "{\"ok\":false}");

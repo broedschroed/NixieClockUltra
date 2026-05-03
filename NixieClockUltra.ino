@@ -211,6 +211,8 @@ portMUX_TYPE irMux = portMUX_INITIALIZER_UNLOCKED;
 
 // Trennpunkte dauerhaft an (statt Sekundenblinken)
 bool colonAlwaysOn = false;
+// Trennpunkte statisch warmweiß (ignoriert Animationsfarbe)
+bool colonStatic   = false;
 
 // ═══════════════════════════════════════════════════════════
 //  TASTER-STRUKTUR (muss vor auto-generierten Prototypen stehen)
@@ -278,7 +280,8 @@ void setup() {
   for (int i = 0; i < IR_ACTION_COUNT; i++) {
     irCodes[i] = prefs.getULong64(IR_ACTION_KEYS[i], 0);
   }
-  colonAlwaysOn    = prefs.getBool("colonOn", false);
+  colonAlwaysOn    = prefs.getBool("colonOn",     false);
+  colonStatic      = prefs.getBool("colonStatic", false);
 
   // --- RTC ---
   Rtc.Begin();
