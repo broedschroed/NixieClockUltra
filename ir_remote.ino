@@ -47,6 +47,11 @@ void executeAction(IrAction action) {
       startSlotAnimation(curHour, curMin, curSec);
       break;
 
+    case IR_ACTION_COLON_TOGGLE:
+      colonAlwaysOn = !colonAlwaysOn;
+      prefs.putBool("colonOn", colonAlwaysOn);
+      break;
+
     default: break;
   }
 }

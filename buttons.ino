@@ -97,15 +97,24 @@ void handleEditMode() {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  HELLIGKEITSSTEUERUNG
+//  HELLIGKEITSSTEUERUNG & COLON-TOGGLE
 // ═══════════════════════════════════════════════════════════
 void handleBrightness() {
+  // Kurzer Druck: Helligkeit weiterschalten
   if (btnLight.pressed) {
     brightLevel = (brightLevel + 1) % 4;
     neoBright   = BRIGHTNESS_LEVELS[brightLevel];
-    // Speichern
     prefs.putUChar("bright", brightLevel);
     prefs.putUChar("neoBright", neoBright);
   }
+
+  // Langer Druck: Trennpunkte dauerhaft an/aus (einmalig pro Druck)
+  static bool colonToggleDone = false;
+  if (btnLight.held && !colonToggleDone) {
+    colonAlwaysOn = !colonAlwaysOn;
+    prefs.putBool("colonOn", colonAlwaysOn);
+    colonToggleDone = true;
+  }
+  if (btnLight.lastState == HIGH) colonToggleDone = false;
 }
 

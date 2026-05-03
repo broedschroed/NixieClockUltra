@@ -216,10 +216,10 @@ async function wScan(){
   });
 }
 
-const IR_ACTIONS=['SET','UP','DOWN','BRIGHTNESS','ANIM_NEXT','SLOT'];
+const IR_ACTIONS=['SET','UP','DOWN','BRIGHTNESS','ANIM_NEXT','SLOT','COLON_TOGGLE'];
 const IR_LABELS={'SET':'SET &#x2013; Einstellmodus','UP':'UP &#x2013; Erh&ouml;hen','DOWN':'DOWN &#x2013; Verringern',
   'BRIGHTNESS':'BRIGHTNESS &#x2013; Helligkeit','ANIM_NEXT':'ANIM &#x2013; n&auml;chste Animation',
-  'SLOT':'SLOT &#x2013; Slot-Maschine'};
+  'SLOT':'SLOT &#x2013; Slot-Maschine','COLON_TOGGLE':'COLON &#x2013; Trennpunkte an/aus'};
 let irPollTimer=null;
 
 async function refreshIR(){
