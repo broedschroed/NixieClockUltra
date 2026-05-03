@@ -54,7 +54,7 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
 <div class="card">
   <h2>💡 Helligkeit &amp; Animation</h2>
   <div class="row">
-    <label>Nixie-Helligkeit</label>
+    <label>NeoPixel-Helligkeit (Stufen)</label>
     <select id="bright" onchange="setBright()">
       <option value="0">Sehr dim</option>
       <option value="1">Dim</option>
@@ -63,7 +63,7 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
     </select>
   </div>
   <div class="row">
-    <label>NeoPixel-Helligkeit</label>
+    <label>NeoPixel-Helligkeit (Fein)</label>
     <input type="range" id="neoBright" min="10" max="255" value="80" oninput="setNeoBright(this.value)">
     <span id="neoBrightVal">80</span>
   </div>

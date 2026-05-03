@@ -43,9 +43,9 @@ Die blinkende Stelle zeigt an, welcher Wert gerade eingestellt wird. Nach **15 S
 
 ---
 
-## Helligkeit (Taste LIGHT – kurzer Druck)
+## NeoPixel-Helligkeit (Taste LIGHT – kurzer Druck)
 
-Jeder kurze Druck auf **LIGHT** schaltet zur nächsten Helligkeitsstufe:
+Jeder kurze Druck auf **LIGHT** schaltet zur nächsten NeoPixel-Helligkeitsstufe:
 
 | Stufe | Beschreibung    |
 |-------|-----------------|
@@ -136,8 +136,8 @@ Sobald die Uhr mit dem Heimnetz verbunden ist, synchronisiert sie die Zeit autom
 
 | Einstellung                   | Beschreibung                                      |
 |-------------------------------|---------------------------------------------------|
-| Nixie-Helligkeit               | 4 Stufen (entspricht kurzem Druck auf LIGHT)      |
-| NeoPixel-Helligkeit            | Schieberegler 10–255                              |
+| NeoPixel-Helligkeit (Stufen)   | 4 Stufen (entspricht kurzem Druck auf LIGHT)      |
+| NeoPixel-Helligkeit (Fein)     | Schieberegler 10–255                              |
 | Animation                      | Animationsmodus wählen (siehe unten)              |
 | NeoPixel-Farbe (Hue)           | Grundfarbe für statische Modi und Puls            |
 | Trennpunkte dauerhaft an       | Trennpunkt-LEDs blinken oder leuchten dauerhaft   |
