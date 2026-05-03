@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-//  DISPLAY-UPDATE (aus displayDigits befüllen)
+//  DISPLAY-UPDATE (displayDigits befüllen)
 // ═══════════════════════════════════════════════════════════
 void setDisplayTime(uint8_t h, uint8_t m, uint8_t s) {
   portENTER_CRITICAL(&timerMux);

@@ -28,6 +28,7 @@
 //  INCLUDES
 // ═══════════════════════════════════════════════════════════
 #include <Arduino.h>
+#include "driver/gpio.h"        // gpio_set_level() – IRAM_ATTR, sicher im ISR
 #include <Adafruit_NeoPixel.h>
 #include <RtcDS1302.h>
 #include <ThreeWire.h>
@@ -46,11 +47,16 @@
 // ═══════════════════════════════════════════════════════════
 
 // Kathoden (Ziffern 0–9) – gemeinsam für alle Röhren
-const uint8_t CATHODE_PIN[10] = {47, 17, 18, 38, 39, 40, 41, 42, 45, 46};
+// DRAM_ATTR: Arrays müssen im SRAM liegen, da der ISR auf sie zugreift.
+// const-Arrays ohne Attribut landen im Flash (.rodata); wenn der Flash-Cache
+// während WiFi-Init kurz deaktiviert wird, stalled der ISR → Interrupt-WDT.
+//const uint8_t DRAM_ATTR CATHODE_PIN[10] = {47, 17, 18, 38, 39, 40, 41, 42, 45, 46};
+const uint8_t DRAM_ATTR CATHODE_PIN[10] = {17, 47, 46, 45, 42, 41, 40, 39, 38, 18};
+
 
 // Anoden (Röhren-Auswahl im Multiplex)
-const uint8_t ANODE_PIN[6]    = {16, 15, 14, 13, 12, 11};
-//                                HZ  HE  MZ  ME  SZ  SE
+const uint8_t DRAM_ATTR ANODE_PIN[6]    = {16, 15, 14, 13, 12, 11};
+//                                         HZ  HE  MZ  ME  SZ  SE
 
 // DS1302
 #define RTC_IO_PIN   4
@@ -75,7 +81,7 @@ const uint8_t ANODE_PIN[6]    = {16, 15, 14, 13, 12, 11};
 // ═══════════════════════════════════════════════════════════
 
 // Multiplex-Timing (µs)
-#define MUX_DIGIT_US       1800   // Zeit pro aktiver Röhre
+#define MUX_DIGIT_US       2800   // Zeit pro aktiver Röhre
 #define MUX_BLANK_US        200   // Anti-Ghosting Blanking-Phase
 
 // Fade
@@ -134,7 +140,7 @@ uint8_t brightLevel = 3;
 // NeoPixel Farbverlauf
 uint8_t  neoHue    = 0;
 uint8_t  neoSat    = 255;
-uint8_t  neoBright = 80;
+uint8_t  neoBright = 30;
 
 // Animations-Modus
 enum AnimMode { ANIM_RAINBOW, ANIM_STATIC, ANIM_PULSE, ANIM_SLOTS, ANIM_COUNT };
@@ -291,14 +297,16 @@ void setup() {
   readRTC();
   setDisplayTime(curHour, curMin, curSec);
 
-  // --- Multiplex-Timer (Timer 0, 1 MHz Basis) ---
-  muxTimer = timerBegin(1000000);  // 1 MHz = 1 µs Auflösung
-  timerAttachInterrupt(muxTimer, &onMuxTimer);
-  timerAlarm(muxTimer, MUX_BLANK_US, false, 0);
-
   // --- WiFi + Web-Server ---
   setupWifi();
   setupWebServer();
+
+  // --- Multiplex-Timer (Timer 0, 1 MHz Basis) ---
+  // Erst nach WiFi-Init starten: WiFi.softAP() deaktiviert intern kurz den
+  // Flash-Cache; würde der ISR dabei laufen, stalled er beim Array-Zugriff.
+  muxTimer = timerBegin(1000000);  // 1 MHz = 1 µs Auflösung
+  timerAttachInterrupt(muxTimer, &onMuxTimer);
+  timerAlarm(muxTimer, MUX_BLANK_US, true, 0);  // auto-reload: ISR muss timerAlarm() nicht selbst aufrufen
 
   // --- IR-Empfänger ---
   irrecv.enableIRIn();
