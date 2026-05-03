@@ -81,8 +81,8 @@ const uint8_t DRAM_ATTR ANODE_PIN[6]    = {16, 15, 14, 13, 12, 11};
 // ═══════════════════════════════════════════════════════════
 
 // Multiplex-Timing (µs)
-#define MUX_DIGIT_US       4400   // → 12 Ticks gesamt (6 Display + 5 Blank + 1 Anode-Vorlauf)
-#define MUX_BLANK_US        400   // Timer-Periode (= ein Tick)
+#define MUX_DIGIT_US       2800   // Zeit pro aktiver Röhre
+#define MUX_BLANK_US        200   // Anti-Ghosting Blanking-Phase
 
 // Fade
 #define FADE_STEPS           20   // Schritte für Fade-In/Out
