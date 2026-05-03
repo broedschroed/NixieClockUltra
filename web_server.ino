@@ -64,7 +64,7 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
   </div>
   <div class="row">
     <label>NeoPixel-Helligkeit</label>
-    <input type="range" id="neoBright" min="10" max="100" value="80" oninput="setNeoBright(this.value)">
+    <input type="range" id="neoBright" min="10" max="255" value="80" oninput="setNeoBright(this.value)">
     <span id="neoBrightVal">80</span>
   </div>
   <div class="row">
@@ -78,7 +78,7 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
   </div>
   <div class="row">
     <label>Trennpunkt-Helligkeit</label>
-    <input type="range" id="colonBright" min="1" max="60" value="15" oninput="setColonBright(this.value)">
+    <input type="range" id="colonBright" min="1" max="100" value="15" oninput="setColonBright(this.value)">
     <span id="colonBrightVal">15</span>
   </div>
   <div class="row">
@@ -356,7 +356,7 @@ void setupWebServer() {
     [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
       StaticJsonDocument<64> doc;
       if (!deserializeJson(doc, data, len)) {
-        neoBright = constrain((int)doc["val"], 10, 100);
+        neoBright = constrain((int)doc["val"], 10, 255);
         prefs.putUChar("neoBright", neoBright);
       }
       req->send(200, "application/json", "{\"ok\":true}");
@@ -381,7 +381,7 @@ void setupWebServer() {
     [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
       StaticJsonDocument<64> doc;
       if (!deserializeJson(doc, data, len)) {
-        colonBright = constrain((int)doc["val"], 1, 60);
+        colonBright = constrain((int)doc["val"], 1, 100);
         prefs.putUChar("colonBright", colonBright);
       }
       req->send(200, "application/json", "{\"ok\":true}");
