@@ -218,6 +218,9 @@ portMUX_TYPE irMux = portMUX_INITIALIZER_UNLOCKED;
 // Power-Save dauerhaft aktiviert/deaktiviert
 bool powerSaveEnabled = true;
 
+// Trennpunkte dauerhaft an (statt Sekundenblinken)
+bool colonAlwaysOn = false;
+
 // ═══════════════════════════════════════════════════════════
 //  TASTER-STRUKTUR (muss vor auto-generierten Prototypen stehen)
 // ═══════════════════════════════════════════════════════════
@@ -283,7 +286,8 @@ void setup() {
   for (int i = 0; i < IR_ACTION_COUNT; i++) {
     irCodes[i] = prefs.getULong64(IR_ACTION_KEYS[i], 0);
   }
-  powerSaveEnabled = prefs.getBool("psEnabled", true);
+  powerSaveEnabled = prefs.getBool("psEnabled",  true);
+  colonAlwaysOn    = prefs.getBool("colonOn",    false);
 
   // --- RTC ---
   Rtc.Begin();

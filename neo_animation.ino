@@ -29,7 +29,7 @@ void updateNeoPixel() {
       }
       neoHue++;
       // Doppelpunkte: synchron blinkend zum Sekundentakt
-      bool colonOn = (curSec % 2 == 0);
+      bool colonOn = colonAlwaysOn || (curSec % 2 == 0);
       uint32_t colonColor = colonOn
         ? strip.ColorHSV((neoHue + 128) * 256, 200, 255)
         : strip.Color(0, 0, 0);
@@ -41,7 +41,7 @@ void updateNeoPixel() {
       // Statische Farbe (warmweiß)
       uint32_t warm = strip.Color(255, 180, 80);
       for (int i = 0; i < 6; i++) strip.setPixelColor(i, warm);
-      bool colonOn = (curSec % 2 == 0);
+      bool colonOn = colonAlwaysOn || (curSec % 2 == 0);
       uint32_t colonColor = colonOn ? strip.Color(255, 100, 0) : strip.Color(0, 0, 0);
       for (int i = 6; i < 10; i++) strip.setPixelColor(i, rgbSwap(colonColor));
       break;
@@ -54,7 +54,7 @@ void updateNeoPixel() {
       uint32_t col = strip.ColorHSV(neoHue * 256, neoSat, val);
       for (int i = 0; i < 6; i++) strip.setPixelColor(i, col);
       neoHue++;
-      bool colonOn = (curSec % 2 == 0);
+      bool colonOn = colonAlwaysOn || (curSec % 2 == 0);
       for (int i = 6; i < 10; i++)
         strip.setPixelColor(i, colonOn ? rgbSwap(col) : strip.Color(0,0,0));
       break;
@@ -73,7 +73,7 @@ void updateNeoPixel() {
           strip.setPixelColor(i, strip.ColorHSV(hue * 256, neoSat, 255));
         }
         neoHue++;
-        bool colonOn = (curSec % 2 == 0);
+        bool colonOn = colonAlwaysOn || (curSec % 2 == 0);
         uint32_t colonColor = colonOn
           ? strip.ColorHSV((neoHue + 128) * 256, 200, 255)
           : strip.Color(0, 0, 0);
