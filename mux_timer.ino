@@ -31,7 +31,7 @@ void IRAM_ATTR onMuxTimer() {
       gpio_set_level((gpio_num_t)CATHODE_PIN[digit], 1);
       gpio_set_level((gpio_num_t)ANODE_PIN[muxIndex], 1);
     }
-  } else if (tick == MUX_TICKS_PER_TUBE - 5) {
+  } else if (tick == MUX_TICKS_PER_TUBE - MUX_BLANK_TICKS) {
     // Blank-Phase: erst Anode aus, dann alle Kathoden aktiv auf LOW – entlädt parasitäre Restladungen
     gpio_set_level((gpio_num_t)ANODE_PIN[muxIndex], 0);
     for (uint8_t i = 0; i < 10; i++) {
