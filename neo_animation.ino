@@ -16,7 +16,7 @@ void updateNeoPixel() {
   if (now - lastNeoUpdate < 20) return;
   lastNeoUpdate = now;
 
-  uint8_t effectBright = powerSaveActive ? (neoBright / 4) : neoBright;
+  uint8_t effectBright = neoBright;
   strip.setBrightness(effectBright);
 
   switch (animMode) {

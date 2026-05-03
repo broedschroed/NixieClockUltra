@@ -47,12 +47,6 @@ void executeAction(IrAction action) {
       startSlotAnimation(curHour, curMin, curSec);
       break;
 
-    case IR_ACTION_POWER_SAVE_TOGGLE:
-      powerSaveEnabled = !powerSaveEnabled;
-      prefs.putBool("psEnabled", powerSaveEnabled);
-      if (!powerSaveEnabled) powerSaveActive = false;
-      break;
-
     default: break;
   }
 }
@@ -64,7 +58,6 @@ void dispatchIRAction(uint64_t code) {
     portEXIT_CRITICAL(&irMux);
     if (match) {
       executeAction((IrAction)i);
-      lastInteractionMs = millis();
       return;
     }
   }

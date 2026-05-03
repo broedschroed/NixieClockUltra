@@ -102,9 +102,6 @@ const uint8_t BRIGHTNESS_LEVELS[4] = {30, 80, 160, 255};
 // Einstellmodus Timeout (ms)
 #define EDIT_TIMEOUT_MS   15000
 
-// Power-Save: Dimm-Schwelle (Sekunden ohne Tastendruck)
-#define POWER_SAVE_TIMEOUT_S  120
-
 // ═══════════════════════════════════════════════════════════
 //  OBJEKTE
 // ═══════════════════════════════════════════════════════════
@@ -154,10 +151,6 @@ unsigned long editEnterTime = 0;
 // Uhrzeit (lokal gecacht)
 uint8_t  curHour = 0, curMin = 0, curSec = 0;
 
-// Letzter Tastendruck (Power-Save)
-unsigned long lastInteractionMs = 0;
-bool          powerSaveActive   = false;
-
 // WiFi / NTP Status
 bool wifiStaConnected = false;
 bool ntpSynced        = false;
@@ -192,18 +185,17 @@ enum IrAction {
   IR_ACTION_BRIGHTNESS    = 3,
   IR_ACTION_ANIM_NEXT     = 4,
   IR_ACTION_SLOT          = 5,
-  IR_ACTION_POWER_SAVE_TOGGLE = 6,
-  IR_ACTION_COUNT         = 7
+  IR_ACTION_COUNT         = 6
 };
 
 const char* IR_ACTION_KEYS[IR_ACTION_COUNT] = {
   "ir_SET", "ir_UP", "ir_DOWN", "ir_BRIGHTNESS",
-  "ir_ANIM_NEXT", "ir_SLOT", "ir_PSTOGGLE"
+  "ir_ANIM_NEXT", "ir_SLOT"
 };
 
 const char* IR_ACTION_LABELS[IR_ACTION_COUNT] = {
   "SET", "UP", "DOWN", "BRIGHTNESS",
-  "ANIM_NEXT", "SLOT", "POWER_SAVE_TOGGLE"
+  "ANIM_NEXT", "SLOT"
 };
 
 IRrecv   irrecv(IR_RECV_PIN);
@@ -214,9 +206,6 @@ IrAction irLearnTarget  = IR_LEARN_NONE;
 unsigned long irLearnStartMs = 0;
 #define IR_LEARN_TIMEOUT_MS 10000
 portMUX_TYPE irMux = portMUX_INITIALIZER_UNLOCKED;
-
-// Power-Save dauerhaft aktiviert/deaktiviert
-bool powerSaveEnabled = true;
 
 // Trennpunkte dauerhaft an (statt Sekundenblinken)
 bool colonAlwaysOn = false;
@@ -286,8 +275,7 @@ void setup() {
   for (int i = 0; i < IR_ACTION_COUNT; i++) {
     irCodes[i] = prefs.getULong64(IR_ACTION_KEYS[i], 0);
   }
-  powerSaveEnabled = prefs.getBool("psEnabled",  true);
-  colonAlwaysOn    = prefs.getBool("colonOn",    false);
+  colonAlwaysOn    = prefs.getBool("colonOn", false);
 
   // --- RTC ---
   Rtc.Begin();
@@ -320,7 +308,6 @@ void setup() {
   startFadeIn   = true;
   startFadeStep = 0;
 
-  lastInteractionMs = millis();
   Serial.println("[NixieClock] Bereit.");
 }
 
@@ -385,9 +372,6 @@ void loop() {
 
   // --- NeoPixel ---
   updateNeoPixel();
-
-  // --- Power-Save ---
-  handlePowerSave();
 
   // --- NTP → RTC-Sync (einmalig nach Verbindung) ---
   if (wifiStaConnected && !ntpSynced) {

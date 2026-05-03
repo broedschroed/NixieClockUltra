@@ -85,10 +85,7 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
     <label>Trennpunkte dauerhaft an</label>
     <label class="toggle"><input type="checkbox" id="colonOn" onchange="setColonOn(this.checked)"><span class="slider"></span></label>
   </div>
-  <div class="row">
-    <label>Power-Save (Auto-Dimmen)</label>
-    <label class="toggle"><input type="checkbox" id="psEnabled" onchange="setPowerSave(this.checked)"><span class="slider"></span></label>
-  </div>
+
 </div>
 
 <div class="card">
@@ -145,7 +142,6 @@ async function refreshClock(){
   if(d.bright!==undefined) document.getElementById('bright').value=d.bright;
   if(d.neoBright!==undefined){document.getElementById('neoBright').value=d.neoBright;document.getElementById('neoBrightVal').textContent=d.neoBright;}
   if(d.anim!==undefined) document.getElementById('anim').value=d.anim;
-  if(d.psEnabled!==undefined)document.getElementById('psEnabled').checked=d.psEnabled;
   if(d.colonOn!==undefined)document.getElementById('colonOn').checked=d.colonOn;
   if(d.slot!==undefined) document.getElementById('slotStatus').textContent=d.slot?'läuft…':'bereit';
 }
@@ -220,10 +216,10 @@ async function wScan(){
   });
 }
 
-const IR_ACTIONS=['SET','UP','DOWN','BRIGHTNESS','ANIM_NEXT','SLOT','POWER_SAVE_TOGGLE'];
+const IR_ACTIONS=['SET','UP','DOWN','BRIGHTNESS','ANIM_NEXT','SLOT'];
 const IR_LABELS={'SET':'SET &#x2013; Einstellmodus','UP':'UP &#x2013; Erh&ouml;hen','DOWN':'DOWN &#x2013; Verringern',
   'BRIGHTNESS':'BRIGHTNESS &#x2013; Helligkeit','ANIM_NEXT':'ANIM &#x2013; n&auml;chste Animation',
-  'SLOT':'SLOT &#x2013; Slot-Maschine','POWER_SAVE_TOGGLE':'POWER SAVE &#x2013; Toggle'};
+  'SLOT':'SLOT &#x2013; Slot-Maschine'};
 let irPollTimer=null;
 
 async function refreshIR(){
@@ -264,9 +260,6 @@ async function irClear(action){
 }
 async function setColonOn(enabled){
   await api('/api/colonon',{enabled});
-}
-async function setPowerSave(enabled){
-  await api('/api/powersave',{enabled});
 }
 
 setInterval(refreshClock,1000);
@@ -323,7 +316,6 @@ void setupWebServer() {
     doc["neoBright"] = neoBright;
     doc["anim"]      = (int)animMode;
     doc["slot"]      = slotActive;
-    doc["psEnabled"]   = powerSaveEnabled;
     doc["colonOn"]     = colonAlwaysOn;
     String out; serializeJson(doc, out);
     req->send(200, "application/json", out);
@@ -530,22 +522,6 @@ void setupWebServer() {
       if (!deserializeJson(doc, data, len)) {
         colonAlwaysOn = (bool)doc["enabled"];
         prefs.putBool("colonOn", colonAlwaysOn);
-        req->send(200, "application/json", "{\"ok\":true}");
-      } else {
-        req->send(400, "application/json", "{\"ok\":false}");
-      }
-    }
-  );
-
-  // --- Power-Save Toggle ---
-  server.on("/api/powersave", HTTP_POST, [](AsyncWebServerRequest *req){},
-    nullptr,
-    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
-      StaticJsonDocument<64> doc;
-      if (!deserializeJson(doc, data, len)) {
-        powerSaveEnabled = (bool)doc["enabled"];
-        prefs.putBool("psEnabled", powerSaveEnabled);
-        if (!powerSaveEnabled) powerSaveActive = false;
         req->send(200, "application/json", "{\"ok\":true}");
       } else {
         req->send(400, "application/json", "{\"ok\":false}");

@@ -17,12 +17,10 @@ void updateButton(Button &b) {
     if (held >= b.debounceMs) {
       if (b.lastState == HIGH) {
         b.pressed = true;  // Erstes Drücken
-        lastInteractionMs = millis();
       }
       if (millis() - b.lastRepeat >= b.repeatMs) {
         b.held = true;
         b.lastRepeat = millis();
-        lastInteractionMs = millis();
       }
     }
   }
@@ -111,18 +109,3 @@ void handleBrightness() {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
-//  POWER-SAVE
-// ═══════════════════════════════════════════════════════════
-void handlePowerSave() {
-  if (!powerSaveEnabled) {
-    if (powerSaveActive) powerSaveActive = false;
-    return;
-  }
-  unsigned long idleSec = (millis() - lastInteractionMs) / 1000;
-  if (idleSec >= POWER_SAVE_TIMEOUT_S && !powerSaveActive) {
-    powerSaveActive = true;
-  } else if (idleSec < POWER_SAVE_TIMEOUT_S && powerSaveActive) {
-    powerSaveActive = false;
-  }
-}
