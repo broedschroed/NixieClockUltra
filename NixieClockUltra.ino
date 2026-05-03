@@ -11,7 +11,7 @@
  * ║   • NeoPixel Farbverlauf + Animationen                               ║
  * ║   • Helligkeitssteuerung (4 Stufen)                                  ║
  * ║   • Web-Interface (WiFi AP)                                          ║
- * ║   • Power-Saving (Light-Sleep)                                       ║
+ * ║   • IR-Interface                                                     ║
  * ║   • DS1302 RTC Handling + Einstellmodus                              ║
  * ╚══════════════════════════════════════════════════════════════════════╝
  *
@@ -89,7 +89,7 @@ const uint8_t DRAM_ATTR ANODE_PIN[6]    = {16, 15, 14, 13, 12, 11};
 #define FADE_INTERVAL_MS      2   // ms zwischen Fade-Schritten
 
 // Helligkeitsstufen (PWM 0–255 → werden als Duty-Cycle-Anteil genutzt)
-const uint8_t BRIGHTNESS_LEVELS[4] = {30, 80, 160, 255};
+const uint8_t BRIGHTNESS_LEVELS[4] = {10, 30, 50, 80};
 
 // WiFi AP (Fallback-Hotspot, immer aktiv)
 #define WIFI_SSID   "NixieClock"
@@ -134,10 +134,11 @@ volatile bool    inBlank  = false;
 // Helligkeit (Index in BRIGHTNESS_LEVELS)
 uint8_t brightLevel = 3;
 
-// NeoPixel Farbverlauf
-uint8_t  neoHue    = 0;
-uint8_t  neoSat    = 255;
-uint8_t  neoBright = 30;
+// NeoPixel Helligkeit (getrennt für Hintergrund- und Trennpunkt-LEDs)
+uint8_t  neoBright   = 30;   // Pixel 0–5 (Hintergrund)
+uint8_t  colonBright = 15;   // Pixel 6–9 (Trennpunkte)
+uint8_t  neoHue      = 0;    // auto-inkrement in Animationen
+uint8_t  neoSat      = 255;
 
 // Animations-Modus
 enum AnimMode { ANIM_RAINBOW, ANIM_STATIC, ANIM_PULSE, ANIM_SLOTS, ANIM_COUNT };
@@ -263,14 +264,15 @@ void setup() {
 
   // --- NeoPixel ---
   strip.begin();
-  strip.setBrightness(80);
+  strip.setBrightness(255);  // Skalierung erfolgt per Pixel in neo_animation
   strip.clear();
   strip.show();
 
   // --- Preferences laden ---
   prefs.begin("nixie", false);
   brightLevel = prefs.getUChar("bright",    3);
-  neoBright   = prefs.getUChar("neoBright", 80);
+  neoBright   = prefs.getUChar("neoBright",   30);
+  colonBright = prefs.getUChar("colonBright", 15);
   animMode    = (AnimMode)prefs.getUChar("animMode", 0);
 
   for (int i = 0; i < IR_ACTION_COUNT; i++) {

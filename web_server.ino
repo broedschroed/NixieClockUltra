@@ -54,17 +54,17 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
 <div class="card">
   <h2>💡 Helligkeit &amp; Animation</h2>
   <div class="row">
-    <label>NeoPixel-Helligkeit (Stufen)</label>
+    <label>Nixie-Helligkeit</label>
     <select id="bright" onchange="setBright()">
-      <option value="0">Sehr dim</option>
-      <option value="1">Dim</option>
+      <option value="0">Sehr dunkel</option>
+      <option value="1">Dunkel</option>
       <option value="2">Hell</option>
-      <option value="3" selected>Voll</option>
+      <option value="3" selected>Sehr hell</option>
     </select>
   </div>
   <div class="row">
-    <label>NeoPixel-Helligkeit (Fein)</label>
-    <input type="range" id="neoBright" min="10" max="255" value="80" oninput="setNeoBright(this.value)">
+    <label>NeoPixel-Helligkeit</label>
+    <input type="range" id="neoBright" min="10" max="100" value="80" oninput="setNeoBright(this.value)">
     <span id="neoBrightVal">80</span>
   </div>
   <div class="row">
@@ -77,9 +77,9 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
     </select>
   </div>
   <div class="row">
-    <label>NeoPixel-Farbe (Hue)</label>
-    <input type="range" id="neoHue" min="0" max="255" value="0" oninput="setNeoHue(this.value)">
-    <span id="neoHueVal">0</span>
+    <label>Trennpunkt-Helligkeit</label>
+    <input type="range" id="colonBright" min="1" max="60" value="15" oninput="setColonBright(this.value)">
+    <span id="colonBrightVal">15</span>
   </div>
   <div class="row">
     <label>Trennpunkte dauerhaft an</label>
@@ -143,6 +143,7 @@ async function refreshClock(){
   if(d.neoBright!==undefined){document.getElementById('neoBright').value=d.neoBright;document.getElementById('neoBrightVal').textContent=d.neoBright;}
   if(d.anim!==undefined) document.getElementById('anim').value=d.anim;
   if(d.colonOn!==undefined)document.getElementById('colonOn').checked=d.colonOn;
+  if(d.colonBright!==undefined){document.getElementById('colonBright').value=d.colonBright;document.getElementById('colonBrightVal').textContent=d.colonBright;}
   if(d.slot!==undefined) document.getElementById('slotStatus').textContent=d.slot?'läuft…':'bereit';
 }
 
@@ -172,9 +173,9 @@ async function setAnim(){
   let v=parseInt(document.getElementById('anim').value);
   await api('/api/anim',{mode:v});
 }
-async function setNeoHue(v){
-  document.getElementById('neoHueVal').textContent=v;
-  await api('/api/neohue',{hue:parseInt(v)});
+async function setColonBright(v){
+  document.getElementById('colonBrightVal').textContent=v;
+  await api('/api/colonbright',{val:parseInt(v)});
 }
 async function triggerSlot(){
   await api('/api/slot',{});
@@ -317,6 +318,7 @@ void setupWebServer() {
     doc["anim"]      = (int)animMode;
     doc["slot"]      = slotActive;
     doc["colonOn"]     = colonAlwaysOn;
+    doc["colonBright"] = colonBright;
     String out; serializeJson(doc, out);
     req->send(200, "application/json", out);
   });
@@ -354,7 +356,7 @@ void setupWebServer() {
     [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
       StaticJsonDocument<64> doc;
       if (!deserializeJson(doc, data, len)) {
-        neoBright = constrain((int)doc["val"], 10, 255);
+        neoBright = constrain((int)doc["val"], 10, 100);
         prefs.putUChar("neoBright", neoBright);
       }
       req->send(200, "application/json", "{\"ok\":true}");
@@ -374,12 +376,13 @@ void setupWebServer() {
     }
   );
 
-  server.on("/api/neohue", HTTP_POST, [](AsyncWebServerRequest *req){},
+  server.on("/api/colonbright", HTTP_POST, [](AsyncWebServerRequest *req){},
     nullptr,
     [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
       StaticJsonDocument<64> doc;
       if (!deserializeJson(doc, data, len)) {
-        neoHue = (uint8_t)doc["hue"];
+        colonBright = constrain((int)doc["val"], 1, 60);
+        prefs.putUChar("colonBright", colonBright);
       }
       req->send(200, "application/json", "{\"ok\":true}");
     }
