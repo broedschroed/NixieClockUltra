@@ -20,32 +20,12 @@ Die Nixie Clock Ultra ist eine Röhrenuhr auf Basis des ESP32-S3 mit 6 Nixie-Rö
 
 Das Gerät besitzt vier Tasten:
 
-| Taste   | Funktion                                      |
-|---------|-----------------------------------------------|
-| SET     | Einstellmodus starten / nächste Stelle wählen |
-| UP      | Wert erhöhen (mit Auto-Repeat bei Dauerdruck) |
-| DOWN    | Wert verringern (mit Auto-Repeat bei Dauerdruck) |
-| LIGHT   | Helligkeit umschalten (4 Stufen)              |
-
----
-
-## IR-Fernbedienung
-
-Die Uhr kann mit einer beliebigen Infrarot-Fernbedienung gesteuert werden. Jede Taste der Fernbedienung kann einer Funktion zugewiesen werden (siehe [Fernbedienung anlernen](#fernbedienung-anlernen) im Web-Interface).
-
-### Verfügbare IR-Funktionen
-
-| Funktion            | Beschreibung                                              |
-|---------------------|-----------------------------------------------------------|
-| SET                 | Einstellmodus starten / nächste Stelle / Zeit speichern  |
-| UP                  | Wert erhöhen im Einstellmodus                            |
-| DOWN                | Wert verringern im Einstellmodus                         |
-| BRIGHTNESS          | Helligkeit umschalten (4 Stufen)                         |
-| ANIM_NEXT           | Nächsten Animationsmodus aktivieren                      |
-| SLOT                | Slot-Machine-Animation auslösen                          |
-| POWER_SAVE_TOGGLE   | Power-Save-Modus ein- oder ausschalten                   |
-
-Nicht belegte Funktionen werden ignoriert. Repeat-Codes (Auto-Repeat der Fernbedienung) werden beim Empfang herausgefiltert.
+| Taste | Kurzer Druck | Langer Druck |
+|-------|-------------|--------------|
+| **SET** | Einstellmodus starten / nächste Stelle wählen / Zeit speichern | — |
+| **UP** | Wert erhöhen | Wert erhöhen (Auto-Repeat) |
+| **DOWN** | Wert verringern | Wert verringern (Auto-Repeat) |
+| **LIGHT** | Helligkeit weiterschalten (4 Stufen) | Trennpunkt-LEDs dauerhaft an/aus |
 
 ---
 
@@ -63,26 +43,51 @@ Die blinkende Stelle zeigt an, welcher Wert gerade eingestellt wird. Nach **15 S
 
 ---
 
-## Helligkeit (Taste LIGHT)
+## Helligkeit (Taste LIGHT – kurzer Druck)
 
-Jeder Druck auf **LIGHT** schaltet zur nächsten Helligkeitsstufe:
+Jeder kurze Druck auf **LIGHT** schaltet zur nächsten Helligkeitsstufe:
 
-| Stufe | Beschreibung  |
-|-------|---------------|
-| 1     | Sehr dim      |
-| 2     | Dim           |
-| 3     | Hell          |
+| Stufe | Beschreibung    |
+|-------|-----------------|
+| 1     | Sehr dim        |
+| 2     | Dim             |
+| 3     | Hell            |
 | 4     | Voll (Standard) |
 
 Die gewählte Stufe wird dauerhaft gespeichert.
 
 ---
 
-## Power-Save
+## Trennpunkt-LEDs (Taste LIGHT – langer Druck)
 
-Nach **120 Sekunden** ohne Tastendruck dimmt die NeoPixel-Beleuchtung automatisch auf ein Viertel der eingestellten Helligkeit. Jeder Tasten- oder Fernbedienungsdruck weckt die Uhr wieder auf volle Helligkeit.
+Ein langer Druck auf **LIGHT** schaltet die vier Trennpunkt-LEDs zwischen zwei Modi um:
 
-Der Power-Save-Modus kann dauerhaft deaktiviert werden – entweder über den **Power-Save-Toggle** im Web-Interface (Karte „Helligkeit & Animation") oder über die zugewiesene IR-Taste (`POWER_SAVE_TOGGLE`). Die Einstellung wird gespeichert und bleibt nach einem Neustart erhalten.
+| Modus | Beschreibung |
+|-------|-------------|
+| **Blinken** (Standard) | LEDs blinken sekundengenau im Takt der Uhr |
+| **Dauerhaft an** | LEDs leuchten durchgehend ohne zu blinken |
+
+Die Einstellung wird dauerhaft gespeichert und kann auch über IR oder das Web-Interface geändert werden.
+
+---
+
+## IR-Fernbedienung
+
+Die Uhr kann mit einer beliebigen Infrarot-Fernbedienung gesteuert werden. Jede Taste der Fernbedienung kann einer Funktion zugewiesen werden (siehe [Fernbedienung anlernen](#fernbedienung-anlernen)).
+
+### Verfügbare IR-Funktionen
+
+| Funktion        | Beschreibung                                            |
+|-----------------|---------------------------------------------------------|
+| SET             | Einstellmodus starten / nächste Stelle / Zeit speichern |
+| UP              | Wert erhöhen im Einstellmodus                           |
+| DOWN            | Wert verringern im Einstellmodus                        |
+| BRIGHTNESS      | Helligkeit weiterschalten (4 Stufen)                    |
+| ANIM_NEXT       | Nächsten Animationsmodus aktivieren                     |
+| SLOT            | Slot-Machine-Animation auslösen                         |
+| COLON_TOGGLE    | Trennpunkt-LEDs dauerhaft an/aus                        |
+
+Nicht belegte Funktionen werden ignoriert. Repeat-Codes (Auto-Repeat der Fernbedienung) werden beim Empfang herausgefiltert.
 
 ---
 
@@ -92,10 +97,10 @@ Der Power-Save-Modus kann dauerhaft deaktiviert werden – entweder über den **
 
 Die Uhr startet immer als WLAN-Access-Point:
 
-| Parameter | Wert          |
-|-----------|---------------|
-| SSID      | `NixieClock`  |
-| Passwort  | `nixie1234`   |
+| Parameter  | Wert          |
+|------------|---------------|
+| SSID       | `NixieClock`  |
+| Passwort   | `nixie1234`   |
 | IP-Adresse | `192.168.4.1` |
 
 1. Mit dem WLAN `NixieClock` verbinden
@@ -129,24 +134,24 @@ Sobald die Uhr mit dem Heimnetz verbunden ist, synchronisiert sie die Zeit autom
 
 ### Helligkeit & Animation
 
-| Einstellung           | Beschreibung                                      |
-|-----------------------|---------------------------------------------------|
-| Nixie-Helligkeit      | 4 Stufen (entspricht der LIGHT-Taste)             |
-| NeoPixel-Helligkeit   | Schieberegler 10–255                              |
-| Animation             | Animationsmodus wählen (siehe unten)              |
-| NeoPixel-Farbe (Hue)  | Grundfarbe für statische Modi und Puls            |
-| Power-Save            | Auto-Dimmen nach 120 s ein- oder ausschalten      |
+| Einstellung                   | Beschreibung                                      |
+|-------------------------------|---------------------------------------------------|
+| Nixie-Helligkeit               | 4 Stufen (entspricht kurzem Druck auf LIGHT)      |
+| NeoPixel-Helligkeit            | Schieberegler 10–255                              |
+| Animation                      | Animationsmodus wählen (siehe unten)              |
+| NeoPixel-Farbe (Hue)           | Grundfarbe für statische Modi und Puls            |
+| Trennpunkte dauerhaft an       | Trennpunkt-LEDs blinken oder leuchten dauerhaft   |
 
 ### Animationsmodi
 
-| Modus              | Beschreibung                                                        |
-|--------------------|---------------------------------------------------------------------|
-| Rainbow            | Farbverlauf wandert über die 6 Hintergrund-LEDs                     |
-| Statisch Warmweiß  | Alle LEDs in warmweißem Orange                                      |
-| Puls               | Sinusförmiges Auf- und Abdimmen der gesamten Beleuchtung            |
-| Slot-Machine       | Schneller Farbwechsel während der Slot-Animation, sonst Rainbow     |
+| Modus             | Beschreibung                                                    |
+|-------------------|-----------------------------------------------------------------|
+| Rainbow           | Farbverlauf wandert über die 6 Hintergrund-LEDs                 |
+| Statisch Warmweiß | Alle Hintergrund-LEDs in warmweißem Orange                      |
+| Puls              | Sinusförmiges Auf- und Abdimmen der gesamten Beleuchtung        |
+| Slot-Machine      | Schneller Farbwechsel während der Slot-Animation, sonst Rainbow |
 
-In allen Modi blinken die Doppelpunkt-LEDs sekundentaktgenau.
+Die Trennpunkt-LEDs (zwischen den Zifferngruppen) blinken in allen Modi sekundengenau – oder leuchten dauerhaft, wenn der entsprechende Toggle aktiviert ist.
 
 ### Slot-Machine-Animation
 
@@ -177,16 +182,16 @@ Folgende Einstellungen werden dauerhaft im Flash-Speicher gespeichert und nach e
 - Nixie-Helligkeit
 - NeoPixel-Helligkeit
 - Animationsmodus
+- Trennpunkt-LEDs dauerhaft an/aus
 - WLAN-Zugangsdaten
 - IR-Codes (alle 7 Funktionen)
-- Power-Save aktiviert/deaktiviert
 
 ---
 
 ## Technische Daten
 
-| Eigenschaft         | Wert                          |
-|---------------------|-------------------------------|
+| Eigenschaft         | Wert                              |
+|---------------------|-----------------------------------|
 | Mikrocontroller     | ESP32-S3                          |
 | Nixie-Röhren        | 6 Stück (Multiplexing)            |
 | NeoPixel            | 10x WS2812B                       |
