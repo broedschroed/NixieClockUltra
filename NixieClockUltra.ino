@@ -241,6 +241,9 @@ void setup() {
   colonAlwaysOn    = prefs.getBool("colonOn",     false);
   colonStatic      = prefs.getBool("colonStatic", false);
 
+  // --- Nixie Direct Drive via MCP23017 ---
+  nixieInit();    // Wire.begin() muss vor readRTC()/setDisplayTime() stehen
+
   // --- RTC ---
   Rtc.Begin();
   if (!Rtc.IsDateTimeValid()) {
@@ -256,9 +259,6 @@ void setup() {
   // --- WiFi + Web-Server ---
   setupWifi();
   setupWebServer();
-
-  // --- Nixie Direct Drive via MCP23017 ---
-  nixieInit();
 
   // --- IR-Empfänger ---
   irrecv.enableIRIn();

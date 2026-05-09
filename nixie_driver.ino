@@ -5,11 +5,14 @@
 // ═══════════════════════════════════════════════════════════
 
 #include <Wire.h>
+#include <freertos/semphr.h>
 
 #define MCP_BASE_ADDR  0x20
 #define MCP_IODIRA     0x00
 #define MCP_IODIRB     0x01
 #define MCP_OLATA      0x14
+
+static SemaphoreHandle_t nixieMutex = nullptr;
 
 // Shadow-Register: aktueller Ausgangszustand der 4 MCPs
 // Bit 0–7 = GPA0–7, Bit 8–15 = GPB0–7
@@ -49,6 +52,7 @@ static void mcpWriteAB(uint8_t addr, uint16_t value) {
 }
 
 void nixieInit() {
+  nixieMutex = xSemaphoreCreateMutex();
   Wire.begin(8, 9);
   for (uint8_t i = 0; i < 4; i++) {
     uint8_t addr = MCP_BASE_ADDR + i;
@@ -68,6 +72,7 @@ void nixieInit() {
 
 // digits[6]: Werte 0–9 = Ziffer anzeigen, 10 = Röhre blank
 void nixieWrite(uint8_t digits[6]) {
+  if (!nixieMutex || xSemaphoreTake(nixieMutex, pdMS_TO_TICKS(10)) != pdTRUE) return;
   uint16_t newState[4] = {0, 0, 0, 0};
   for (uint8_t tube = 0; tube < 6; tube++) {
     uint8_t d = digits[tube];
@@ -82,4 +87,5 @@ void nixieWrite(uint8_t digits[6]) {
       mcpState[i] = newState[i];
     }
   }
+  xSemaphoreGive(nixieMutex);
 }
