@@ -4,8 +4,7 @@
  * ║         6x Nixie | DS1302 RTC | 10x NeoPixel | Web UI                ║
  * ║                                                                      ║
  * ║  Architektur:                                                        ║
- * ║   • Multiplexing via ISR (Timer)  → kein Flimmern                    ║
- * ║   • Anti-Ghosting (Blank-Phase)                                      ║
+ * ║   • Direkte Ansteuerung via 4× MCP23017 (I2C)                        ║
  * ║   • Entprellte Taster (FSM)                                          ║
  * ║   • Fade-In / Fade-Out je Röhre                                      ║
  * ║   • NeoPixel Farbverlauf + Animationen                               ║
@@ -28,7 +27,6 @@
 //  INCLUDES
 // ═══════════════════════════════════════════════════════════
 #include <Arduino.h>
-#include "driver/gpio.h"        // gpio_set_level() – IRAM_ATTR, sicher im ISR
 #include <Adafruit_NeoPixel.h>
 #include <RtcDS1302.h>
 #include <ThreeWire.h>
@@ -46,28 +44,16 @@
 //  PIN-DEFINITIONEN
 // ═══════════════════════════════════════════════════════════
 
-// Kathoden (Ziffern 0–9) – gemeinsam für alle Röhren
-// DRAM_ATTR: Arrays müssen im SRAM liegen, da der ISR auf sie zugreift.
-// const-Arrays ohne Attribut landen im Flash (.rodata); wenn der Flash-Cache
-// während WiFi-Init kurz deaktiviert wird, stalled der ISR → Interrupt-WDT.
-//const uint8_t DRAM_ATTR CATHODE_PIN[10] = {47, 17, 18, 38, 39, 40, 41, 42, 45, 46};
-const uint8_t DRAM_ATTR CATHODE_PIN[10] = {17, 47, 46, 45, 42, 41, 40, 39, 38, 18};
-
-
-// Anoden (Röhren-Auswahl im Multiplex)
-const uint8_t DRAM_ATTR ANODE_PIN[6]    = {16, 15, 14, 13, 12, 11};
-//                                         HZ  HE  MZ  ME  SZ  SE
-
 // DS1302
 #define RTC_IO_PIN   4
 #define RTC_CLK_PIN  5
 #define RTC_CE_PIN   2
 
 // Taster (LOW-aktiv, Pull-Up intern)
-#define BTN_SET      10
-#define BTN_UP        9
-#define BTN_DOWN      8
-#define BTN_LIGHT     7
+#define BTN_SET      13
+#define BTN_UP       14
+#define BTN_DOWN     15
+#define BTN_LIGHT    16
 
 // NeoPixel
 #define NEO_PIN      21
@@ -79,13 +65,6 @@ const uint8_t DRAM_ATTR ANODE_PIN[6]    = {16, 15, 14, 13, 12, 11};
 // ═══════════════════════════════════════════════════════════
 //  KONSTANTEN & KONFIGURATION
 // ═══════════════════════════════════════════════════════════
-
-// Multiplex-Timing (µs)
-#define MUX_DIGIT_US       2800   // Zeit pro aktiver Röhre
-#define MUX_BLANK_US        200   // Timer-Periode (= 1 Tick)
-#define MUX_BLANK_TICKS       8   // Anzahl Blank-Ticks am Ende jeder Röhrenperiode
-                                  // Blank-Dauer = MUX_BLANK_TICKS * MUX_BLANK_US
-                                  // 8 × 200 µs = 1,6 ms; Digit-Phase = (15-8) × 200 µs = 1,4 ms
 
 // Fade
 #define FADE_STEPS           20   // Schritte für Fade-In/Out
@@ -123,16 +102,7 @@ Preferences prefs;
 // ═══════════════════════════════════════════════════════════
 
 // Anzuzeigende Ziffern [0]=HZ [1]=HE [2]=MZ [3]=ME [4]=SZ [5]=SE
-volatile uint8_t displayDigits[6] = {0, 0, 0, 0, 0, 0};
-
-// Fade-Werte je Röhre (0–255)
-volatile uint8_t fadeBrightness[6] = {255, 255, 255, 255, 255, 255};
-
-// Aktueller Multiplex-Index
-volatile uint8_t muxIndex = 0;
-
-// Blanking-Flag (Anti-Ghosting)
-volatile bool    inBlank  = false;
+uint8_t displayDigits[6] = {0, 0, 0, 0, 0, 0};
 
 // Helligkeit (Index in BRIGHTNESS_LEVELS)
 uint8_t brightLevel = 3;
@@ -173,10 +143,6 @@ uint8_t slotCurrent[6] = {0};
 // Fade-In beim Start
 bool startFadeIn = true;
 uint8_t startFadeStep = 0;
-
-// Hardware-Timer
-hw_timer_t *muxTimer = NULL;
-portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
 // ═══════════════════════════════════════════════════════════
 //  IR-FERNBEDIENUNG
@@ -237,8 +203,8 @@ Button btnDown  = {BTN_DOWN,  HIGH, false, false, 0, 0, 30, 200};
 Button btnLight = {BTN_LIGHT, HIGH, false, false, 0, 0, 30, 500};
 
 // Forward-Deklarationen für Funktionen, die der Arduino-Präprozessor
-// nicht automatisch erkennt (IRAM_ATTR bzw. Raw-String-Literal in web_server.ino)
-void IRAM_ATTR onMuxTimer();
+// nicht automatisch erkennt (Raw-String-Literal in web_server.ino)
+void nixieInit();
 void setupWifi();
 void setupWebServer();
 
@@ -249,17 +215,6 @@ void setup() {
   Serial.begin(115200);
   delay(200);
   Serial.println("\n[NixieClock] Booting...");
-
-  // --- Pins: Kathoden ---
-  for (int i = 0; i < 10; i++) {
-    pinMode(CATHODE_PIN[i], OUTPUT);
-    digitalWrite(CATHODE_PIN[i], LOW);
-  }
-  // --- Pins: Anoden ---
-  for (int i = 0; i < 6; i++) {
-    pinMode(ANODE_PIN[i], OUTPUT);
-    digitalWrite(ANODE_PIN[i], LOW);
-  }
 
   // --- Taster ---
   pinMode(BTN_SET,   INPUT_PULLUP);
@@ -302,12 +257,8 @@ void setup() {
   setupWifi();
   setupWebServer();
 
-  // --- Multiplex-Timer (Timer 0, 1 MHz Basis) ---
-  // Erst nach WiFi-Init starten: WiFi.softAP() deaktiviert intern kurz den
-  // Flash-Cache; würde der ISR dabei laufen, stalled er beim Array-Zugriff.
-  muxTimer = timerBegin(1000000);  // 1 MHz = 1 µs Auflösung
-  timerAttachInterrupt(muxTimer, &onMuxTimer);
-  timerAlarm(muxTimer, MUX_BLANK_US, true, 0);  // auto-reload: ISR muss timerAlarm() nicht selbst aufrufen
+  // --- Nixie Direct Drive via MCP23017 ---
+  nixieInit();
 
   // --- IR-Empfänger ---
   irrecv.enableIRIn();
@@ -403,259 +354,3 @@ void loop() {
   delay(1);
 }
 
-/*
- * ══════════════════════════════════════════════════════════
- *  HINWEISE ZUR HARDWARE / INBETRIEBNAHME
- * ══════════════════════════════════════════════════════════
- *
- *  1) Benötigte Bibliotheken im Arduino Library Manager:
- *     - "Adafruit NeoPixel" von Adafruit
- *     - "Rtc by Makuna" von Michael C. Miller
- *     - "AsyncTCP" von me-no-dev
- *     - "ESPAsyncWebServer" von me-no-dev
- *     - "ArduinoJson" von Benoit Blanchon
- *
- *  2) Board: "ESP32S3 Dev Module"
- *     Upload Speed: 921600, Flash: 4MB, Partition: Default
- *
- *  3) Web-Interface:
- *     - Mit WLAN "NixieClock" verbinden (Passwort: nixie1234)
- *     - Browser: http://192.168.4.1
- *
- *  4) Anpassen des WiFi-Passworts:
- *     #define WIFI_PASS "IhrPasswort"
- *
- *  5) Anti-Ghosting:
- *     MUX_BLANK_US kann bei sichtbarem Ghosting erhöht werden (z.B. 300).
- *     MUX_DIGIT_US entsprechend anpassen für optimale Helligkeit.
- *
- *  6) Kathoden-Wert 10:
- *     Wenn displayDigits[i] == 10, wird keine Kathode geschaltet
- *     (wird für Blink-Effekt im Einstellmodus genutzt).
- *     Sicherstellen, dass CATHODE_PIN[10] nicht existiert –
- *     der ISR prüft dies nicht (Array-Überläufe vermeiden):
- *     Im ISR ist uint8_t digit = displayDigits[muxIndex];
- *     und dann digitalWrite(CATHODE_PIN[digit], HIGH).
- *     Füge daher folgenden Guard in der ISR ein oder stelle
- *     sicher, dass displayDigits[i] nur 0–9 enthält im
- *     Normalbetrieb. Im Blink-Modus wird bereits die Anode
- *     nicht aktiviert, da handleEditMode() beide Digits auf
- *     10 setzt und die Anode trotzdem eingeschaltet wird –
- *     passe handleEditMode() an, indem du bei digit==10
- *     auch die Anode LOW lässt (ISR-Guard unten eingebaut).
- *
- *  SICHERHEIT: Die Nixie-Hochspannung (170–180V DC) ist
- *  lebensgefährlich! Kondensatoren entladen vor Arbeiten
- *  an der Schaltung!
- * ══════════════════════════════════════════════════════════
-
-  ┌────────────────┬────────────────────────────────────────────────────────────────────────────────────────────┐  
-  │    Feature     │                                          Details                                           │  
-  ├────────────────┼────────────────────────────────────────────────────────────────────────────────────────────┤
-  │                │ Runs before the web server. Always starts the AP (NixieClock/nixie1234). If home-WiFi      │
-  │ setupWifi()    │ credentials are saved in flash, also connects in STA mode (WIFI_AP_STA). 10-second         │
-  │                │ timeout, then continues with AP-only.                                                      │  
-  ├────────────────┼────────────────────────────────────────────────────────────────────────────────────────────┤
-  │ NTP sync       │ After STA connects, configTzTime() starts background NTP. In loop(), once getLocalTime()   │  
-  │                │ succeeds, the RTC is updated once and ntpSynced is set.                                    │  
-  ├────────────────┼────────────────────────────────────────────────────────────────────────────────────────────┤
-  │ /api/wifi GET  │ Returns current mode (sta/ap), home network SSID, IP, and NTP status.                      │  
-  ├────────────────┼────────────────────────────────────────────────────────────────────────────────────────────┤  
-  │ /api/wifi POST │ Saves {ssid, pass} to NVS (Preferences). Empty SSID clears credentials. Reboots after 800  │
-  │                │ ms.                                                                                        │  
-  ├────────────────┼────────────────────────────────────────────────────────────────────────────────────────────┤  
-  │ /api/wifi/scan │ Blocks ~2 s while scanning, returns sorted list with SSID, RSSI, encryption flag.          │
-  ├────────────────┼────────────────────────────────────────────────────────────────────────────────────────────┤  
-  │ Web UI card    │ Shows current mode/IP/NTP status. Scan populates a dropdown → click to fill the SSID       │  
-  │                │ field. Save triggers restart.                                                              │  
-  └────────────────┴────────────────────────────────────────────────────────────────────────────────────────────┘ 
-
-
-  Beschreibung der Firmware – NixieClockUltra                                                                      
-                                                                                                                   
-  Überblick                                                                                                        
-                                                                                                                   
-  Die Firmware läuft auf einem ESP32-S3 und steuert eine Nixie-Röhren-Uhr mit 6 Nixie-Röhren, 10 NeoPixel-LEDs und 
-  einer DS1302-Echtzeituhr (RTC). Die gesamte Logik ist in einer einzigen .ino-Datei organisiert und teilt sich in
-  mehrere klar abgegrenzte Blöcke auf.                                                                             
-                  
-  ---
-  1. Hardware-Ansteuerung der Nixie-Röhren (Multiplexing)
-                                                         
-  Da alle 6 Röhren dieselben 10 Kathoden-Pins (je eine pro Ziffer 0–9) teilen, wird ein Multiplex-Verfahren
-  eingesetzt: Es ist immer nur eine Röhre gleichzeitig aktiv. Ein Hardware-Timer feuert als Interrupt Service      
-  Routine (ISR) und schaltet in einem Zweiphasen-Rhythmus:
-                                                                                                                   
-  - Blank-Phase (200 µs): Alle Pins werden abgeschaltet – das verhindert sogenanntes "Ghosting", also schwaches    
-  Nachleuchten falscher Ziffern.
-  - Digit-Phase (1800 µs): Die richtige Anode (Röhre) und die richtige Kathode (Ziffer) werden eingeschaltet.      
-                                                                                                                   
-  Durch den schnellen Wechsel (ca. 925 Hz Gesamt-Zyklusrate) nimmt das menschliche Auge alle 6 Röhren als          
-  gleichzeitig leuchtend wahr.                                                                                     
-                                                                                                                   
-  ---             
-  2. Taster-Entprellung
-                                                                                                                   
-  Vier Taster (SET, UP, DOWN, LIGHT) werden in einer Button-Struktur verwaltet. Jeder Taster hat konfigurierbare
-  Entprellzeit (30 ms) sowie eine Wiederholrate für Dauerdruck ("Auto-Repeat"). Die Logik erzeugt saubere          
-  Einzel-Ereignisse (pressed) und Dauerhalte-Ereignisse (held).
-                                                                                                                   
-  ---             
-  3. Echtzeituhr (DS1302 RTC)
-                                                                                                                   
-  Der DS1302 wird über das 3-Draht-Interface (ThreeWire) angesteuert. Beim Start wird geprüft, ob die RTC gültige
-  Zeit enthält – falls nicht, wird eine Standardzeit (1. Januar 2024) gesetzt. Im Normalbetrieb liest die Firmware 
-  die aktuelle Zeit alle 500 ms aus der RTC.
-                                                                                                                   
-  ---             
-  4. Einstellmodus (endlicher Automat / FSM)
-                                                                                                                   
-  Durch Drücken des SET-Tasters durchläuft man eine Zustandsmaschine:
-                                                                                                                   
-  Kein Einstellmodus → Stunden einstellen → Minuten einstellen → Sekunden einstellen → Speichern                   
-                                                                                                                   
-  Die aktuell zu ändernde Stelle blinkt (250 ms-Intervall, Röhre wird einfach ausgeblendet). UP/DOWN ändern den    
-  Wert mit Auto-Repeat. Nach 15 Sekunden ohne Eingabe wird der Modus automatisch beendet und die Zeit gespeichert.
-                                                                                                                   
-  ---                                                                                                              
-  5. NeoPixel-Animationen
-                                                                                                                   
-  10 WS2812B-LEDs (6 Hintergrundlichter unter den Röhren, 4 für die Doppelpunkte) werden alle 20 ms aktualisiert.
-  Es gibt vier Animationsmodi:                                                                                     
-   
-  ┌───────────────────┬─────────────────────────────────────────────────────────────────────────────────────────┐  
-  │       Modus       │                                      Beschreibung                                       │
-  ├───────────────────┼─────────────────────────────────────────────────────────────────────────────────────────┤
-  │ Rainbow           │ Farbverlauf wandert über die 6 Hintergrund-LEDs, Doppelpunkte blinken sekundentaktgenau │
-  ├───────────────────┼─────────────────────────────────────────────────────────────────────────────────────────┤
-  │ Statisch Warmweiß │ Alle LEDs in warmweißem Orange, Doppelpunkte blinken                                    │  
-  ├───────────────────┼─────────────────────────────────────────────────────────────────────────────────────────┤  
-  │ Puls              │ Sinusförmiges Auf- und Abdimmen der gesamten Beleuchtung                                │  
-  ├───────────────────┼─────────────────────────────────────────────────────────────────────────────────────────┤  
-  │ Slot-Machine      │ Schneller Farbwechsel während der Slot-Animation, sonst Rainbow als Fallback            │
-  └───────────────────┴─────────────────────────────────────────────────────────────────────────────────────────┘  
-                  
-  ---                                                                                                              
-  6. Slot-Machine-Animation
-                                                                                                                   
-  Auf Knopfdruck oder per Web-Interface "rollen" alle 6 Röhren: Jede Röhre dreht ihre Ziffer schnell durch und
-  stoppt nacheinander (mit 180 ms Versatz) bei der richtigen Zielziffer. Die Zielwerte sind die aktuelle Uhrzeit.  
-                  
-  ---                                                                                                              
-  7. WiFi und Web-Interface
-                                                                                                                   
-  Beim Start (setupWifi()):
-  - Der ESP32 startet immer als WLAN-Access-Point (NixieClock, Passwort nixie1234) – der Hotspot ist also immer    
-  erreichbar unter 192.168.4.1.                                                                                    
-  - Wenn zuvor Heimnetz-Zugangsdaten im Flash gespeichert wurden, verbindet sich der ESP32 zusätzlich als          
-  WLAN-Client (STA-Modus) mit dem Heimnetz. Bei Erfolg startet automatisch die NTP-Zeitsynchronisierung.           
-                                                                                                                   
-  NTP-Sync: Sobald die Verbindung steht, ruft der ESP32 die genaue Zeit vom NTP-Server pool.ntp.org ab und schreibt
-   sie einmalig in die RTC. Die Zeitzone ist auf Mitteleuropa (CET/CEST) eingestellt.                              
-                  
-  Web-Server (Port 80) bietet folgende API-Endpunkte:                                                              
-                  
-  ┌────────────────┬─────────┬────────────────────────────────────────────────────────────┐                        
-  │    Endpunkt    │ Methode │                          Funktion                          │
-  ├────────────────┼─────────┼────────────────────────────────────────────────────────────┤                        
-  │ /              │ GET     │ Liefert die komplette Web-Oberfläche (HTML/CSS/JS)         │
-  ├────────────────┼─────────┼────────────────────────────────────────────────────────────┤
-  │ /api/status    │ GET     │ Aktuelle Uhrzeit, Helligkeit, Animationsmodus, Slot-Status │                        
-  ├────────────────┼─────────┼────────────────────────────────────────────────────────────┤                        
-  │ /api/settime   │ POST    │ Uhrzeit stellen ({h, m, s})                                │                        
-  ├────────────────┼─────────┼────────────────────────────────────────────────────────────┤                        
-  │ /api/bright    │ POST    │ Nixie-Helligkeit (4 Stufen)                                │
-  ├────────────────┼─────────┼────────────────────────────────────────────────────────────┤                        
-  │ /api/neobright │ POST    │ NeoPixel-Helligkeit (10–255)                               │
-  ├────────────────┼─────────┼────────────────────────────────────────────────────────────┤                        
-  │ /api/anim      │ POST    │ Animationsmodus wählen                                     │
-  ├────────────────┼─────────┼────────────────────────────────────────────────────────────┤                        
-  │ /api/neohue    │ POST    │ NeoPixel-Farbe (Hue 0–255)                                 │
-  ├────────────────┼─────────┼────────────────────────────────────────────────────────────┤                        
-  │ /api/slot      │ POST    │ Slot-Animation auslösen                                    │
-  ├────────────────┼─────────┼────────────────────────────────────────────────────────────┤                        
-  │ /api/wifi      │ GET     │ WiFi-Status (Modus, IP, NTP-Status)                        │
-  ├────────────────┼─────────┼────────────────────────────────────────────────────────────┤                        
-  │ /api/wifi      │ POST    │ Heimnetz-Zugangsdaten speichern → automatischer Neustart   │
-  ├────────────────┼─────────┼────────────────────────────────────────────────────────────┤                        
-  │ /api/wifi/scan │ GET     │ Verfügbare WLAN-Netzwerke scannen                          │
-  └────────────────┴─────────┴────────────────────────────────────────────────────────────┘                        
-                  
-  Die Web-Oberfläche selbst ist als komprimierter HTML/CSS/JS-String im Programmspeicher (PROGMEM) abgelegt, um RAM
-   zu sparen.     
-                                                                                                                   
-  ---             
-  8. Einstellungen-Persistenz
-                                                                                                                   
-  Alle benutzerspezifischen Einstellungen (Helligkeit, NeoPixel-Helligkeit, Animationsmodus, WLAN-Zugangsdaten)
-  werden im NVS-Flash des ESP32 gespeichert (Preferences-Bibliothek) und beim Neustart automatisch geladen.        
-                  
-  ---                                                                                                              
-  9. Power-Save   
-               
-  Nach 120 Sekunden ohne Tastendruck wechselt der ESP32 in einen Stromspar-Modus: Die NeoPixel-Helligkeit wird auf
-  ein Viertel gedimmt. Jeder Tastendruck weckt die Uhr wieder auf.                                                 
-   
-  ---                                                                                                              
-  10. Start-Sequenz (setup())
-                             
-  1. Pins initialisieren (Kathoden, Anoden, Taster, NeoPixel)
-  2. Einstellungen aus Flash laden                                                                                 
-  3. RTC initialisieren und Zeit auslesen
-  4. Multiplex-Timer starten                                                                                       
-  5. WiFi starten (setupWifi())
-  6. Web-Server starten (setupWebServer())                                                                         
-  7. Sanftes Fade-In der NeoPixel-Beleuchtung                                                                      
-                                                                                                                   
-  ---                                                                                                              
-  11. Hauptschleife (loop())                                                                                       
-                            
-  Pro Durchlauf (~1 ms) werden der Reihe nach abgearbeitet:
-                                                                                                                   
-  - Fade-In beim Start (blockiert bis abgeschlossen)                                                               
-  - Taster auslesen                                                                                                
-  - Helligkeitsstufe verwalten                                                                                     
-  - Einstellmodus-Logik                                                                                            
-  - RTC alle 500 ms lesen und Display aktualisieren
-  - Slot-Animation aktualisieren                                                                                   
-  - NeoPixel-Animation rendern
-  - Power-Save prüfen                                                                                              
-  - NTP→RTC-Sync prüfen (einmalig nach Verbindungsaufbau)
-  - Ausstehenden Neustart nach WLAN-Änderung ausführen          
-
-  ┌───────────────────┬──────────────────────────────┬────────────────────────────────┐                            
-  │    Bibliothek     │            Autor             │ Suchbegriff im Library Manager │                            
-  ├───────────────────┼──────────────────────────────┼────────────────────────────────┤                            
-  │ Adafruit NeoPixel │ Adafruit                     │ Adafruit NeoPixel              │                            
-  ├───────────────────┼──────────────────────────────┼────────────────────────────────┤                            
-  │ Rtc by Makuna     │ Michael C. Miller            │ Rtc by Makuna                  │                            
-  ├───────────────────┼──────────────────────────────┼────────────────────────────────┤
-  │ ArduinoJson       │ Benoit Blanchon              │ ArduinoJson                    │                            
-  ├───────────────────┼──────────────────────────────┼────────────────────────────────┤                            
-  │ AsyncTCP          │ ESP32Async (ehem. me-no-dev) │ AsyncTCP                       │
-  ├───────────────────┼──────────────────────────────┼────────────────────────────────┤                            
-  │ ESPAsyncWebServer │ ESP32Async (ehem. me-no-dev) │ ESPAsyncWebServer              │
-  └───────────────────┴──────────────────────────────┴────────────────────────────────┘                            
-                  
-  ▎ Hinweis zu AsyncTCP / ESPAsyncWebServer: Diese beiden werden manchmal nicht im offiziellen Library Manager     
-  gefunden oder sind dort veraltet. Zuverlässiger ist die Installation direkt von GitHub:
-  ▎ - https://github.com/ESP32Async/AsyncTCP                                                                       
-  ▎ - https://github.com/ESP32Async/ESPAsyncWebServer                                                              
-  ▎ ZIP herunterladen → Arduino IDE: Sketch → Bibliothek einbinden → .ZIP-Bibliothek hinzufügen
-                                                                                                                   
-  ---             
-  Bereits im ESP32-Arduino-Core enthalten (keine Installation nötig)                                               
-                                                                                                                   
-  ┌──────────────────────────────────────┬────────────────────────────────────┐
-  │              Bibliothek              │            Beschreibung            │                                    
-  ├──────────────────────────────────────┼────────────────────────────────────┤
-  │ WiFi                                 │ WLAN-Stack des ESP32               │
-  ├──────────────────────────────────────┼────────────────────────────────────┤
-  │ Preferences                          │ NVS-Flash-Speicher (Einstellungen) │                                    
-  ├──────────────────────────────────────┼────────────────────────────────────┤                                    
-  │ time.h / configTzTime / getLocalTime │ NTP- und Zeitzonen-Funktionen      │                                    
-  └──────────────────────────────────────┴────────────────────────────────────┘                                    
-                  
-                                                   
-                                       
- */

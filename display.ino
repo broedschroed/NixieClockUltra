@@ -2,14 +2,13 @@
 //  DISPLAY-UPDATE (displayDigits befüllen)
 // ═══════════════════════════════════════════════════════════
 void setDisplayTime(uint8_t h, uint8_t m, uint8_t s) {
-  portENTER_CRITICAL(&timerMux);
   displayDigits[0] = h / 10;
   displayDigits[1] = h % 10;
   displayDigits[2] = m / 10;
   displayDigits[3] = m % 10;
   displayDigits[4] = s / 10;
   displayDigits[5] = s % 10;
-  portEXIT_CRITICAL(&timerMux);
+  nixieWrite(displayDigits);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -44,4 +43,5 @@ void updateSlotAnimation() {
     }
   }
   if (allDone) slotActive = false;
+  nixieWrite(displayDigits);
 }

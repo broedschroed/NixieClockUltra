@@ -86,14 +86,13 @@ void handleEditMode() {
   }
 
   // Sonderfall 99: Blanke Röhren
-  portENTER_CRITICAL(&timerMux);
   displayDigits[0] = (dH == 99) ? 10 : dH / 10;  // 10 = keine Kathode aktiv
   displayDigits[1] = (dH == 99) ? 10 : dH % 10;
   displayDigits[2] = (dM == 99) ? 10 : dM / 10;
   displayDigits[3] = (dM == 99) ? 10 : dM % 10;
   displayDigits[4] = (dS == 99) ? 10 : dS / 10;
   displayDigits[5] = (dS == 99) ? 10 : dS % 10;
-  portEXIT_CRITICAL(&timerMux);
+  nixieWrite(displayDigits);
 }
 
 // ═══════════════════════════════════════════════════════════
