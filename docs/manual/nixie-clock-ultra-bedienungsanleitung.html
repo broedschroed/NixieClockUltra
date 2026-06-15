@@ -13,12 +13,14 @@
   --text-b:   #3d2b00;
   --gold:     #b8860b;
   --gold-dk:  #8b6914;
-  --gold-lt:  #d4af37;
   --red-warn: #8b0000;
   --line:     #d3c9a8;
   --line-med: #c8b878;
   --hdr-txt:  #a08040;
   --warn-bg:  #fff8f0;
+  --text-muted:    #777777;
+  --red-warn-text: #5a2000;
+  --info-bg: #faf7ef;
 }
 
 /* ── Reset ─────────────────────────────────────────────────────── */
@@ -118,7 +120,7 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
   padding: 5px 9px; border-bottom: 0.2mm solid var(--line); color: var(--text-b);
 }
 .data-table tbody td strong { color: var(--text-h); }
-.data-table tbody td em { color: #777; font-style: normal; }
+.data-table tbody td em { color: var(--text-muted); font-style: normal; }
 
 /* ── Warning Box ───────────────────────────────────────────────── */
 .warning-box {
@@ -134,7 +136,7 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
   font-size: 8pt; color: var(--red-warn); font-weight: bold;
   letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px;
 }
-.warning-box p { font-size: 8.5pt; color: #5a2000; margin: 0; line-height: 1.5; }
+.warning-box p { font-size: 8.5pt; color: var(--red-warn-text); margin: 0; line-height: 1.5; }
 
 /* ── Numbered Steps ────────────────────────────────────────────── */
 .steps { display: flex; flex-direction: column; gap: 2.5mm; margin: 3mm 0 5mm; }
@@ -151,7 +153,7 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
 .info-box {
   border: 0.3mm solid var(--gold);
   border-left: 1.2mm solid var(--gold-dk);
-  background: #faf7ef;
+  background: var(--info-bg);
   padding: 7px 11px;
   border-radius: 0 3px 3px 0;
   margin: 4mm 0;
@@ -195,10 +197,10 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
   body  { background: none; }
   .page {
     margin: 0; box-shadow: none;
-    width: 100%; min-height: 100vh;
-    page-break-after: always;
+    width: 100%; min-height: 297mm;
+    break-after: page;
   }
-  .no-break { page-break-inside: avoid; }
+  .no-break { break-inside: avoid; }
   thead { display: table-header-group; }
 }
 </style>
