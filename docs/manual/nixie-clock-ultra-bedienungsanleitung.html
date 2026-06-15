@@ -727,7 +727,70 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
 </div>
 
 <!-- ═══════════ KAPITEL VII ═══════════ -->
-<!-- Task 8 -->
+<div class="page">
+  <div class="running-header">
+    <span>Nixie Clock Ultra &middot; Bedienungsanleitung</span>
+    <span>⚙ 11</span>
+  </div>
+  <div class="chapter-title">
+    <svg width="30" height="30" viewBox="0 0 30 30" style="flex-shrink:0"><g transform="translate(15,15)"><circle r="5.5" fill="var(--pg-light)" stroke="var(--gold)" stroke-width="1.1"/><circle r="2.2" fill="var(--gold)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(0)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(45)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(90)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(135)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(180)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(225)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(270)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(315)"/></g></svg>
+    <div>
+      <div class="chapter-label">Kapitel VII</div>
+      <h1>WLAN &amp; Web-Interface</h1>
+    </div>
+  </div>
+  <div class="chapter-rule"></div>
+
+  <h2>Verbindung herstellen</h2>
+  <p>Die Uhr startet immer als WLAN-Access-Point. Das Web-Interface ist ohne weitere Konfiguration sofort erreichbar:</p>
+
+  <table class="conn-table no-break">
+    <tbody>
+      <tr><td>SSID</td><td>NixieClock</td></tr>
+      <tr><td>Passwort</td><td>nixie1234</td></tr>
+      <tr><td>IP-Adresse</td><td>192.168.4.1</td></tr>
+    </tbody>
+  </table>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><p>Mit dem WLAN <strong>NixieClock</strong> verbinden.</p></div>
+    <div class="step"><div class="step-num">2</div><p>Browser öffnen und <strong>http://192.168.4.1</strong> aufrufen.</p></div>
+  </div>
+
+  <h2>Heimnetz einrichten</h2>
+  <p>Im Web-Interface unter <strong>WLAN-Einrichtung</strong>:</p>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><p>Auf <strong>Scannen</strong> klicken → verfügbare Netzwerke erscheinen.</p></div>
+    <div class="step"><div class="step-num">2</div><p>Gewünschtes Netzwerk auswählen und Passwort eingeben.</p></div>
+    <div class="step"><div class="step-num">3</div><p><strong>Verbinden</strong> klicken → Uhr startet automatisch neu.</p></div>
+  </div>
+
+  <p>Nach dem Neustart ist die Uhr über den Hotspot (<code>192.168.4.1</code>) <em>und</em> über das Heimnetz erreichbar. Die Heimnetz-IP wird im Web-Interface angezeigt. Heimnetz entfernen: SSID-Feld leer lassen und <strong>Verbinden</strong> klicken.</p>
+
+  <h2>NTP-Zeitsynchronisierung</h2>
+  <p>Sobald die Uhr mit einem Heimnetz verbunden ist, synchronisiert sie die Uhrzeit <strong>einmalig</strong> automatisch über NTP (<code>pool.ntp.org</code>). Die Zeitzone ist auf <strong>Mitteleuropa (CET/CEST)</strong> voreingestellt. Der NTP-Status wird im Web-Interface angezeigt.</p>
+
+  <h2>Web-Interface Funktionen</h2>
+  <table class="data-table no-break">
+    <thead><tr><th>Funktion</th><th>Beschreibung</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Zeit stellen</strong></td><td>Stunden, Minuten, Sekunden manuell eingeben oder Browser-Zeit übernehmen</td></tr>
+      <tr><td><strong>Helligkeit (Stufen)</strong></td><td>4 Stufen — entspricht kurzem Druck auf LIGHT</td></tr>
+      <tr><td><strong>Helligkeit (Fein)</strong></td><td>Schieberegler 10–255 für stufenlose Einstellung</td></tr>
+      <tr><td><strong>Animation</strong></td><td>Animationsmodus aus Dropdown wählen</td></tr>
+      <tr><td><strong>Farbe (Hue)</strong></td><td>Grundfarbe für statische Modi und Puls-Animation</td></tr>
+      <tr><td><strong>Trennpunkte</strong></td><td>Blinken oder dauerhaft an</td></tr>
+      <tr><td><strong>Slot-Machine</strong></td><td>Animation manuell auslösen</td></tr>
+      <tr><td><strong>IR-Fernbedienung</strong></td><td>Codes anlernen und löschen (siehe Kapitel VI)</td></tr>
+      <tr><td><strong>WLAN-Einrichtung</strong></td><td>Heimnetz verbinden oder trennen</td></tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:auto;padding-top:6mm;text-align:center">
+    <svg class="ornament-small" width="80" height="10" viewBox="0 0 80 10"><line x1="0" y1="5" x2="28" y2="5" stroke="#b8860b" stroke-width="0.8"/><circle cx="40" cy="5" r="3" fill="none" stroke="#b8860b" stroke-width="0.8"/><line x1="52" y1="5" x2="80" y2="5" stroke="#b8860b" stroke-width="0.8"/></svg>
+  </div>
+</div>
 
 <!-- ═══════════ KAPITEL VIII ═══════════ -->
 <!-- Task 9 -->
