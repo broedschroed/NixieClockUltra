@@ -151,8 +151,8 @@ Alle GET-Endpunkte liefern JSON zurück.
 | `/api/wifi`        | POST    | `{"ssid":"…","pass":"…"}`            | STA-Verbindung herstellen, Neustart     |
 | `/api/wifi/scan`   | GET     | —                                    | Liste verfügbarer WLANs als JSON-Array  |
 | `/api/ir/status`   | GET     | —                                    | Aktuelle IR-Code-Belegung (7 Einträge)  |
-| `/api/ir/learn`    | POST    | `{"action":"SET"\|"UP"\|"DOWN"\|"BRIGHTNESS"\|"ANIM_NEXT"\|"SLOT"\|"COLTOGGLE"}` | IR-Lernmodus starten (Timeout 10 s) |
-| `/api/ir/clear`    | POST    | `{"action":"SET"\|"UP"\|…}`          | IR-Code für Funktion löschen + NVS      |
+| `/api/ir/learn`    | POST    | `{"action":"SET"\|"UP"\|"DOWN"\|"BRIGHTNESS"\|"ANIM_NEXT"\|"SLOT"\|"COLON_TOGGLE"}` | IR-Lernmodus starten (Timeout 10 s) |
+| `/api/ir/clear`    | POST    | `{"action":"SET"\|"UP"\|"DOWN"\|"BRIGHTNESS"\|"ANIM_NEXT"\|"SLOT"\|"COLON_TOGGLE"}` | IR-Code für Funktion löschen + NVS |
 
 ## NVS-Persistenz
 
