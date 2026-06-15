@@ -793,10 +793,87 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
 </div>
 
 <!-- ═══════════ KAPITEL VIII ═══════════ -->
-<!-- Task 9 -->
+<div class="page">
+  <div class="running-header">
+    <span>Nixie Clock Ultra &middot; Bedienungsanleitung</span>
+    <span>⚙ 13</span>
+  </div>
+  <div class="chapter-title">
+    <svg width="30" height="30" viewBox="0 0 30 30" style="flex-shrink:0"><g transform="translate(15,15)"><circle r="5.5" fill="var(--pg-light)" stroke="var(--gold)" stroke-width="1.1"/><circle r="2.2" fill="var(--gold)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(0)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(45)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(90)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(135)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(180)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(225)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(270)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(315)"/></g></svg>
+    <div>
+      <div class="chapter-label">Kapitel VIII</div>
+      <h1>Einstellungen &amp; Persistenz</h1>
+    </div>
+  </div>
+  <div class="chapter-rule"></div>
+
+  <p>Folgende Einstellungen werden dauerhaft im Flash-Speicher des ESP32-S3 gespeichert und nach jedem Neustart automatisch wiederhergestellt:</p>
+
+  <table class="data-table no-break">
+    <thead><tr><th>Einstellung</th><th>Gespeicherter Wert</th></tr></thead>
+    <tbody>
+      <tr><td><strong>NeoPixel-Helligkeit</strong></td><td>Stufe (1–4) und Feinwert (10–255)</td></tr>
+      <tr><td><strong>Animationsmodus</strong></td><td>Rainbow / Statisch / Puls / Slot-Machine</td></tr>
+      <tr><td><strong>Trennpunkt-LEDs</strong></td><td>Blinken oder dauerhaft an</td></tr>
+      <tr><td><strong>WLAN-Zugangsdaten</strong></td><td>SSID und Passwort des Heimnetzes</td></tr>
+      <tr><td><strong>IR-Codes</strong></td><td>Alle 7 angelernten Funktionen</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box no-break">
+    Die Uhrzeit wird in der batteriegepufferten RTC (DS1302) gespeichert und bleibt auch bei Stromausfall erhalten — vorausgesetzt, die RTC-Batterie ist geladen.
+  </div>
+
+  <div style="margin-top:auto;padding-top:6mm;text-align:center">
+    <svg class="ornament-small" width="80" height="10" viewBox="0 0 80 10"><line x1="0" y1="5" x2="28" y2="5" stroke="#b8860b" stroke-width="0.8"/><circle cx="40" cy="5" r="3" fill="none" stroke="#b8860b" stroke-width="0.8"/><line x1="52" y1="5" x2="80" y2="5" stroke="#b8860b" stroke-width="0.8"/></svg>
+  </div>
+</div>
 
 <!-- ═══════════ KAPITEL IX ═══════════ -->
-<!-- Task 9 -->
+<div class="page">
+  <div class="running-header">
+    <span>Nixie Clock Ultra &middot; Bedienungsanleitung</span>
+    <span>⚙ 14</span>
+  </div>
+  <div class="chapter-title">
+    <svg width="30" height="30" viewBox="0 0 30 30" style="flex-shrink:0"><g transform="translate(15,15)"><circle r="5.5" fill="var(--pg-light)" stroke="var(--gold)" stroke-width="1.1"/><circle r="2.2" fill="var(--gold)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(0)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(45)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(90)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(135)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(180)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(225)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(270)"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="0.6" fill="var(--gold)" transform="rotate(315)"/></g></svg>
+    <div>
+      <div class="chapter-label">Kapitel IX</div>
+      <h1>Technische Daten</h1>
+    </div>
+  </div>
+  <div class="chapter-rule"></div>
+
+  <table class="data-table no-break">
+    <thead><tr><th>Eigenschaft</th><th>Wert</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Mikrocontroller</strong></td><td>ESP32-S3</td></tr>
+      <tr><td><strong>Nixie-Ansteuerung</strong></td><td>4× MCP23017 I²C Port-Expander (0x20–0x23), direkte Ansteuerung ohne Multiplexing</td></tr>
+      <tr><td><strong>Nixie-Röhren</strong></td><td>6 Stück</td></tr>
+      <tr><td><strong>Nixie-Hochspannung</strong></td><td>170–180 V DC</td></tr>
+      <tr><td><strong>Echtzeituhr</strong></td><td>DS1302 (ThreeWire-Interface, batteriegepuffert)</td></tr>
+      <tr><td><strong>NeoPixel</strong></td><td>10× WS2812B (6 Hintergrund + 4 Trennpunkte), Pin GPIO21</td></tr>
+      <tr><td><strong>IR-Empfänger</strong></td><td>VS1838 (38 kHz), Pin GPIO48</td></tr>
+      <tr><td><strong>I²C-Bus</strong></td><td>SDA = GPIO8, SCL = GPIO9</td></tr>
+      <tr><td><strong>Taster</strong></td><td>SET = GPIO13, UP = GPIO14, DOWN = GPIO15, LIGHT = GPIO16</td></tr>
+      <tr><td><strong>Versorgungsspannung</strong></td><td>5 V (Logik) + HV-Netzteil für Nixies</td></tr>
+      <tr><td><strong>Web-Interface</strong></td><td>HTTP, Port 80, AP + STA Dual-Mode</td></tr>
+      <tr><td><strong>NTP-Zeitzone</strong></td><td>CET-1CEST (Mitteleuropa, automatische Sommerzeit)</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Abschlussornament -->
+  <div style="text-align:center;margin-top:10mm">
+    <svg width="220" height="14" viewBox="0 0 220 14">
+      <line x1="0" y1="7" x2="100" y2="7" stroke="#b8860b" stroke-width="1"/>
+      <polygon points="104,7 110,3 116,7 110,11" fill="none" stroke="#b8860b" stroke-width="1"/>
+      <line x1="120" y1="7" x2="220" y2="7" stroke="#b8860b" stroke-width="1"/>
+    </svg>
+    <div style="font-size:9pt;color:var(--hdr-txt);margin-top:4mm;letter-spacing:2px;font-style:italic">
+      Nixie Clock Ultra &middot; Version 2.0 &middot; Juni 2026
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
