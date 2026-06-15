@@ -22,16 +22,15 @@ aus einer Datei sind in allen anderen sichtbar.
 Die `setup()`-Funktion läuft einmalig nach dem Start in dieser Reihenfolge:
 
 1. Serial-Port öffnen (115200 Baud)
-2. `nixieInit()` — I²C initialisieren, alle 4 MCP23017 auf Output-Modus setzen, alle Bits 0
+2. Taster-Pins konfigurieren (INPUT_PULLUP)
 3. NeoPixel-Strip initialisieren, Helligkeit aus `BRIGHTNESS_LEVELS[brightLevel]` setzen
-4. RTC lesen (`readRTC()`), Uhrzeit in `curHour`, `curMin`, `curSec` laden
-5. Taster-Pins konfigurieren (INPUT_PULLUP)
-6. IR-Empfänger starten (`IrReceiver.begin(IR_RECV_PIN)`)
-7. NVS laden — Helligkeit, Animation, WiFi-Zugangsdaten, IR-Codes, `colonAlwaysOn`
-8. `setupWifi()` — AP starten (SSID: `NixieClock`, PW: `nixie1234`), ggf. STA verbinden
-9. `setupWebServer()` — alle API-Routen registrieren, `server.begin()`
-10. NTP konfigurieren (`configTzTime()`) — nur wenn STA-Verbindung aktiv
-11. Fade-In-Flag setzen (`startFadeIn = true`), Röhren werden in `loop()` eingeblendet
+4. NVS laden — Helligkeit, Animation, WiFi-Zugangsdaten, IR-Codes, `colonAlwaysOn`
+5. `nixieInit()` — I²C initialisieren, alle 4 MCP23017 auf Output-Modus setzen, alle Bits 0
+6. RTC lesen (`readRTC()`), Uhrzeit in `curHour`, `curMin`, `curSec` laden
+7. `setupWifi()` — AP starten (SSID: `NixieClock`, PW: `nixie1234`), ggf. STA verbinden; bei STA-Verbindung NTP konfigurieren (`configTzTime()`)
+8. `setupWebServer()` — alle API-Routen registrieren, `server.begin()`
+9. IR-Empfänger starten (`IrReceiver.begin(IR_RECV_PIN)`)
+10. Fade-In-Flag setzen (`startFadeIn = true`), Röhren werden in `loop()` eingeblendet
 
 ## Wichtige Defines
 
@@ -71,7 +70,7 @@ const uint8_t BRIGHTNESS_LEVELS[4] = {10, 30, 50, 80};  // NeoPixel-Helligkeiten
 | `editState`       | `EditState`      | Aktueller Einstellschritt (s. u.)                     |
 | `colonAlwaysOn`   | `bool`           | Trennpunkte dauerhaft an (kein Blinken)               |
 | `colonStatic`     | `bool`           | Trennpunkte statisch (kein Blinken, Variante 2)       |
-| `irCodes[7]`      | `uint64_t[7]`    | Angelernte IR-Codes, Index = `IrAction`-Enum-Wert    |
+| `irCodes[7]`      | `uint64_t[7]`    | Angelernte IR-Codes, Index = IR_ACTION_SET..IR_ACTION_COLON_TOGGLE (0–6) |
 | `wifiStaConnected`| `bool`           | STA-Verbindung aktiv                                  |
 | `ntpSynced`       | `bool`           | NTP-Synchronisierung erfolgreich                      |
 | `slotActive`      | `bool`           | Slot-Machine-Animation läuft                          |
@@ -83,9 +82,15 @@ const uint8_t BRIGHTNESS_LEVELS[4] = {10, 30, 50, 80};  // NeoPixel-Helligkeiten
 enum AnimMode  { ANIM_RAINBOW, ANIM_STATIC, ANIM_PULSE, ANIM_SLOTS, ANIM_COUNT };
 enum EditState { EDIT_NONE, EDIT_HOUR, EDIT_MIN, EDIT_SEC };
 enum IrAction  {
-    IR_SET, IR_UP, IR_DOWN, IR_BRIGHTNESS,
-    IR_ANIM_NEXT, IR_SLOT, IR_COLON_TOGGLE,
-    IR_ACTION_COUNT   // = 7
+    IR_LEARN_NONE        = -1,
+    IR_ACTION_SET        = 0,
+    IR_ACTION_UP         = 1,
+    IR_ACTION_DOWN       = 2,
+    IR_ACTION_BRIGHTNESS = 3,
+    IR_ACTION_ANIM_NEXT  = 4,
+    IR_ACTION_SLOT       = 5,
+    IR_ACTION_COLON_TOGGLE = 6,
+    IR_ACTION_COUNT      = 7
 };
 ```
 
@@ -130,24 +135,24 @@ erreichbar, im STA-Modus zusätzlich unter der vom Heimrouter zugewiesenen IP.
 Alle POST-Endpunkte erwarten JSON im Request-Body (`Content-Type: application/json`).
 Alle GET-Endpunkte liefern JSON zurück.
 
-| Pfad               | Methode | Request-Body                       | Antwort / Funktion                      |
-|--------------------|---------|------------------------------------|-----------------------------------------|
-| `/`                | GET     | —                                  | Vollständiges Web-Interface (HTML/CSS/JS, eingebettet) |
-| `/api/status`      | GET     | —                                  | `{h, m, s, brightLevel, neoBright, animMode, wifiSta, ntpSynced, colonAlwaysOn}` |
-| `/api/settime`     | POST    | `{"h":H,"m":M,"s":S}`             | Zeit in DS1302 RTC schreiben            |
-| `/api/bright`      | POST    | `{"level":0..3}`                   | Helligkeitsstufe setzen + NVS speichern |
-| `/api/neobright`   | POST    | `{"value":10..255}`                | NeoPixel-Feinwert setzen + NVS          |
-| `/api/anim`        | POST    | `{"mode":0..3}`                    | Animationsmodus setzen + NVS            |
-| `/api/colonbright` | POST    | `{"value":0..255}`                 | Trennpunkt-Helligkeit setzen            |
-| `/api/colonon`     | POST    | `{"on":true\|false}`               | Trennpunkte dauerhaft an/aus + NVS      |
-| `/api/colonstatic` | POST    | `{"static":true\|false}`           | Trennpunkte statisch (kein Blinken)     |
-| `/api/slot`        | POST    | —                                  | Slot-Machine-Animation sofort auslösen  |
-| `/api/wifi`        | GET     | —                                  | `{apIP, staIP, staConnected, ntpSynced}`|
-| `/api/wifi`        | POST    | `{"ssid":"…","password":"…"}`      | STA-Verbindung herstellen, Neustart     |
-| `/api/wifi/scan`   | GET     | —                                  | Liste verfügbarer WLANs als JSON-Array  |
-| `/api/ir/status`   | GET     | —                                  | Aktuelle IR-Code-Belegung (7 Einträge)  |
-| `/api/ir/learn`    | POST    | `{"action":0..6}`                  | IR-Lernmodus starten (Timeout 10 s)     |
-| `/api/ir/clear`    | POST    | `{"action":0..6}`                  | IR-Code für Funktion löschen + NVS      |
+| Pfad               | Methode | Request-Body                         | Antwort / Funktion                      |
+|--------------------|---------|--------------------------------------|-----------------------------------------|
+| `/`                | GET     | —                                    | Vollständiges Web-Interface (HTML/CSS/JS, eingebettet) |
+| `/api/status`      | GET     | —                                    | `{h, m, s, brightLevel, neoBright, animMode, wifiSta, ntpSynced, colonAlwaysOn}` |
+| `/api/settime`     | POST    | `{"h":H,"m":M,"s":S}`               | Zeit in DS1302 RTC schreiben            |
+| `/api/bright`      | POST    | `{"level":0..3}`                     | Helligkeitsstufe setzen + NVS speichern |
+| `/api/neobright`   | POST    | `{"val":10..255}`                    | NeoPixel-Feinwert setzen + NVS          |
+| `/api/anim`        | POST    | `{"mode":0..3}`                      | Animationsmodus setzen + NVS            |
+| `/api/colonbright` | POST    | `{"val":1..100}`                     | Trennpunkt-Helligkeit setzen            |
+| `/api/colonon`     | POST    | `{"enabled":true\|false}`            | Trennpunkte dauerhaft an/aus + NVS      |
+| `/api/colonstatic` | POST    | `{"enabled":true\|false}`            | Trennpunkte statisch (kein Blinken)     |
+| `/api/slot`        | POST    | —                                    | Slot-Machine-Animation sofort auslösen  |
+| `/api/wifi`        | GET     | —                                    | `{apIP, staIP, staConnected, ntpSynced}`|
+| `/api/wifi`        | POST    | `{"ssid":"…","pass":"…"}`            | STA-Verbindung herstellen, Neustart     |
+| `/api/wifi/scan`   | GET     | —                                    | Liste verfügbarer WLANs als JSON-Array  |
+| `/api/ir/status`   | GET     | —                                    | Aktuelle IR-Code-Belegung (7 Einträge)  |
+| `/api/ir/learn`    | POST    | `{"action":"SET"\|"UP"\|"DOWN"\|"BRIGHTNESS"\|"ANIM_NEXT"\|"SLOT"\|"COLTOGGLE"}` | IR-Lernmodus starten (Timeout 10 s) |
+| `/api/ir/clear`    | POST    | `{"action":"SET"\|"UP"\|…}`          | IR-Code für Funktion löschen + NVS      |
 
 ## NVS-Persistenz
 
@@ -155,19 +160,20 @@ Alle Einstellungen werden bei Änderung sofort in den ESP32-NVS-Flash geschriebe
 (über `Preferences`-Bibliothek, Namespace `nixie`). Beim Start werden sie automatisch
 geladen.
 
-| NVS-Schlüssel    | Typ     | Standardwert | Inhalt                              |
-|------------------|---------|--------------|-------------------------------------|
-| `brightLevel`    | UInt8   | 3            | Helligkeitsstufe (0–3)              |
-| `neoBright`      | UInt8   | 30           | NeoPixel-Feinwert Hintergrund       |
-| `animMode`       | UInt8   | 0            | Animationsmodus (AnimMode-Enum)     |
-| `colonAlwaysOn`  | Bool    | false        | Trennpunkte dauerhaft an            |
-| `colonStatic`    | Bool    | false        | Kein Blinken der Trennpunkte        |
-| `wifiSSID`       | String  | `""`         | Heimnetz SSID                       |
-| `wifiPass`       | String  | `""`         | Heimnetz Passwort                   |
-| `irCode_0`       | UInt64  | 0            | IR-Code für IR_SET                  |
-| `irCode_1`       | UInt64  | 0            | IR-Code für IR_UP                   |
-| `irCode_2`       | UInt64  | 0            | IR-Code für IR_DOWN                 |
-| `irCode_3`       | UInt64  | 0            | IR-Code für IR_BRIGHTNESS           |
-| `irCode_4`       | UInt64  | 0            | IR-Code für IR_ANIM_NEXT            |
-| `irCode_5`       | UInt64  | 0            | IR-Code für IR_SLOT                 |
-| `irCode_6`       | UInt64  | 0            | IR-Code für IR_COLON_TOGGLE         |
+| NVS-Schlüssel  | Typ     | Standardwert | Inhalt                              |
+|----------------|---------|--------------|-------------------------------------|
+| `bright`       | UInt8   | 3            | Helligkeitsstufe (0–3)              |
+| `neoBright`    | UInt8   | 30           | NeoPixel-Feinwert Hintergrund       |
+| `colonBright`  | UInt8   | 15           | NeoPixel-Feinwert Trennpunkte       |
+| `animMode`     | UInt8   | 0            | Animationsmodus (AnimMode-Enum)     |
+| `colonOn`      | Bool    | false        | Trennpunkte dauerhaft an            |
+| `colonStatic`  | Bool    | false        | Kein Blinken der Trennpunkte        |
+| `wifiSsid`     | String  | `""`         | Heimnetz SSID                       |
+| `wifiPass`     | String  | `""`         | Heimnetz Passwort                   |
+| `ir_SET`       | UInt64  | 0            | IR-Code für IR_ACTION_SET           |
+| `ir_UP`        | UInt64  | 0            | IR-Code für IR_ACTION_UP            |
+| `ir_DOWN`      | UInt64  | 0            | IR-Code für IR_ACTION_DOWN          |
+| `ir_BRIGHTNESS`| UInt64  | 0            | IR-Code für IR_ACTION_BRIGHTNESS    |
+| `ir_ANIM_NEXT` | UInt64  | 0            | IR-Code für IR_ACTION_ANIM_NEXT     |
+| `ir_SLOT`      | UInt64  | 0            | IR-Code für IR_ACTION_SLOT          |
+| `ir_COLTOGGLE` | UInt64  | 0            | IR-Code für IR_ACTION_COLON_TOGGLE  |
