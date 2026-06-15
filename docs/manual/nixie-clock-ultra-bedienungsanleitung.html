@@ -208,7 +208,120 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
 <body>
 
 <!-- ═══════════ TITELSEITE ═══════════ -->
-<!-- Task 2 -->
+<div class="page">
+  <!-- Eckverzierungen -->
+  <svg class="corner-tl" width="36" height="36" viewBox="0 0 36 36">
+    <path d="M2,2 L2,16 M2,2 L16,2" stroke="#b8860b" stroke-width="1.4" fill="none"/>
+    <circle cx="2" cy="2" r="2" fill="#b8860b"/>
+  </svg>
+  <svg class="corner-tr" width="36" height="36" viewBox="0 0 36 36">
+    <path d="M34,2 L34,16 M34,2 L20,2" stroke="#b8860b" stroke-width="1.4" fill="none"/>
+    <circle cx="34" cy="2" r="2" fill="#b8860b"/>
+  </svg>
+  <svg class="corner-bl" width="36" height="36" viewBox="0 0 36 36">
+    <path d="M2,34 L2,20 M2,34 L16,34" stroke="#b8860b" stroke-width="1.4" fill="none"/>
+    <circle cx="2" cy="34" r="2" fill="#b8860b"/>
+  </svg>
+  <svg class="corner-br" width="36" height="36" viewBox="0 0 36 36">
+    <path d="M34,34 L34,20 M34,34 L20,34" stroke="#b8860b" stroke-width="1.4" fill="none"/>
+    <circle cx="34" cy="34" r="2" fill="#b8860b"/>
+  </svg>
+
+  <!-- Ornamentlinie oben -->
+  <svg class="ornament-line" width="220" height="14" viewBox="0 0 220 14">
+    <line x1="0" y1="7" x2="88" y2="7" stroke="#b8860b" stroke-width="1"/>
+    <polygon points="100,7 106,3 112,7 106,11" fill="none" stroke="#b8860b" stroke-width="1"/>
+    <line x1="122" y1="7" x2="220" y2="7" stroke="#b8860b" stroke-width="1"/>
+  </svg>
+
+  <!-- Titelblock -->
+  <div style="text-align:center;margin:10mm 0 8mm">
+    <!-- Zahnrad -->
+    <svg width="52" height="52" viewBox="0 0 52 52" style="display:block;margin:0 auto 6mm">
+      <g transform="translate(26,26)">
+        <circle r="10" fill="var(--pg-light)" stroke="var(--gold)" stroke-width="1.4"/>
+        <circle r="4"  fill="var(--gold)"/>
+        <rect x="-3" y="-18" width="6" height="7.5" rx="1" fill="var(--gold)" transform="rotate(0)"/>
+        <rect x="-3" y="-18" width="6" height="7.5" rx="1" fill="var(--gold)" transform="rotate(45)"/>
+        <rect x="-3" y="-18" width="6" height="7.5" rx="1" fill="var(--gold)" transform="rotate(90)"/>
+        <rect x="-3" y="-18" width="6" height="7.5" rx="1" fill="var(--gold)" transform="rotate(135)"/>
+        <rect x="-3" y="-18" width="6" height="7.5" rx="1" fill="var(--gold)" transform="rotate(180)"/>
+        <rect x="-3" y="-18" width="6" height="7.5" rx="1" fill="var(--gold)" transform="rotate(225)"/>
+        <rect x="-3" y="-18" width="6" height="7.5" rx="1" fill="var(--gold)" transform="rotate(270)"/>
+        <rect x="-3" y="-18" width="6" height="7.5" rx="1" fill="var(--gold)" transform="rotate(315)"/>
+      </g>
+    </svg>
+
+    <div style="font-size:26pt;font-weight:bold;color:var(--text-h);letter-spacing:3px;text-transform:uppercase">
+      Nixie Clock Ultra
+    </div>
+
+    <!-- Doppelgoldlinie mit eingebettetem Text -->
+    <div style="margin:6mm auto;width:80%;border-top:0.4mm solid var(--gold);border-bottom:0.4mm solid var(--gold);padding:3mm 0">
+      <div style="font-size:11pt;color:var(--gold-dk);letter-spacing:7px;text-transform:uppercase">
+        Bedienungsanleitung
+      </div>
+    </div>
+
+    <div style="font-size:10pt;color:var(--hdr-txt);letter-spacing:2px;font-style:italic">
+      Modell ESP32-S3 &middot; 6 Nixie-Röhren
+    </div>
+  </div>
+
+  <!-- Nixie-Röhren-Illustration -->
+  <div style="text-align:center;margin:10mm 0">
+    <svg width="240" height="70" viewBox="0 0 240 70">
+      <defs>
+        <radialGradient id="nixieGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#ff9500" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#ff9500" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <!-- Röhre 1 -->
+      <rect x="2"   y="6" width="28" height="52" rx="5" fill="#0d0500" stroke="#b8860b" stroke-width="1.3"/>
+      <ellipse cx="16"  cy="32" rx="10" ry="14" fill="url(#nixieGlow)"/>
+      <text x="16"  y="40" text-anchor="middle" font-size="22" font-family="Georgia,serif" fill="#ff9500">8</text>
+      <!-- Röhre 2 -->
+      <rect x="34"  y="6" width="28" height="52" rx="5" fill="#0d0500" stroke="#b8860b" stroke-width="1.3"/>
+      <ellipse cx="48"  cy="32" rx="10" ry="14" fill="url(#nixieGlow)"/>
+      <text x="48"  y="40" text-anchor="middle" font-size="22" font-family="Georgia,serif" fill="#ff9500">8</text>
+      <!-- Doppelpunkte -->
+      <circle cx="74"  cy="23" r="3.5" fill="#d4af37" opacity="0.85"/>
+      <circle cx="74"  cy="41" r="3.5" fill="#d4af37" opacity="0.85"/>
+      <!-- Röhre 3 -->
+      <rect x="82"  y="6" width="28" height="52" rx="5" fill="#0d0500" stroke="#b8860b" stroke-width="1.3"/>
+      <ellipse cx="96"  cy="32" rx="10" ry="14" fill="url(#nixieGlow)"/>
+      <text x="96"  y="40" text-anchor="middle" font-size="22" font-family="Georgia,serif" fill="#ff9500">8</text>
+      <!-- Röhre 4 -->
+      <rect x="114" y="6" width="28" height="52" rx="5" fill="#0d0500" stroke="#b8860b" stroke-width="1.3"/>
+      <ellipse cx="128" cy="32" rx="10" ry="14" fill="url(#nixieGlow)"/>
+      <text x="128" y="40" text-anchor="middle" font-size="22" font-family="Georgia,serif" fill="#ff9500">8</text>
+      <!-- Doppelpunkte -->
+      <circle cx="152" cy="23" r="3.5" fill="#d4af37" opacity="0.85"/>
+      <circle cx="152" cy="41" r="3.5" fill="#d4af37" opacity="0.85"/>
+      <!-- Röhre 5 -->
+      <rect x="160" y="6" width="28" height="52" rx="5" fill="#0d0500" stroke="#b8860b" stroke-width="1.3"/>
+      <ellipse cx="174" cy="32" rx="10" ry="14" fill="url(#nixieGlow)"/>
+      <text x="174" y="40" text-anchor="middle" font-size="22" font-family="Georgia,serif" fill="#ff9500">8</text>
+      <!-- Röhre 6 -->
+      <rect x="192" y="6" width="28" height="52" rx="5" fill="#0d0500" stroke="#b8860b" stroke-width="1.3"/>
+      <ellipse cx="206" cy="32" rx="10" ry="14" fill="url(#nixieGlow)"/>
+      <text x="206" y="40" text-anchor="middle" font-size="22" font-family="Georgia,serif" fill="#ff9500">8</text>
+    </svg>
+  </div>
+
+  <!-- Ornamentlinie unten -->
+  <svg class="ornament-line" width="220" height="14" viewBox="0 0 220 14">
+    <line x1="0" y1="7" x2="88" y2="7" stroke="#b8860b" stroke-width="1"/>
+    <polygon points="100,7 106,3 112,7 106,11" fill="none" stroke="#b8860b" stroke-width="1"/>
+    <line x1="122" y1="7" x2="220" y2="7" stroke="#b8860b" stroke-width="1"/>
+  </svg>
+
+  <!-- Versionszeile -->
+  <div style="text-align:center;margin-top:5mm">
+    <div style="font-size:9pt;color:var(--hdr-txt);letter-spacing:2px">Version 2.0 &middot; Juni 2026</div>
+  </div>
+</div>
 
 <!-- ═══════════ INHALTSVERZEICHNIS ═══════════ -->
 <!-- Task 3 -->
