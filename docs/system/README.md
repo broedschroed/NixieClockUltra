@@ -73,7 +73,7 @@ Alle Bibliotheken über den Arduino Library Manager installieren:
 | Rtc by Makuna      | Michael C. Miller | DS1302 RTC über ThreeWire          |
 | AsyncTCP           | me-no-dev         | Async-TCP-Basis für ESP32          |
 | ESPAsyncWebServer  | me-no-dev         | Nicht-blockierender HTTP-Server    |
-| ArduinoJson        | Benoit Blanchon   | JSON-Serialisierung (v6+)          |
+| ArduinoJson        | Benoit Blanchon   | JSON-Serialisierung (v6.x, nicht v7) |
 | IRremoteESP8266    | David Conran      | IR-Empfang (NEC, Samsung, RC5 …)   |
 
 ## Weiterführende Dokumente
