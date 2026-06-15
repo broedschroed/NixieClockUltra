@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nixie Clock Ultra – Bedienungsanleitung</title>
+<style>
+/* ── Custom Properties ─────────────────────────────────────────── */
+:root {
+  --pg-light: #f7f2e8;
+  --pg-dark:  #f0ebe0;
+  --text-h:   #2c1810;
+  --text-b:   #3d2b00;
+  --gold:     #b8860b;
+  --gold-dk:  #8b6914;
+  --gold-lt:  #d4af37;
+  --red-warn: #8b0000;
+  --line:     #d3c9a8;
+  --line-med: #c8b878;
+  --hdr-txt:  #a08040;
+  --warn-bg:  #fff8f0;
+}
+
+/* ── Reset ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Body & Screen Layout ──────────────────────────────────────── */
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: #b0a898;
+  color: var(--text-b);
+}
+
+/* ── Page Block ────────────────────────────────────────────────── */
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 10mm auto;
+  background: linear-gradient(180deg, var(--pg-light) 0%, var(--pg-dark) 100%);
+  padding: 18mm 22mm 16mm;
+  position: relative;
+  box-shadow: 0 4px 28px rgba(0,0,0,0.22);
+}
+
+/* ── Corner Ornaments ──────────────────────────────────────────── */
+.corner-tl { position: absolute; top: 8mm; left: 8mm; opacity: 0.55; }
+.corner-tr { position: absolute; top: 8mm; right: 8mm; opacity: 0.55; }
+.corner-bl { position: absolute; bottom: 8mm; left: 8mm; opacity: 0.55; }
+.corner-br { position: absolute; bottom: 8mm; right: 8mm; opacity: 0.55; }
+
+/* ── Running Header ────────────────────────────────────────────── */
+.running-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10mm;
+  padding-bottom: 2.5mm;
+  border-bottom: 0.3mm solid var(--line-med);
+  font-size: 7.5pt;
+  color: var(--hdr-txt);
+  font-style: italic;
+}
+
+/* ── Chapter Title ─────────────────────────────────────────────── */
+.chapter-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 3mm;
+}
+.chapter-label {
+  font-size: 7.5pt;
+  color: var(--gold-dk);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 1mm;
+}
+.chapter-title h1 {
+  font-size: 18pt;
+  color: var(--text-h);
+  letter-spacing: 0.5px;
+  font-weight: bold;
+  line-height: 1.2;
+}
+.chapter-rule {
+  height: 0.3mm;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  margin-bottom: 6mm;
+}
+
+/* ── Typography ────────────────────────────────────────────────── */
+p  { font-size: 10.5pt; line-height: 1.75; margin-bottom: 3mm; color: var(--text-b); }
+h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
+     text-transform: uppercase; margin: 5mm 0 2mm; font-weight: bold; }
+
+/* ── Section Label ─────────────────────────────────────────────── */
+.section-label {
+  font-size: 8.5pt;
+  color: var(--gold-dk);
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 5mm 0 2mm;
+  border-bottom: 0.2mm solid var(--line);
+  padding-bottom: 1mm;
+}
+
+/* ── Data Table ────────────────────────────────────────────────── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 2mm 0 5mm; }
+.data-table thead tr { background: var(--gold-dk); }
+.data-table thead th {
+  color: var(--pg-light); padding: 5px 9px;
+  text-align: left; font-weight: normal; letter-spacing: 0.5px;
+}
+.data-table tbody tr:nth-child(odd)  { background: var(--pg-light); }
+.data-table tbody tr:nth-child(even) { background: var(--pg-dark); }
+.data-table tbody td {
+  padding: 5px 9px; border-bottom: 0.2mm solid var(--line); color: var(--text-b);
+}
+.data-table tbody td strong { color: var(--text-h); }
+.data-table tbody td em { color: #777; font-style: normal; }
+
+/* ── Warning Box ───────────────────────────────────────────────── */
+.warning-box {
+  display: flex; gap: 9px; align-items: flex-start;
+  border: 0.3mm solid var(--gold);
+  border-left: 1.2mm solid var(--red-warn);
+  background: var(--warn-bg);
+  padding: 7px 11px;
+  border-radius: 0 3px 3px 0;
+  margin: 4mm 0;
+}
+.warn-title {
+  font-size: 8pt; color: var(--red-warn); font-weight: bold;
+  letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px;
+}
+.warning-box p { font-size: 8.5pt; color: #5a2000; margin: 0; line-height: 1.5; }
+
+/* ── Numbered Steps ────────────────────────────────────────────── */
+.steps { display: flex; flex-direction: column; gap: 2.5mm; margin: 3mm 0 5mm; }
+.step  { display: flex; gap: 9px; align-items: flex-start; }
+.step-num {
+  width: 19px; height: 19px; flex-shrink: 0; border-radius: 50%;
+  background: var(--gold-dk); color: var(--pg-light);
+  font-size: 8pt; display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+.step p { margin: 0; font-size: 10pt; line-height: 1.65; }
+
+/* ── Info Box ──────────────────────────────────────────────────── */
+.info-box {
+  border: 0.3mm solid var(--gold);
+  border-left: 1.2mm solid var(--gold-dk);
+  background: #faf7ef;
+  padding: 7px 11px;
+  border-radius: 0 3px 3px 0;
+  margin: 4mm 0;
+  font-size: 9.5pt;
+  color: var(--text-b);
+  line-height: 1.6;
+}
+
+/* ── Ornament Lines ────────────────────────────────────────────── */
+.ornament-line  { display: block; margin: 5mm auto; }
+.ornament-small { display: block; margin: 6mm auto; }
+
+/* ── TOC ───────────────────────────────────────────────────────── */
+.toc-heading {
+  text-align: center;
+  font-size: 10.5pt;
+  color: var(--gold-dk);
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  margin-bottom: 6mm;
+}
+.toc-entry {
+  display: flex; align-items: baseline; gap: 4px;
+  padding: 5px 0; border-bottom: 0.2mm dotted var(--line-med);
+  font-size: 10.5pt;
+}
+.toc-entry:last-child { border-bottom: none; }
+.toc-num   { color: var(--gold-dk); min-width: 32px; font-style: italic; font-size: 9pt; }
+.toc-title { color: var(--text-h); flex: 1; }
+.toc-page  { color: var(--hdr-txt); font-size: 9pt; text-align: right; min-width: 18px; }
+
+/* ── Connectivity Info Box ─────────────────────────────────────── */
+.conn-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 2mm 0 4mm; }
+.conn-table td { padding: 4px 8px; border-bottom: 0.2mm solid var(--line); }
+.conn-table td:first-child { color: var(--gold-dk); font-weight: bold; width: 40%; }
+.conn-table td:last-child  { color: var(--text-b); font-family: 'Courier New', monospace; font-size: 9pt; }
+
+/* ── Print ─────────────────────────────────────────────────────── */
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+  body  { background: none; }
+  .page {
+    margin: 0; box-shadow: none;
+    width: 100%; min-height: 100vh;
+    page-break-after: always;
+  }
+  .no-break { page-break-inside: avoid; }
+  thead { display: table-header-group; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ TITELSEITE ═══════════ -->
+<!-- Task 2 -->
+
+<!-- ═══════════ INHALTSVERZEICHNIS ═══════════ -->
+<!-- Task 3 -->
+
+<!-- ═══════════ KAPITEL I ═══════════ -->
+<!-- Task 4 -->
+
+<!-- ═══════════ KAPITEL II ═══════════ -->
+<!-- Task 4 -->
+
+<!-- ═══════════ KAPITEL III ═══════════ -->
+<!-- Task 5 -->
+
+<!-- ═══════════ KAPITEL IV ═══════════ -->
+<!-- Task 5 -->
+
+<!-- ═══════════ KAPITEL V ═══════════ -->
+<!-- Task 6 -->
+
+<!-- ═══════════ KAPITEL VI ═══════════ -->
+<!-- Task 7 -->
+
+<!-- ═══════════ KAPITEL VII ═══════════ -->
+<!-- Task 8 -->
+
+<!-- ═══════════ KAPITEL VIII ═══════════ -->
+<!-- Task 9 -->
+
+<!-- ═══════════ KAPITEL IX ═══════════ -->
+<!-- Task 9 -->
+
+</body>
+</html>
