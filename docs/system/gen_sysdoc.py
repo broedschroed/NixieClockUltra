@@ -271,8 +271,11 @@ def build_content():
                  "Abb. 1 – Logic Board Schaltplan (nixieclocklogic_V2-SCH.pdf)"))
 
     c.append(h2("PCB-Layout"))
-    c.append(img("logic_pcb", 15.5, 11.0,
-                 "Abb. 2 – Logic Board PCB-Layout (nixieclocklogic_V2_BPHL.pdf)"))
+    c.append(img("logic_pcb_top", 15.5, 11.0,
+                 "Abb. 2a – Logic Board PCB-Layout Oberseite (nixieclocklogic_V2_BPHL.pdf)"))
+    if (IMGS / "logic_pcb-2.png").exists():
+        c.append(img("logic_pcb_bot", 15.5, 11.0,
+                     "Abb. 2b – Logic Board PCB-Layout Unterseite"))
 
     c.append(h2("Komponenten"))
     c.append(table(
@@ -356,15 +359,20 @@ def build_content():
                "Anzeigeelektronik. Vier MCP23017 I²C-GPIO-Expander stellen 64 digitale "
                "Ausgänge bereit, von denen 60 jeweils einen SMBTA42-NPN-Transistor "
                "ansteuern. Jeder Transistor schaltet eine Nixie-Kathode auf GND. "
-               "Zehn WS2812B-LEDs liefern die Hintergrundbeleuchtung."))
+               "Sechs WS2812B-SMD-LEDs (Pixel 0–5, GRB) liefern die Röhrenhintergrundbeleuchtung; "
+               "vier WS2812B-THT-LEDs YF923 (Pixel 6–9, RGB) dienen als Trennpunkt-LEDs "
+               "zwischen den Zifferngruppen."))
 
     c.append(h2("Schaltplan"))
     c.append(img("nixie_sch", 15.5, 11.0,
                  "Abb. 3 – Nixie Display Board Schaltplan (nixieclockin12_V2-Sch.pdf)"))
 
     c.append(h2("PCB-Layout"))
-    c.append(img("nixie_pcb", 15.5, 11.0,
-                 "Abb. 4 – Nixie Display Board PCB-Layout (nixieclockin12_V2-BPHL.pdf)"))
+    c.append(img("nixie_pcb_top", 15.5, 11.0,
+                 "Abb. 4a – Nixie Display Board PCB-Layout Oberseite (nixieclockin12_V2-BPHL.pdf)"))
+    if (IMGS / "nixie_pcb-2.png").exists():
+        c.append(img("nixie_pcb_bot", 15.5, 11.0,
+                     "Abb. 4b – Nixie Display Board PCB-Layout Unterseite"))
 
     c.append(h2("Komponenten"))
     c.append(table(
@@ -373,9 +381,8 @@ def build_content():
             ["U1–U4",   "MCP23017-E/SO (SOIC-28)", "4",  "16-bit I²C GPIO-Expander, je 16 Ausgänge"],
             ["Q1–Q60",  "SMBTA42 (TSOT-23)",        "60", "NPN 300 V Hochvolt-Transistor als Kathodenschalter"],
             ["NX1–NX6", "IN-12A",                   "6",  "Numerische Nixie-Röhre, Aufsicht, 10 Kathoden (0–9)"],
-            ["D1",      "WS2812B-SMD (×6)",          "6",  "Hintergrundbeleuchtung, Pixel 0–5 (GRB-Farbreihenfolge)"],
-            ["D2–D6",   "WS2812B-SMD",               "5",  "Zusätzliche NeoPixel (SMD)"],
-            ["D7–D9",   "WS2812B-THT (YF923)",       "3",  "Trennpunkt-LEDs (Durchsteck, RGB-Farbreihenfolge)"],
+            ["D1–D6",   "WS2812B-SMD",               "6",  "Röhrenhintergrundbeleuchtung, Pixel 0–5 (GRB)"],
+            ["D7–D10",  "WS2812B-THT (YF923)",       "4",  "Trennpunkt-LEDs, Pixel 6–9 (RGB-Farbreihenfolge)"],
             ["R1–R64",  "3,3 kΩ (0805)",             "64", "Basis-Vorwiderstände für SMBTA42"],
             ["R65–R70", "10 kΩ (THT axial)",         "6",  "I²C-Bus-Pull-ups + MCP-Adress-Pull-ups"],
             ["C1–C4",   "100 nF (0805)",              "4",  "Abblockkondensatoren je MCP23017 (VCC gegen GND)"],
@@ -781,11 +788,17 @@ def create_odt():
     _used_col_widths = set()   # reset before each run
 
     images = {
-        "logic_sch.png": IMGS / "logic_sch-1.png",
-        "logic_pcb.png": IMGS / "logic_pcb-1.png",
-        "nixie_sch.png": IMGS / "nixie_sch-1.png",
-        "nixie_pcb.png": IMGS / "nixie_pcb-1.png",
+        "logic_sch.png":     IMGS / "logic_sch-1.png",
+        "logic_pcb_top.png": IMGS / "logic_pcb-1.png",
+        "nixie_sch.png":     IMGS / "nixie_sch-1.png",
+        "nixie_pcb_top.png": IMGS / "nixie_pcb-1.png",
     }
+    for key, path in [
+        ("logic_pcb_bot.png", IMGS / "logic_pcb-2.png"),
+        ("nixie_pcb_bot.png", IMGS / "nixie_pcb-2.png"),
+    ]:
+        if path.exists():
+            images[key] = path
 
     body = build_content()    # populates _used_col_widths as side-effect
     auto_styles = build_auto_styles(_used_col_widths)

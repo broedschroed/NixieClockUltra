@@ -53,7 +53,7 @@ static void mcpWriteAB(uint8_t addr, uint16_t value) {
 
 void nixieInit() {
   nixieMutex = xSemaphoreCreateMutex();
-  Wire.begin(8, 9);
+  Wire.begin(I2C_SDA, I2C_SCL);
   for (uint8_t i = 0; i < 4; i++) {
     uint8_t addr = MCP_BASE_ADDR + i;
     Wire.beginTransmission(addr);

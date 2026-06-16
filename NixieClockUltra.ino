@@ -62,6 +62,10 @@
 // IR-Empfänger
 #define IR_RECV_PIN  48
 
+// I2C für MCP23017
+#define I2C_SDA      8
+#define I2C_SCL      9
+
 // ═══════════════════════════════════════════════════════════
 //  KONSTANTEN & KONFIGURATION
 // ═══════════════════════════════════════════════════════════
@@ -353,4 +357,3 @@ void loop() {
   // Kurze Pause um CPU zu entlasten
   delay(1);
 }
-
