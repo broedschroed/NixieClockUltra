@@ -80,7 +80,5 @@ void updateNeoPixel() {
       strip.setPixelColor(i, rgbSwap(scaleColor(warmwhite, colonBright)));
   }
 
-  irrecv.pause();
   strip.show();
-  irrecv.resume();
 }
