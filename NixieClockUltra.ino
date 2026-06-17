@@ -113,7 +113,7 @@ uint8_t brightLevel = 3;
 
 // NeoPixel Helligkeit (getrennt für Hintergrund- und Trennpunkt-LEDs)
 uint8_t  neoBright   = 30;   // Pixel 0–5 (Hintergrund)
-uint8_t  colonBright = 15;   // Pixel 6–9 (Trennpunkte)
+uint8_t  colonBright = 80;   // Pixel 6–9 (Trennpunkte)
 uint8_t  neoHue      = 0;    // auto-inkrement in Animationen
 uint8_t  neoSat      = 255;
 
@@ -242,7 +242,8 @@ void setup() {
   colonBright = prefs.getUChar("colonBright", 80);
   uint8_t savedAnim = prefs.getUChar("animMode", 0);
   animMode     = (savedAnim < (uint8_t)ANIM_COUNT) ? (AnimMode)savedAnim : ANIM_RAINBOW;
-  slotInterval = (SlotInterval)prefs.getUChar("slotIval", 0);
+  uint8_t savedSlot = prefs.getUChar("slotIval", 0);
+  slotInterval = (savedSlot <= (uint8_t)SLOT_1HR) ? (SlotInterval)savedSlot : SLOT_OFF;
 
   for (int i = 0; i < IR_ACTION_COUNT; i++) {
     irCodes[i] = prefs.getULong64(IR_ACTION_KEYS[i], 0);
