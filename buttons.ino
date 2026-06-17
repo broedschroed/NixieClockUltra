@@ -7,23 +7,27 @@ void updateButton(Button &b) {
   bool state = digitalRead(b.pin);
 
   if (state == LOW && b.lastState == HIGH) {
-    // Flanke fallend
+    // Fallende Flanke – Entprellzeit starten
     b.pressTime  = millis();
-    b.lastRepeat = millis();
+    b.debounced  = false;
   }
 
   if (state == LOW) {
-    unsigned long held = millis() - b.pressTime;
-    if (held >= b.debounceMs) {
-      if (b.lastState == HIGH) {
-        b.pressed = true;  // Erstes Drücken
-      }
-      if (millis() - b.lastRepeat >= b.repeatMs) {
-        b.held = true;
-        b.lastRepeat = millis();
-      }
+    if (!b.debounced && millis() - b.pressTime >= b.debounceMs) {
+      // Entprellzeit abgelaufen: einmaliges Press-Event
+      b.pressed    = true;
+      b.debounced  = true;
+      b.lastRepeat = millis();
+    }
+    if (b.debounced && millis() - b.lastRepeat >= b.repeatMs) {
+      // Auto-Repeat solange gehalten
+      b.held       = true;
+      b.lastRepeat = millis();
     }
   }
+
+  if (state == HIGH) b.debounced = false;
+
   b.lastState = state;
 }
 

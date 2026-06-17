@@ -203,16 +203,17 @@ struct Button {
   bool         lastState;
   bool         pressed;
   bool         held;
+  bool         debounced;   // true sobald Entprellzeit nach Flanke abgelaufen
   unsigned long pressTime;
   unsigned long lastRepeat;
   uint16_t     debounceMs;
   uint16_t     repeatMs;
 };
 
-Button btnSet   = {BTN_SET,   HIGH, false, false, 0, 0, 30, 400};
-Button btnUp    = {BTN_UP,    HIGH, false, false, 0, 0, 30, 200};
-Button btnDown  = {BTN_DOWN,  HIGH, false, false, 0, 0, 30, 200};
-Button btnLight = {BTN_LIGHT, HIGH, false, false, 0, 0, 30, 500};
+Button btnSet   = {BTN_SET,   HIGH, false, false, false, 0, 0, 30, 400};
+Button btnUp    = {BTN_UP,    HIGH, false, false, false, 0, 0, 30, 200};
+Button btnDown  = {BTN_DOWN,  HIGH, false, false, false, 0, 0, 30, 200};
+Button btnLight = {BTN_LIGHT, HIGH, false, false, false, 0, 0, 30, 500};
 
 // Forward-Deklarationen für Funktionen, die der Arduino-Präprozessor
 // nicht automatisch erkennt (Raw-String-Literal in web_server.ino)
