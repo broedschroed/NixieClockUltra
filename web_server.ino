@@ -339,6 +339,7 @@ void setupWebServer() {
     doc["neoBright"] = neoBright;
     doc["anim"]      = (int)animMode;
     doc["slot"]      = slotActive;
+    doc["slotIval"]  = (int)slotInterval;
     doc["colonOn"]     = colonAlwaysOn;
     doc["colonStatic"] = colonStatic;
     doc["colonBright"] = colonBright;
@@ -416,6 +417,21 @@ void setupWebServer() {
     [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
       startSlotAnimation(curHour, curMin, curSec);
       req->send(200, "application/json", "{\"ok\":true}");
+    }
+  );
+
+  server.on("/api/slotinterval", HTTP_POST, [](AsyncWebServerRequest *req){},
+    nullptr,
+    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
+      StaticJsonDocument<64> doc;
+      if (!deserializeJson(doc, data, len)) {
+        int v = constrain((int)doc["interval"], 0, 4);
+        slotInterval = (SlotInterval)v;
+        prefs.putUChar("slotIval", v);
+        req->send(200, "application/json", "{\"ok\":true}");
+      } else {
+        req->send(400, "application/json", "{\"ok\":false}");
+      }
     }
   );
 
