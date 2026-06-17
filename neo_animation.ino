@@ -45,7 +45,7 @@ void updateNeoPixel() {
       uint32_t warm = strip.Color(255, 180, 80);
       for (int i = 0; i < 6; i++) strip.setPixelColor(i, scaleColor(warm, neoBright));
       bool colonOn = colonAlwaysOn || (curSec % 2 == 0);
-      uint32_t colonColor = colonOn ? strip.Color(255, 100, 0) : strip.Color(0, 0, 0);
+      uint32_t colonColor = colonOn ? strip.Color(COLON_WARM_R, COLON_WARM_G, COLON_WARM_B) : strip.Color(0, 0, 0);
       for (int i = 6; i < 10; i++) strip.setPixelColor(i, rgbSwap(scaleColor(colonColor, colonBright)));
       break;
     }
@@ -76,7 +76,7 @@ void updateNeoPixel() {
   // Statischer Modus: Trennpunkte warmweiß – colonAlwaysOn steuert weiterhin das Blinken
   if (colonStatic && !slotActive) {
     bool colonOn = colonAlwaysOn || (curSec % 2 == 0);
-    uint32_t warmwhite = colonOn ? strip.Color(255, 100, 0) : strip.Color(0, 0, 0);
+    uint32_t warmwhite = colonOn ? strip.Color(COLON_WARM_R, COLON_WARM_G, COLON_WARM_B) : strip.Color(0, 0, 0);
     for (int i = 6; i < 10; i++)
       strip.setPixelColor(i, rgbSwap(scaleColor(warmwhite, colonBright)));
   }

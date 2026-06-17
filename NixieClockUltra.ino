@@ -70,6 +70,11 @@
 //  KONSTANTEN & KONFIGURATION
 // ═══════════════════════════════════════════════════════════
 
+// Trennpunkt-Warmweiß (R/G/B – Verwendung: strip.Color(COLON_WARM_R, COLON_WARM_G, COLON_WARM_B))
+#define COLON_WARM_R  255
+#define COLON_WARM_G  100
+#define COLON_WARM_B    0
+
 // Fade
 #define FADE_STEPS           20   // Schritte für Fade-In/Out
 #define FADE_INTERVAL_MS      2   // ms zwischen Fade-Schritten
