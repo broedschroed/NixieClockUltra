@@ -51,9 +51,9 @@
 
 // Taster (LOW-aktiv, Pull-Up intern)
 #define BTN_SET      13
-#define BTN_UP       14
-#define BTN_DOWN     15
-#define BTN_LIGHT    16
+#define BTN_UP       12
+#define BTN_DOWN     11
+#define BTN_LIGHT    10
 
 // NeoPixel
 #define NEO_PIN      21
