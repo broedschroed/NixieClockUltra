@@ -63,27 +63,14 @@ void updateNeoPixel() {
       break;
     }
 
-    case ANIM_SLOTS: {
-      if (slotActive) {
-        uint32_t col = strip.ColorHSV((millis() / 5) % 65536, 255, 255);
-        for (int i = 0; i < 6; i++) strip.setPixelColor(i, scaleColor(col, neoBright));
-        for (int i = 6; i < 10; i++) strip.setPixelColor(i, rgbSwap(scaleColor(col, colonBright)));
-      } else {
-        for (int i = 0; i < 6; i++) {
-          uint8_t hue = neoHue + i * 40;
-          strip.setPixelColor(i, scaleColor(strip.ColorHSV(hue * 256, neoSat, 255), neoBright));
-        }
-        neoHue++;
-        bool colonOn = colonAlwaysOn || (curSec % 2 == 0);
-        uint32_t colonColor = colonOn
-          ? strip.ColorHSV((neoHue + 128) * 256, 200, 255)
-          : strip.Color(0, 0, 0);
-        for (int i = 6; i < 10; i++) strip.setPixelColor(i, rgbSwap(scaleColor(colonColor, colonBright)));
-      }
-      break;
-    }
-
     default: break;
+  }
+
+  // Slot-Effekt überschreibt Hintergrundanimation solange slotActive
+  if (slotActive) {
+    uint32_t col = strip.ColorHSV((millis() / 5) % 65536, 255, 255);
+    for (int i = 0; i < 6;  i++) strip.setPixelColor(i, scaleColor(col, neoBright));
+    for (int i = 6; i < 10; i++) strip.setPixelColor(i, rgbSwap(scaleColor(col, colonBright)));
   }
 
   // Statischer Modus: Trennpunkte unabhängig von Animation warmweiß überschreiben
