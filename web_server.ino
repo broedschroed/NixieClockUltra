@@ -73,7 +73,6 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
       <option value="0">Rainbow</option>
       <option value="1">Statisch Warmweiß</option>
       <option value="2">Puls</option>
-      <option value="3">Slot-Machine</option>
     </select>
   </div>
   <div class="row">
@@ -93,7 +92,17 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
 </div>
 
 <div class="card">
-  <h2>🎰 Slot-Animation starten</h2>
+  <h2>🎰 Slot-Animation</h2>
+  <div class="row">
+    <label>Automatisch</label>
+    <select id="slotIval" onchange="setSlotInterval()">
+      <option value="0">Aus</option>
+      <option value="1">10 Sek</option>
+      <option value="2">1 Min</option>
+      <option value="3">15 Min</option>
+      <option value="4">1 Std</option>
+    </select>
+  </div>
   <div class="row">
     <button onclick="triggerSlot()">Slot-Machine!</button>
     <span class="badge" id="slotStatus">bereit</span>
@@ -146,6 +155,7 @@ async function refreshClock(){
   if(d.bright!==undefined) document.getElementById('bright').value=d.bright;
   if(d.neoBright!==undefined){document.getElementById('neoBright').value=d.neoBright;document.getElementById('neoBrightVal').textContent=d.neoBright;}
   if(d.anim!==undefined) document.getElementById('anim').value=d.anim;
+  if(d.slotIval!==undefined) document.getElementById('slotIval').value=d.slotIval;
   if(d.colonOn!==undefined)document.getElementById('colonOn').checked=d.colonOn;
   if(d.colonStatic!==undefined)document.getElementById('colonStatic').checked=d.colonStatic;
   if(d.colonBright!==undefined){document.getElementById('colonBright').value=d.colonBright;document.getElementById('colonBrightVal').textContent=d.colonBright;}
@@ -177,6 +187,10 @@ async function setNeoBright(v){
 async function setAnim(){
   let v=parseInt(document.getElementById('anim').value);
   await api('/api/anim',{mode:v});
+}
+async function setSlotInterval(){
+  let v=parseInt(document.getElementById('slotIval').value);
+  await api('/api/slotinterval',{interval:v});
 }
 async function setColonBright(v){
   document.getElementById('colonBrightVal').textContent=v;
