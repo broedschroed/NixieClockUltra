@@ -118,8 +118,11 @@ uint8_t  neoHue      = 0;    // auto-inkrement in Animationen
 uint8_t  neoSat      = 255;
 
 // Animations-Modus
-enum AnimMode { ANIM_RAINBOW, ANIM_STATIC, ANIM_PULSE, ANIM_SLOTS, ANIM_COUNT };
+enum AnimMode { ANIM_RAINBOW, ANIM_STATIC, ANIM_PULSE, ANIM_COUNT };
 AnimMode animMode = ANIM_RAINBOW;
+
+enum SlotInterval { SLOT_OFF, SLOT_10S, SLOT_1MIN, SLOT_15MIN, SLOT_1HR };
+SlotInterval slotInterval = SLOT_OFF;
 
 // Einstellmodus
 enum EditState { EDIT_NONE, EDIT_HOUR, EDIT_MIN, EDIT_SEC };
@@ -236,8 +239,10 @@ void setup() {
   prefs.begin("nixie", false);
   brightLevel = prefs.getUChar("bright",    3);
   neoBright   = prefs.getUChar("neoBright",   30);
-  colonBright = prefs.getUChar("colonBright", 15);
-  animMode    = (AnimMode)prefs.getUChar("animMode", 0);
+  colonBright = prefs.getUChar("colonBright", 80);
+  uint8_t savedAnim = prefs.getUChar("animMode", 0);
+  animMode     = (savedAnim < (uint8_t)ANIM_COUNT) ? (AnimMode)savedAnim : ANIM_RAINBOW;
+  slotInterval = (SlotInterval)prefs.getUChar("slotIval", 0);
 
   for (int i = 0; i < IR_ACTION_COUNT; i++) {
     irCodes[i] = prefs.getULong64(IR_ACTION_KEYS[i], 0);
@@ -322,12 +327,16 @@ void loop() {
     if (curSec != lastSec) {
       lastSec = curSec;
 
-      if (animMode == ANIM_SLOTS && curSec % 10 == 0) {
-        // Alle 10 Sekunden Slot-Animation
-        startSlotAnimation(curHour, curMin, curSec);
-      } else if (!slotActive) {
-        setDisplayTime(curHour, curMin, curSec);
+      bool triggerSlot = false;
+      switch (slotInterval) {
+        case SLOT_10S:   triggerSlot = (curSec % 10 == 0); break;
+        case SLOT_1MIN:  triggerSlot = (curSec == 0); break;
+        case SLOT_15MIN: triggerSlot = (curSec == 0 && curMin % 15 == 0); break;
+        case SLOT_1HR:   triggerSlot = (curSec == 0 && curMin == 0); break;
+        default: break;
       }
+      if (triggerSlot && !slotActive) startSlotAnimation(curHour, curMin, curSec);
+      else if (!slotActive) setDisplayTime(curHour, curMin, curSec);
     }
   }
 
