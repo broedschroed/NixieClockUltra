@@ -70,6 +70,11 @@
 //  KONSTANTEN & KONFIGURATION
 // ═══════════════════════════════════════════════════════════
 
+// Hintergrund-Warmweiß, ANIM_STATIC (R/G/B – Verwendung: strip.Color(BG_WARM_R, BG_WARM_G, BG_WARM_B))
+#define BG_WARM_R  255
+#define BG_WARM_G  180
+#define BG_WARM_B   80
+
 // Trennpunkt-Warmweiß (R/G/B – Verwendung: strip.Color(COLON_WARM_R, COLON_WARM_G, COLON_WARM_B))
 #define COLON_WARM_R  255
 #define COLON_WARM_G  100

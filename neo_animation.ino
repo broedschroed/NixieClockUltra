@@ -42,7 +42,7 @@ void updateNeoPixel() {
     }
 
     case ANIM_STATIC: {
-      uint32_t warm = strip.Color(255, 180, 80);
+      uint32_t warm = strip.Color(BG_WARM_R, BG_WARM_G, BG_WARM_B);
       for (int i = 0; i < 6; i++) strip.setPixelColor(i, scaleColor(warm, neoBright));
       bool colonOn = colonAlwaysOn || (curSec % 2 == 0);
       uint32_t colonColor = colonOn ? strip.Color(COLON_WARM_R, COLON_WARM_G, COLON_WARM_B) : strip.Color(0, 0, 0);
