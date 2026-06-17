@@ -77,8 +77,8 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
   </div>
   <div class="row">
     <label>Trennpunkt-Helligkeit</label>
-    <input type="range" id="colonBright" min="1" max="100" value="15" oninput="setColonBright(this.value)">
-    <span id="colonBrightVal">15</span>
+    <input type="range" id="colonBright" min="1" max="100" value="80" oninput="setColonBright(this.value)">
+    <span id="colonBrightVal">80</span>
   </div>
   <div class="row">
     <label>Trennpunkte dauerhaft an</label>
