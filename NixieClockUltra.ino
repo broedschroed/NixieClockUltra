@@ -91,7 +91,7 @@ const uint8_t BRIGHTNESS_LEVELS[4] = {10, 30, 50, 80};
 // WiFi AP (Fallback-Hotspot, immer aktiv)
 #define WIFI_SSID     "NixieClockCS"
 #define WIFI_PASS     "nixie1234"
-#define WIFI_HOSTNAME "nixieclockcs"   // mDNS + DHCP-Hostname → http://nixieclock.local
+#define WIFI_HOSTNAME "nixieclockcs"   // mDNS + DHCP-Hostname → http://nixieclockcs.local
 
 // NTP
 #define NTP_SERVER  "pool.ntp.org"
