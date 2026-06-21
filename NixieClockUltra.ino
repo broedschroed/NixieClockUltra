@@ -100,6 +100,9 @@ const uint8_t BRIGHTNESS_LEVELS[4] = {10, 30, 50, 80};
 // Einstellmodus Timeout (ms)
 #define EDIT_TIMEOUT_MS   15000
 
+// Datum-Anzeige Dauer nach Slot-Animation
+#define DATE_SHOW_MS  5000
+
 // ═══════════════════════════════════════════════════════════
 //  OBJEKTE
 // ═══════════════════════════════════════════════════════════
@@ -163,6 +166,10 @@ bool slotActive = false;
 unsigned long slotStartMs = 0;
 uint8_t slotTarget[6] = {0};
 uint8_t slotCurrent[6] = {0};
+
+// Datum-Anzeige nach Slot
+bool     dateShowActive = false;
+uint32_t dateShowStart  = 0;
 
 // Fade-In beim Start
 bool startFadeIn = true;
@@ -354,13 +361,27 @@ void loop() {
         case SLOT_1HR:   triggerSlot = (curSec == 0 && curMin == 0); break;
         default: break;
       }
-      if (triggerSlot && !slotActive) startSlotAnimation(curHour, curMin, curSec);
-      else if (!slotActive) setDisplayTime(curHour, curMin, curSec);
+      if (!slotActive && !dateShowActive) {
+        if (triggerSlot) startSlotAnimation(curHour, curMin, curSec);
+        else             setDisplayTime(curHour, curMin, curSec);
+      }
     }
   }
 
   // --- Slot-Animation ---
+  bool wasSlotActive = slotActive;
   if (slotActive) updateSlotAnimation();
+  if (wasSlotActive && !slotActive) {
+    dateShowActive = true;
+    dateShowStart  = millis();
+    setDisplayDate();
+  }
+
+  // Datum-Anzeige beenden
+  if (dateShowActive && millis() - dateShowStart >= DATE_SHOW_MS) {
+    dateShowActive = false;
+    setDisplayTime(curHour, curMin, curSec);
+  }
 
   // --- NeoPixel ---
   updateNeoPixel();

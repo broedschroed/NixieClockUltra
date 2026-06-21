@@ -23,6 +23,16 @@ void startSlotAnimation(uint8_t h, uint8_t m, uint8_t s) {
   slotStartMs  = millis();
 }
 
+void setDisplayDate() {
+  displayDigits[0] = curDay   / 10;
+  displayDigits[1] = curDay   % 10;
+  displayDigits[2] = curMonth / 10;
+  displayDigits[3] = curMonth % 10;
+  displayDigits[4] = curYear  / 10;
+  displayDigits[5] = curYear  % 10;
+  nixieWrite(displayDigits);
+}
+
 void updateSlotAnimation() {
   if (!slotActive) return;
   unsigned long elapsed = millis() - slotStartMs;
