@@ -92,5 +92,16 @@ void updateNeoPixel() {
       strip.setPixelColor(i, rgbSwap(scaleColor(warmwhite, effColonBright)));
   }
 
+  // Datum-Anzeige: Hintergrund + obere Trennpunkte aus, nur untere Trennpunkte (Pixel 7+9) an
+  if (dateShowActive) {
+    for (int i = 0; i < 6; i++) strip.setPixelColor(i, 0);
+    strip.setPixelColor(6, 0);
+    strip.setPixelColor(8, 0);
+    uint32_t warmwhite = rgbSwap(scaleColor(
+      strip.Color(COLON_WARM_R, COLON_WARM_G, COLON_WARM_B), effColonBright));
+    strip.setPixelColor(7, warmwhite);
+    strip.setPixelColor(9, warmwhite);
+  }
+
   strip.show();
 }

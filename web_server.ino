@@ -127,13 +127,13 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
       <option value="0">Gedimmt</option>
       <option value="1">Dunkel</option>
     </select></div>
-  <div class="row"><label>LDR-Sensor aktiv</label>
+  <div class="row"><label>Lichtsensor aktiv</label>
     <label class="toggle"><input type="checkbox" id="ldrEn"><span class="slider"></span></label></div>
   <div class="row"><label>Schwellwert (0–4095)</label>
     <input type="range" id="ldrThr" min="0" max="4095" value="512"
       oninput="document.getElementById('ldrThrVal').textContent=this.value">
     <span id="ldrThrVal">512</span></div>
-  <div class="row"><label>LDR-Rohwert</label><span class="badge" id="ldrVal">--</span></div>
+  <div class="row"><label>Umgebungshelligkeit</label><span class="badge" id="ldrVal">--</span></div>
   <div class="row"><button onclick="saveNightMode()">Übernehmen</button></div>
 </div>
 
@@ -265,10 +265,11 @@ async function wSave(){
   await api('/api/wifi',{ssid:s,pass:p});
 }
 
-const IR_ACTIONS=['SET','UP','DOWN','BRIGHTNESS','ANIM_NEXT','SLOT','COLON_TOGGLE'];
+const IR_ACTIONS=['SET','UP','DOWN','BRIGHTNESS','ANIM_NEXT','SLOT','COLON_TOGGLE','DATUM'];
 const IR_LABELS={'SET':'SET &#x2013; Einstellmodus','UP':'UP &#x2013; Erh&ouml;hen','DOWN':'DOWN &#x2013; Verringern',
   'BRIGHTNESS':'BRIGHTNESS &#x2013; Helligkeit','ANIM_NEXT':'ANIM &#x2013; n&auml;chste Animation',
-  'SLOT':'SLOT &#x2013; Slot-Maschine','COLON_TOGGLE':'COLON &#x2013; Trennpunkte an/aus'};
+  'SLOT':'SLOT &#x2013; Slot-Maschine','COLON_TOGGLE':'COLON &#x2013; Trennpunkte an/aus',
+  'DATUM':'DATUM &#x2013; Datum anzeigen'};
 let irPollTimer=null;
 
 async function refreshIR(){
@@ -282,7 +283,7 @@ async function refreshIR(){
     let tr=document.createElement('tr');
     tr.id='irr-'+a;
     if(learning)tr.style.animation='blink 0.6s infinite';
-    let td1=document.createElement('td');td1.style.cssText='padding:4px 8px 4px 0;font-size:.82em';td1.textContent=IR_LABELS[a];
+    let td1=document.createElement('td');td1.style.cssText='padding:4px 8px 4px 0;font-size:.82em';td1.innerHTML=IR_LABELS[a];
     let td2=document.createElement('td');td2.style.cssText='padding:4px 8px;font-size:.8em;color:'+(code?'var(--accent)':'var(--dim)');td2.textContent=code||'—';
     let td3=document.createElement('td');td3.style.cssText='white-space:nowrap';
     td3.innerHTML='<button class="sec" style="padding:3px 9px;font-size:.78em" onclick="irLearn(\''+a+'\')">'+( learning?'warte&#x2026;':'Anlernen')+'</button> '+

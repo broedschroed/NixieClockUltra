@@ -52,6 +52,14 @@ void executeAction(IrAction action) {
       prefs.putBool("colonOn", colonAlwaysOn);
       break;
 
+    case IR_ACTION_DATE:
+      if (editState == EDIT_NONE && !slotActive) {
+        dateShowActive = true;
+        dateShowStart  = millis();
+        setDisplayDate();
+      }
+      break;
+
     default: break;
   }
 }

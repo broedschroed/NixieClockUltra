@@ -17,7 +17,7 @@ static bool timeInNightRange(uint8_t h) {
 }
 
 void updateNightMode() {
-  if (ldrEnabled && millis() - lastLdrRead >= LDR_SAMPLE_MS) {
+  if (millis() - lastLdrRead >= LDR_SAMPLE_MS) {
     lastLdrRead = millis();
     uint32_t sum = 0;
     for (int i = 0; i < 4; i++) sum += analogRead(LDR_PIN);

@@ -211,17 +211,18 @@ enum IrAction {
   IR_ACTION_ANIM_NEXT     = 4,
   IR_ACTION_SLOT          = 5,
   IR_ACTION_COLON_TOGGLE  = 6,
-  IR_ACTION_COUNT         = 7
+  IR_ACTION_DATE          = 7,
+  IR_ACTION_COUNT         = 8
 };
 
 const char* IR_ACTION_KEYS[IR_ACTION_COUNT] = {
   "ir_SET", "ir_UP", "ir_DOWN", "ir_BRIGHTNESS",
-  "ir_ANIM_NEXT", "ir_SLOT", "ir_COLTOGGLE"
+  "ir_ANIM_NEXT", "ir_SLOT", "ir_COLTOGGLE", "ir_DATE"
 };
 
 const char* IR_ACTION_LABELS[IR_ACTION_COUNT] = {
   "SET", "UP", "DOWN", "BRIGHTNESS",
-  "ANIM_NEXT", "SLOT", "COLON_TOGGLE"
+  "ANIM_NEXT", "SLOT", "COLON_TOGGLE", "DATUM"
 };
 
 IRrecv   irrecv(IR_RECV_PIN);
