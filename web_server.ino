@@ -196,6 +196,7 @@ async function refreshClock(){
     }
   }
   if(d.nightState!==undefined) document.getElementById('nightStateBadge').textContent=NS_LABELS[d.nightState]||'Normal';
+  if(d.ldrVal!==undefined) document.getElementById('ldrVal').textContent=d.ldrVal;
 }
 
 async function setTime(){
@@ -408,6 +409,7 @@ void setupWebServer() {
     snprintf(dateBuf, sizeof(dateBuf), "%02d.%02d.%02d", curDay, curMonth, curYear);
     doc["date"]       = dateBuf;
     doc["nightState"] = (int)nightState;
+    doc["ldrVal"]     = ldrReading;
     String out; serializeJson(doc, out);
     req->send(200, "application/json", out);
   });
