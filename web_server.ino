@@ -39,12 +39,16 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
 <body>
 <h1>⬡ NIXIE CLOCK</h1>
 <div class="clock" id="clkDisp">--:--:--</div>
+<div style="font-size:1.2em;color:var(--dim);letter-spacing:.1em;margin-bottom:20px" id="dateDisp">--.--.--</div>
 
 <div class="card">
-  <h2>⏱ Zeit stellen</h2>
+  <h2>⏱ Zeit & Datum stellen</h2>
   <div class="row"><label>Stunde</label><input type="number" id="ih" min="0" max="23" value="0"></div>
   <div class="row"><label>Minute</label><input type="number" id="im" min="0" max="59" value="0"></div>
   <div class="row"><label>Sekunde</label><input type="number" id="is" min="0" max="59" value="0"></div>
+  <div class="row"><label>Tag</label><input type="number" id="id" min="1" max="31" value="1"></div>
+  <div class="row"><label>Monat</label><input type="number" id="imo" min="1" max="12" value="1"></div>
+  <div class="row"><label>Jahr (2-stellig)</label><input type="number" id="iy" min="0" max="99" value="24"></div>
   <div class="row">
     <button onclick="setTime()">Übernehmen</button>
     <button class="sec" onclick="syncBrowser()">Browser-Zeit</button>
@@ -134,9 +138,7 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
   <div class="row"><label>Passwort</label><input type="password" id="wPass" placeholder="Passwort" style="width:160px"></div>
   <div class="row">
     <button onclick="wSave()">Verbinden</button>
-    <button class="sec" onclick="wScan()">Scannen</button>
   </div>
-  <select id="wNets" size="4" style="display:none;width:100%;background:#111;border:1px solid #444;color:var(--text);border-radius:6px;margin-top:8px;font-family:inherit" onchange="document.getElementById('wSsid').value=this.value"></select>
   <p style="font-size:.75em;color:var(--dim);margin-top:8px">Leer lassen um WLAN zu entfernen. Neustart erfolgt automatisch.</p>
 </div>
 
@@ -160,20 +162,35 @@ async function refreshClock(){
   if(d.colonStatic!==undefined)document.getElementById('colonStatic').checked=d.colonStatic;
   if(d.colonBright!==undefined){document.getElementById('colonBright').value=d.colonBright;document.getElementById('colonBrightVal').textContent=d.colonBright;}
   if(d.slot!==undefined) document.getElementById('slotStatus').textContent=d.slot?'läuft…':'bereit';
+  if(d.date){
+    let parts=d.date.split('.');
+    if(parts.length===3){
+      document.getElementById('id').value  = parseInt(parts[0]);
+      document.getElementById('imo').value = parseInt(parts[1]);
+      document.getElementById('iy').value  = parseInt(parts[2]);
+      document.getElementById('dateDisp').textContent = d.date;
+    }
+  }
 }
 
 async function setTime(){
-  let h=parseInt(document.getElementById('ih').value);
-  let m=parseInt(document.getElementById('im').value);
-  let s=parseInt(document.getElementById('is').value);
-  let r=await api('/api/settime',{h,m,s});
-  document.getElementById('statusMsg').textContent=r.ok?'Zeit gesetzt ✓':'Fehler ✗';
+  let h  = parseInt(document.getElementById('ih').value);
+  let m  = parseInt(document.getElementById('im').value);
+  let s  = parseInt(document.getElementById('is').value);
+  let d  = parseInt(document.getElementById('id').value);
+  let mo = parseInt(document.getElementById('imo').value);
+  let y  = parseInt(document.getElementById('iy').value);
+  let r  = await api('/api/settime',{h,m,s,d,mo,y});
+  document.getElementById('statusMsg').textContent=r.ok?'Zeit & Datum gesetzt ✓':'Fehler ✗';
 }
 function syncBrowser(){
   let now=new Date();
-  document.getElementById('ih').value=now.getHours();
-  document.getElementById('im').value=now.getMinutes();
-  document.getElementById('is').value=now.getSeconds();
+  document.getElementById('ih').value  = now.getHours();
+  document.getElementById('im').value  = now.getMinutes();
+  document.getElementById('is').value  = now.getSeconds();
+  document.getElementById('id').value  = now.getDate();
+  document.getElementById('imo').value = now.getMonth()+1;
+  document.getElementById('iy').value  = now.getFullYear()%100;
   setTime();
 }
 async function setBright(){
@@ -220,20 +237,6 @@ async function wSave(){
   let p=document.getElementById('wPass').value;
   document.getElementById('statusMsg').textContent='Gespeichert – Neustart läuft…';
   await api('/api/wifi',{ssid:s,pass:p});
-}
-async function wScan(){
-  let sel=document.getElementById('wNets');
-  sel.style.display='';
-  sel.innerHTML='<option disabled>Suche Netzwerke…</option>';
-  let nets=await get('/api/wifi/scan');
-  sel.innerHTML='';
-  if(!Array.isArray(nets)||!nets.length){sel.innerHTML='<option disabled>Keine Netzwerke gefunden</option>';return;}
-  nets.sort((a,b)=>b.rssi-a.rssi).forEach(n=>{
-    let o=document.createElement('option');
-    o.value=n.ssid;
-    o.textContent=n.ssid+' ('+n.rssi+' dBm)'+(n.enc?' 🔒':'');
-    sel.appendChild(o);
-  });
 }
 
 const IR_ACTIONS=['SET','UP','DOWN','BRIGHTNESS','ANIM_NEXT','SLOT','COLON_TOGGLE'];
@@ -301,8 +304,11 @@ void setupWifi() {
   String savedSsid = prefs.getString("wifiSsid", "");
   String savedPass = prefs.getString("wifiPass", "");
 
-  // Immer AP starten (Fallback-Hotspot)
-  WiFi.mode(savedSsid.length() > 0 ? WIFI_AP_STA : WIFI_AP);
+  // DHCP-Hostname setzen bevor WiFi-Stack konfiguriert wird
+  WiFi.setHostname(WIFI_HOSTNAME);
+
+  // WIFI_AP_STA immer setzen: STA-Interface muss aktiv sein damit Scan funktioniert
+  WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(WIFI_SSID, WIFI_PASS);
   Serial.printf("[WiFi] AP gestartet: %s  IP: %s\n", WIFI_SSID, WiFi.softAPIP().toString().c_str());
 
@@ -310,18 +316,22 @@ void setupWifi() {
     WiFi.begin(savedSsid.c_str(), savedPass.c_str());
     Serial.printf("[WiFi] Verbinde mit '%s'...\n", savedSsid.c_str());
     unsigned long t = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - t < 10000) {
+    while (WiFi.status() != WL_CONNECTED && millis() - t < 20000) {
       delay(200);
     }
     if (WiFi.status() == WL_CONNECTED) {
       wifiStaConnected = true;
       Serial.printf("[WiFi] STA verbunden. IP: %s\n", WiFi.localIP().toString().c_str());
+      if (MDNS.begin(WIFI_HOSTNAME)) {
+        Serial.printf("[mDNS] Erreichbar als http://%s.local\n", WIFI_HOSTNAME);
+      }
       configTzTime(NTP_TZ, NTP_SERVER);
       Serial.println("[NTP] Synchronisierung gestartet...");
     } else {
       Serial.println("[WiFi] STA-Verbindung fehlgeschlagen – nur AP aktiv.");
     }
   }
+
 }
 
 void setupWebServer() {
@@ -331,18 +341,22 @@ void setupWebServer() {
   });
 
   server.on("/api/status", HTTP_GET, [](AsyncWebServerRequest *req) {
-    StaticJsonDocument<256> doc;
+    StaticJsonDocument<384> doc;
     char buf[10];
     snprintf(buf, sizeof(buf), "%02d:%02d:%02d", curHour, curMin, curSec);
-    doc["time"]      = buf;
-    doc["bright"]    = brightLevel;
-    doc["neoBright"] = neoBright;
-    doc["anim"]      = (int)animMode;
-    doc["slot"]      = slotActive;
-    doc["slotIval"]  = (int)slotInterval;
+    doc["time"]       = buf;
+    doc["bright"]     = brightLevel;
+    doc["neoBright"]  = neoBright;
+    doc["anim"]       = (int)animMode;
+    doc["slot"]       = slotActive;
+    doc["slotIval"]   = (int)slotInterval;
     doc["colonOn"]     = colonAlwaysOn;
     doc["colonStatic"] = colonStatic;
     doc["colonBright"] = colonBright;
+    char dateBuf[9];
+    snprintf(dateBuf, sizeof(dateBuf), "%02d.%02d.%02d", curDay, curMonth, curYear);
+    doc["date"]       = dateBuf;
+    doc["nightState"] = 0;
     String out; serializeJson(doc, out);
     req->send(200, "application/json", out);
   });
@@ -355,6 +369,9 @@ void setupWebServer() {
         curHour = constrain((int)doc["h"], 0, 23);
         curMin  = constrain((int)doc["m"], 0, 59);
         curSec  = constrain((int)doc["s"], 0, 59);
+        if (doc.containsKey("d"))  curDay   = constrain((int)doc["d"],  1, 31);
+        if (doc.containsKey("mo")) curMonth = constrain((int)doc["mo"], 1, 12);
+        if (doc.containsKey("y"))  curYear  = constrain((int)doc["y"],  0, 99);
         writeRTC();
         setDisplayTime(curHour, curMin, curSec);
       }
@@ -474,21 +491,6 @@ void setupWebServer() {
     }
   );
 
-  // --- WLAN-Scan ---
-  server.on("/api/wifi/scan", HTTP_GET, [](AsyncWebServerRequest *req) {
-    int n = WiFi.scanNetworks();
-    DynamicJsonDocument doc(2048);
-    JsonArray arr = doc.to<JsonArray>();
-    for (int i = 0; i < n && i < 20; i++) {
-      JsonObject net = arr.createNestedObject();
-      net["ssid"] = WiFi.SSID(i);
-      net["rssi"] = WiFi.RSSI(i);
-      net["enc"]  = (WiFi.encryptionType(i) != WIFI_AUTH_OPEN);
-    }
-    WiFi.scanDelete();
-    String out; serializeJson(doc, out);
-    req->send(200, "application/json", out);
-  });
 
   // --- IR: Status ---
   server.on("/api/ir/status", HTTP_GET, [](AsyncWebServerRequest *req) {
