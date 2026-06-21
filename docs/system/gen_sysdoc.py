@@ -214,7 +214,7 @@ def build_content():
     c.append(p("Nixie Clock Ultra", "Title"))
     c.append(p("Systemdokumentation", "Subtitle"))
     c.append(br()); c.append(br())
-    c.append(p("Version 2.0 · ESP32-S3 · 6 × IN-12A Nixie", "TitleMeta"))
+    c.append(p("Version 2.1 · ESP32-S3 · 6 × IN-12A Nixie", "TitleMeta"))
     c.append(p("MCP23017 Direct Drive · DS1302 RTC · WS2812B NeoPixel", "TitleMeta"))
     c.append(br())
     c.append(p("Stand: Juni 2026", "TitleMeta"))
@@ -294,7 +294,7 @@ def build_content():
             ["J2",  "USB Micro-B",         "Custom",     "5 V-Einspeisung & Firmware-Upload"],
             ["J3",  "PinHeader 1×8",       "2,54 mm",    "Inter-Board Logik-Signale"],
             ["J4",  "PinHeader 1×4",       "2,54 mm",    "Inter-Board HV-Versorgung"],
-            ["J5",  "PinHeader 1×2",       "2,54 mm",    "Optionaler LDR-Sensor (nicht bestückt)"],
+            ["J5",  "PinHeader 1×2",       "2,54 mm",    "LDR-Helligkeitssensor, bestückt: LDR→VCC, 100 kΩ→GND, Messung GPIO6"],
         ],
         [1.2, 3.5, 2.5, 8.8]
     ))
@@ -322,14 +322,15 @@ def build_content():
         ["GPIO", "Signal", "Richtung", "Funktion"],
         [
             ["2",  "RTC_CE",    "Output", "DS1302 Chip Enable (ThreeWire)"],
-            ["4",  "RTC_IO",    "Bi-Dir.", "DS1302 Datenleitng (ThreeWire)"],
+            ["4",  "RTC_IO",    "Bi-Dir.", "DS1302 Datenleitung (ThreeWire)"],
             ["5",  "RTC_CLK",   "Output", "DS1302 Takt (ThreeWire)"],
+            ["6",  "LDR_ADC",   "Input",  "LDR-Helligkeitssensor (ADC1, LDR→VCC, 100 kΩ→GND)"],
             ["8",  "I2C_SDA",   "Bi-Dir.", "I²C Daten → 4× MCP23017"],
             ["9",  "I2C_SCL",   "Output", "I²C Takt → 4× MCP23017"],
+            ["10", "BTN_LIGHT", "Input",  "Taster LIGHT (INPUT_PULLUP, aktiv LOW)"],
+            ["11", "BTN_DOWN",  "Input",  "Taster DOWN (INPUT_PULLUP, aktiv LOW)"],
+            ["12", "BTN_UP",    "Input",  "Taster UP (INPUT_PULLUP, aktiv LOW)"],
             ["13", "BTN_SET",   "Input",  "Taster SET (INPUT_PULLUP, aktiv LOW)"],
-            ["14", "BTN_UP",    "Input",  "Taster UP (INPUT_PULLUP, aktiv LOW)"],
-            ["15", "BTN_DOWN",  "Input",  "Taster DOWN (INPUT_PULLUP, aktiv LOW)"],
-            ["16", "BTN_LIGHT", "Input",  "Taster LIGHT (INPUT_PULLUP, aktiv LOW)"],
             ["21", "NEO_DATA",  "Output", "WS2812B DIN (10 LEDs, verkettete Kette)"],
             ["48", "IR_RECV",   "Input",  "VS1838B demodulierter 38-kHz-Ausgang"],
         ],
@@ -467,13 +468,15 @@ def build_content():
     c.append(table(
         ["Datei", "Zeilen", "Inhalt / Verantwortlichkeit"],
         [
-            ["NixieClockUltra.ino", "~360", "Globals, setup(), loop(), Edit-Mode-FSM, Slot-Animation, Konstanten"],
-            ["nixie_driver.ino",    "91",   "nixieInit(), nixieWrite(), MCP23017-I²C-Abstraktion, Shadow-Register, Mutex"],
-            ["display.ino",         "47",   "setDisplayTime(), Fade-In/Out-Mechanismus"],
-            ["buttons.ino",         "119",  "Entprell-FSM für 4 Taster, Kurz-/Langdruck-Erkennung"],
-            ["rtc.ino",             "15",   "readRTC(), writeRTC() via DS1302/ThreeWire (Makuna-Bibliothek)"],
-            ["neo_animation.ino",   "99",   "Rainbow, Statisch, Puls, Slot-Machine-Animation, Trennpunkt-Blinken"],
-            ["web_server.ino",      "559",  "Eingebettetes HTML/CSS/JS, alle 16 API-Handler, WiFi AP+STA, NTP"],
+            ["NixieClockUltra.ino", "477", "Globals, setup(), loop(), Edit-Mode-FSM (Zeit+Datum), Software-PWM, Nacht-Modus-Globals"],
+            ["nixie_driver.ino",    "91",  "nixieInit(), nixieWrite(), MCP23017-I²C-Abstraktion, Shadow-Register, Mutex"],
+            ["display.ino",         "66",  "setDisplayTime(), setDisplayDate(), nixieWriteSafe(), Slot-Animation"],
+            ["buttons.ino",         "127", "Entprell-FSM für 4 Taster, Kurz-/Langdruck, Edit-Mode Zeit+Datum"],
+            ["rtc.ino",             "18",  "readRTC(), writeRTC() via DS1302/ThreeWire, liest auch Tag/Monat/Jahr"],
+            ["night_mode.ino",      "34",  "LDR-Abtastung (GPIO6, ADC1), updateNightMode(), Zeitbereich-Logik"],
+            ["neo_animation.ino",   "107", "Rainbow, Statisch, Puls, Slot, Nacht-Modus-Dimming, Datumsanzeige-Override"],
+            ["ir_remote.ino",       "107", "executeAction(), dispatchIRAction(), handleIR(), 8 IR-Aktionen"],
+            ["web_server.ino",      "685", "Eingebettetes HTML/JS, alle API-Handler, WiFi-Setup, NTP, mDNS"],
         ],
         [4.5, 1.5, 10.0]
     ))
@@ -499,16 +502,16 @@ def build_content():
     c.append(table(
         ["Schritt", "Funktion / Aktion", "Details"],
         [
-            ["1",  "Serial.begin(115200)",       "Debug-Ausgabe aktivieren"],
-            ["2",  "pinMode(BTN_*, INPUT_PULLUP)","Alle 4 Taster-GPIOs konfigurieren"],
-            ["3",  "strip.begin() / clear()",     "NeoPixel initialisieren, alle LEDs aus"],
-            ["4",  "prefs.begin(\"nixie\")",      "NVS öffnen, Helligkeit/Anim/IR-Codes/WiFi laden"],
-            ["5",  "nixieInit()",                 "I²C starten, alle 4 MCP23017 auf Output, alle Bits 0"],
-            ["6",  "Rtc.Begin() + readRTC()",     "DS1302 starten, Uhrzeit in curHour/Min/Sec laden"],
-            ["7",  "setupWifi()",                 "AP starten; STA verbinden falls creds vorhanden; NTP konfigurieren"],
-            ["8",  "setupWebServer()",            "Alle 16 API-Routen registrieren, server.begin()"],
-            ["9",  "irrecv.enableIRIn()",         "IR-Empfänger aktivieren (GPIO48)"],
-            ["10", "startFadeIn = true",          "Fade-In-Flag setzen → Röhren blenden in loop() ein"],
+            ["1",  "Serial.begin(115200)",        "Debug-Ausgabe aktivieren"],
+            ["2",  "pinMode(BTN_*, INPUT_PULLUP)", "Alle 4 Taster-GPIOs konfigurieren (IO10–IO13)"],
+            ["3",  "strip.begin() / clear()",      "NeoPixel initialisieren, alle LEDs aus"],
+            ["4",  "prefs.begin(\"nixie\")",       "NVS öffnen: Helligkeit, Anim, SlotIval, IR-Codes, WiFi, Nacht-Modus-Konfiguration laden"],
+            ["5",  "nixieInit()",                  "I²C starten, alle 4 MCP23017 auf Output, alle Bits 0"],
+            ["6",  "Rtc.Begin() + readRTC()",      "DS1302 starten, Uhrzeit + Datum in curHour/Min/Sec/Day/Month/Year laden"],
+            ["7",  "setupWifi()",                  "AP starten (SSID NixieClockCS); STA verbinden + NTP; mDNS als nixieclockcs.local"],
+            ["8",  "setupWebServer()",             "Alle API-Routen registrieren, server.begin()"],
+            ["9",  "irrecv.enableIRIn()",          "IR-Empfänger aktivieren (GPIO48)"],
+            ["10", "startFadeIn = true",           "Fade-In-Flag setzen → Röhren blenden in loop() ein"],
         ],
         [1.2, 4.5, 10.3]
     ))
@@ -517,36 +520,94 @@ def build_content():
     c.append(table(
         ["Variable", "Typ", "Beschreibung"],
         [
-            ["displayDigits[6]",  "uint8_t[6]",   "Aktuell angezeigte Ziffern (0–9; 10 = blank)"],
-            ["brightLevel",        "uint8_t",      "Helligkeitsstufe 0–3 (Index in BRIGHTNESS_LEVELS[])"],
-            ["neoBright",          "uint8_t",      "NeoPixel-Feinwert 10–255 (Hintergrund Pixel 0–5)"],
-            ["colonBright",        "uint8_t",      "NeoPixel-Feinwert (Trennpunkte Pixel 6–9)"],
-            ["neoHue",             "uint8_t",      "Auto-inkrement für Rainbow-Farbverlauf"],
-            ["animMode",           "AnimMode",     "Aktueller Animationsmodus (Enum, s. u.)"],
-            ["editState",          "EditState",    "Aktueller Einstellschritt (NONE/HOUR/MIN/SEC)"],
-            ["colonAlwaysOn",      "bool",         "Trennpunkte dauerhaft an (kein Blinken)"],
-            ["colonStatic",        "bool",         "Trennpunkte statisch (Variante 2)"],
-            ["irCodes[7]",         "uint64_t[7]",  "Angelernte IR-Codes, Index = IrAction-Enum (0–6)"],
-            ["wifiStaConnected",   "bool",         "STA-Verbindung zum Heimnetz aktiv"],
-            ["ntpSynced",          "bool",         "NTP-Synchronisierung erfolgreich"],
-            ["slotActive",         "bool",         "Slot-Machine-Animation läuft"],
-            ["startFadeIn",        "bool",         "Einblend-Sequenz beim Start aktiv"],
+            ["displayDigits[6]",  "uint8_t[6]",  "Aktuell angezeigte Ziffern (0–9; 10 = blank)"],
+            ["brightLevel",        "uint8_t",     "Helligkeitsstufe 0–3 (Index in BRIGHTNESS_LEVELS[])"],
+            ["neoBright",          "uint8_t",     "NeoPixel-Feinwert 10–255 (Hintergrund Pixel 0–5)"],
+            ["colonBright",        "uint8_t",     "NeoPixel-Feinwert (Trennpunkte Pixel 6–9)"],
+            ["neoHue",             "uint8_t",     "Auto-inkrement für Rainbow-Farbverlauf"],
+            ["animMode",           "AnimMode",    "Aktueller Animationsmodus (Enum, s. u.)"],
+            ["editState",          "EditState",   "Aktueller Einstellschritt (NONE/HOUR/MIN/SEC/DAY/MONTH/YEAR)"],
+            ["colonAlwaysOn",      "bool",        "Trennpunkte dauerhaft an (kein Blinken)"],
+            ["colonStatic",        "bool",        "Trennpunkte statisch warmweiß"],
+            ["curDay/Month/Year",  "uint8_t",     "Lokal gecachtes Datum (Tag 1–31, Monat 1–12, Jahr 0–99)"],
+            ["dateShowActive",     "bool",        "Datumsanzeige nach Slot-Animation gerade aktiv"],
+            ["dateShowStart",      "uint32_t",    "millis()-Zeitstempel beim Start der Datumsanzeige"],
+            ["nightState",         "NightState",  "Aktueller Nacht-Modus-Zustand (NORMAL/DIM/DARK)"],
+            ["nightTimeEnabled",   "bool",        "Zeitbereich-Nacht-Modus aktiv"],
+            ["nightStart/End",     "uint8_t",     "Start-/Endstunde des Nacht-Bereichs (0–23)"],
+            ["nightTimeMode",      "uint8_t",     "0 = Gedimmt, 1 = Dunkel"],
+            ["ldrEnabled",         "bool",        "Lichtsensor-Steuerung aktiv"],
+            ["ldrThreshold",       "uint16_t",    "ADC-Schwellwert (0–4095); <= Schwellwert → Dimmen"],
+            ["ldrReading",         "uint16_t",    "Aktueller ADC-Messwert (alle 500 ms aktualisiert)"],
+            ["nixiePwmOn",         "bool",        "Software-PWM: Nixie-Ausgabe gerade eingeschaltet"],
+            ["irCodes[8]",         "uint64_t[8]", "Angelernte IR-Codes, Index = IrAction-Enum (0–7)"],
+            ["wifiStaConnected",   "bool",        "STA-Verbindung zum Heimnetz aktiv"],
+            ["ntpSynced",          "bool",        "NTP-Synchronisierung erfolgreich"],
+            ["slotActive",         "bool",        "Slot-Machine-Animation läuft"],
+            ["startFadeIn",        "bool",        "Einblend-Sequenz beim Start aktiv"],
         ],
         [4.0, 2.5, 9.5]
     ))
 
     c.append(h2("Enumerationen"))
     c.append(code_block(
-        "enum AnimMode  { ANIM_RAINBOW, ANIM_STATIC, ANIM_PULSE, ANIM_SLOTS, ANIM_COUNT };",
-        "enum EditState { EDIT_NONE, EDIT_HOUR, EDIT_MIN, EDIT_SEC };",
-        "enum IrAction  {",
-        "    IR_LEARN_NONE = -1,",
-        "    IR_ACTION_SET = 0, IR_ACTION_UP = 1, IR_ACTION_DOWN = 2,",
-        "    IR_ACTION_BRIGHTNESS = 3, IR_ACTION_ANIM_NEXT = 4,",
-        "    IR_ACTION_SLOT = 5, IR_ACTION_COLON_TOGGLE = 6,",
-        "    IR_ACTION_COUNT = 7",
+        "enum AnimMode   { ANIM_RAINBOW, ANIM_STATIC, ANIM_PULSE, ANIM_COUNT };",
+        "",
+        "enum EditState  { EDIT_NONE,",
+        "                  EDIT_HOUR, EDIT_MIN, EDIT_SEC,",
+        "                  EDIT_DAY, EDIT_MONTH, EDIT_YEAR };",
+        "",
+        "enum NightState { NIGHT_NORMAL, NIGHT_DIM, NIGHT_DARK };",
+        "",
+        "enum IrAction   {",
+        "    IR_LEARN_NONE          = -1,",
+        "    IR_ACTION_SET          = 0,  IR_ACTION_UP          = 1,",
+        "    IR_ACTION_DOWN         = 2,  IR_ACTION_BRIGHTNESS  = 3,",
+        "    IR_ACTION_ANIM_NEXT    = 4,  IR_ACTION_SLOT        = 5,",
+        "    IR_ACTION_COLON_TOGGLE = 6,  IR_ACTION_DATE        = 7,",
+        "    IR_ACTION_COUNT        = 8",
         "};",
     ))
+
+    c.append(h2("nixieWriteSafe() – Blitzschutz im Dimm-Modus"))
+    c.append(p("Um Aufblitzer bei Sekundenwechsel im Dimm-Modus zu verhindern, wrappen "
+               "alle Schreibaufrufe nixieWriteSafe() statt nixieWrite() direkt:"))
+    c.append(code_block(
+        "static void nixieWriteSafe() {",
+        "    if (nightState == NIGHT_DARK)             return; // komplett aus",
+        "    if (nightState == NIGHT_DIM && !nixiePwmOn) return; // PWM Off-Phase",
+        "    nixieWrite(displayDigits);",
+        "}",
+    ))
+    c.append(p("Der Software-PWM in loop() schaltet nixiePwmOn im 20-ms-Rhythmus "
+               "ein und aus (5 ms ein / 15 ms aus = 25 % Duty-Cycle, ~50 Hz). "
+               "Ohne den Guard würde ein Sekundenwechsel die Röhren für eine kurze "
+               "Zeit mit voller Helligkeit aufblitzen lassen, bevor das PWM wieder "
+               "in die Off-Phase schaltet."))
+
+    c.append(h2("Nacht-Modus (night_mode.ino)"))
+    c.append(p("updateNightMode() wird jeden Loop-Durchlauf aufgerufen und "
+               "bestimmt den nightState in drei Stufen:"))
+    c.append(table(
+        ["Priorität", "Bedingung", "Ergebnis"],
+        [
+            ["1 (höchste)", "nightTimeEnabled && Stunde im konfigurierten Bereich", "NIGHT_DIM oder NIGHT_DARK (je nach nightTimeMode)"],
+            ["2",           "ldrEnabled && ldrReading <= ldrThreshold",             "NIGHT_DIM (LDR kann nur dimmen, nicht dunkel)"],
+            ["3 (Fallback)", "keine der obigen Bedingungen",                        "NIGHT_NORMAL"],
+        ],
+        [2.5, 6.5, 7.0]
+    ))
+    c.append(p("Der LDR (GPIO6, ADC1) wird immer alle 500 ms abgetastet — unabhängig "
+               "davon ob ldrEnabled gesetzt ist. So ist der Rohwert im Web-UI immer "
+               "aktuell. LDR→VCC, 100 kΩ→GND: Helligkeit = hoher ADC-Wert, Dunkelheit = niedriger Wert."))
+
+    c.append(h2("Datumsanzeige"))
+    c.append(p("Nach jeder Slot-Animation und bei IR-Taste DATUM wird dateShowActive=true gesetzt. "
+               "Für 5000 ms (DATE_SHOW_MS) zeigen die Röhren das Datum im Format TT MM JJ. "
+               "Die NeoPixel-Ausgabe in neo_animation.ino überschreibt dabei alle Pixel: "
+               "Hintergrund (0–5) und obere Trennpunkte (Pixel 6, 8) werden gelöscht. "
+               "Nur die unteren Trennpunkte (Pixel 7 und 9) leuchten in warmweiß — "
+               "ein visueller Hinweis, dass Datum statt Uhrzeit angezeigt wird."))
 
     c.append(h2("nixie_driver.ino – Direkte MCP23017-Ansteuerung"))
     c.append(p("Der Nixie-Treiber implementiert die direkte, multiplexingfreie "
@@ -574,29 +635,31 @@ def build_content():
         "Wire.endTransmission();",
     ))
 
-    c.append(h2("Web-API (16 Endpunkte)"))
-    c.append(p("Der HTTP-Server läuft auf Port 80, im AP-Modus unter 192.168.4.1, "
-               "im STA-Modus zusätzlich unter der Heimnetz-IP. "
+    c.append(h2("Web-API"))
+    c.append(p("Der HTTP-Server läuft auf Port 80, erreichbar über 192.168.4.1 (AP) "
+               "oder http://nixieclockcs.local (Heimnetz via mDNS). "
                "POST-Endpunkte erwarten JSON (Content-Type: application/json)."))
     c.append(table(
         ["Pfad", "Methode", "Request-Body / Antwort"],
         [
-            ["/",                "GET",  "Vollständiges Web-Interface (HTML/CSS/JS eingebettet)"],
-            ["/api/status",      "GET",  "{h, m, s, brightLevel, neoBright, animMode, wifiSta, ntpSynced}"],
-            ["/api/settime",     "POST", "{\"h\":H, \"m\":M, \"s\":S}  → Zeit in DS1302 schreiben"],
-            ["/api/bright",      "POST", "{\"level\":0..3}  → Helligkeitsstufe"],
-            ["/api/neobright",   "POST", "{\"val\":10..255}  → NeoPixel-Feinwert"],
-            ["/api/anim",        "POST", "{\"mode\":0..3}  → Animationsmodus"],
-            ["/api/colonbright", "POST", "{\"val\":1..100}  → Trennpunkt-Helligkeit"],
-            ["/api/colonon",     "POST", "{\"enabled\":true|false}  → Dauerhaft an/aus"],
-            ["/api/colonstatic", "POST", "{\"enabled\":true|false}  → Statisch (kein Blinken)"],
-            ["/api/slot",        "POST", "(kein Body) → Slot-Machine-Animation starten"],
-            ["/api/wifi",        "GET",  "{apIP, staIP, staConnected, ntpSynced}"],
-            ["/api/wifi",        "POST", "{\"ssid\":\"…\", \"pass\":\"…\"}  → STA verbinden, Neustart"],
-            ["/api/wifi/scan",   "GET",  "JSON-Array verfügbarer WLANs"],
-            ["/api/ir/status",   "GET",  "7 IR-Code-Einträge (je action + code)"],
-            ["/api/ir/learn",    "POST", "{\"action\":\"SET\"|\"UP\"|\"DOWN\"|\"BRIGHTNESS\"|\"ANIM_NEXT\"|\"SLOT\"|\"COLON_TOGGLE\"}"],
-            ["/api/ir/clear",    "POST", "{\"action\":\"…\"}  → IR-Code löschen"],
+            ["/",                  "GET",  "Vollständiges Web-Interface (HTML/CSS/JS eingebettet als PROGMEM)"],
+            ["/api/status",        "GET",  "{time, date, bright, neoBright, animMode, slotIval, colonOn, colonStatic, colonBright, slot, nightState, ldrVal, wifiSta, ntpSynced}"],
+            ["/api/settime",       "POST", "{\"h\":H,\"m\":M,\"s\":S} + optional {\"d\":D,\"mo\":Mo,\"y\":Y} → RTC schreiben"],
+            ["/api/bright",        "POST", "{\"level\":0..3}  → Helligkeitsstufe + NVS"],
+            ["/api/neobright",     "POST", "{\"val\":10..255}  → NeoPixel-Feinwert + NVS"],
+            ["/api/anim",          "POST", "{\"mode\":0..2}  → Animationsmodus + NVS"],
+            ["/api/slotinterval",  "POST", "{\"interval\":0..4}  → Slot-Intervall (SlotInterval-Enum) + NVS"],
+            ["/api/colonbright",   "POST", "{\"val\":1..100}  → Trennpunkt-Helligkeit + NVS"],
+            ["/api/colonon",       "POST", "{\"enabled\":true|false}  → Dauerhaft an/aus + NVS"],
+            ["/api/colonstatic",   "POST", "{\"enabled\":true|false}  → Statisch warmweiß + NVS"],
+            ["/api/slot",          "POST", "(kein Body) → Slot-Machine-Animation sofort starten"],
+            ["/api/nightmode",     "GET",  "{ntEn, ntFrom, ntTo, ntMode, ldrEn, ldrThr, ldrVal, state}"],
+            ["/api/nightmode",     "POST", "{ntEn, ntFrom, ntTo, ntMode, ldrEn, ldrThr} → Nacht-Modus + NVS"],
+            ["/api/wifi",          "GET",  "{mode, staSsid, staIp, ntp}"],
+            ["/api/wifi",          "POST", "{\"ssid\":\"…\",\"pass\":\"…\"} → STA verbinden, Neustart"],
+            ["/api/ir/status",     "GET",  "8 IR-Code-Einträge (je action + code)"],
+            ["/api/ir/learn",      "POST", "{\"action\":\"SET\"|\"UP\"|\"DOWN\"|\"BRIGHTNESS\"|\"ANIM_NEXT\"|\"SLOT\"|\"COLON_TOGGLE\"|\"DATUM\"}"],
+            ["/api/ir/clear",      "POST", "{\"action\":\"…\"} → IR-Code löschen + NVS"],
         ],
         [4.0, 1.8, 10.2]
     ))
@@ -610,10 +673,17 @@ def build_content():
         [
             ["bright",        "UInt8",  "3",     "Helligkeitsstufe (0–3)"],
             ["neoBright",     "UInt8",  "30",    "NeoPixel-Feinwert Hintergrund"],
-            ["colonBright",   "UInt8",  "15",    "NeoPixel-Feinwert Trennpunkte"],
-            ["animMode",      "UInt8",  "0",     "Animationsmodus (0=Rainbow, 1=Statisch, 2=Puls, 3=Slots)"],
+            ["colonBright",   "UInt8",  "80",    "NeoPixel-Feinwert Trennpunkte"],
+            ["animMode",      "UInt8",  "0",     "Animationsmodus (0=Rainbow, 1=Statisch, 2=Puls)"],
+            ["slotIval",      "UInt8",  "0",     "Slot-Intervall (SlotInterval-Enum: 0=Aus, 1=10s, 2=1min, 3=15min, 4=1h)"],
             ["colonOn",       "Bool",   "false", "Trennpunkte dauerhaft an"],
-            ["colonStatic",   "Bool",   "false", "Trennpunkte statisch"],
+            ["colonStatic",   "Bool",   "false", "Trennpunkte statisch warmweiß"],
+            ["ntEn",          "Bool",   "false", "Nacht-Modus Zeitbereich aktiv"],
+            ["ntFrom",        "UInt8",  "23",    "Nacht-Modus Startzeit (Stunde 0–23)"],
+            ["ntTo",          "UInt8",  "7",     "Nacht-Modus Endzeit (Stunde 0–23)"],
+            ["ntMode",        "UInt8",  "0",     "Nacht-Modus Typ (0=Gedimmt, 1=Dunkel)"],
+            ["ldrEn",         "Bool",   "false", "Lichtsensor-Steuerung aktiv"],
+            ["ldrThr",        "UInt16", "512",   "LDR-Schwellwert ADC (0–4095)"],
             ["wifiSsid",      "String", "\"\"",  "Heimnetz SSID"],
             ["wifiPass",      "String", "\"\"",  "Heimnetz Passwort"],
             ["ir_SET",        "UInt64", "0",     "IR-Code für IR_ACTION_SET"],
@@ -623,6 +693,7 @@ def build_content():
             ["ir_ANIM_NEXT",  "UInt64", "0",     "IR-Code für IR_ACTION_ANIM_NEXT"],
             ["ir_SLOT",       "UInt64", "0",     "IR-Code für IR_ACTION_SLOT"],
             ["ir_COLTOGGLE",  "UInt64", "0",     "IR-Code für IR_ACTION_COLON_TOGGLE"],
+            ["ir_DATE",       "UInt64", "0",     "IR-Code für IR_ACTION_DATE (Datumsanzeige)"],
         ],
         [3.0, 1.8, 2.0, 9.2]
     ))
