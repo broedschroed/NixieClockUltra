@@ -139,6 +139,8 @@ AnimMode animMode = ANIM_RAINBOW;
 enum SlotInterval { SLOT_OFF, SLOT_10S, SLOT_1MIN, SLOT_15MIN, SLOT_1HR };
 SlotInterval slotInterval = SLOT_OFF;
 
+enum NightState { NIGHT_NORMAL, NIGHT_DIM, NIGHT_DARK };
+
 // Einstellmodus
 enum EditState { EDIT_NONE, EDIT_HOUR, EDIT_MIN, EDIT_SEC,
                  EDIT_DAY, EDIT_MONTH, EDIT_YEAR };
@@ -240,6 +242,7 @@ Button btnLight = {BTN_LIGHT, HIGH, false, false, false, 0, 0, 30, 500};
 void nixieInit();
 void setupWifi();
 void setupWebServer();
+void updateNightMode();
 
 // ═══════════════════════════════════════════════════════════
 //  SETUP
@@ -276,6 +279,13 @@ void setup() {
   }
   colonAlwaysOn    = prefs.getBool("colonOn",     false);
   colonStatic      = prefs.getBool("colonStatic", false);
+
+  nightTimeEnabled = prefs.getBool("ntEn",      false);
+  nightStart       = prefs.getUChar("ntFrom",   23);
+  nightEnd         = prefs.getUChar("ntTo",     7);
+  nightTimeMode    = prefs.getUChar("ntMode",   0);
+  ldrEnabled       = prefs.getBool("ldrEn",     false);
+  ldrThreshold     = prefs.getUShort("ldrThr",  512);
 
   // --- Nixie Direct Drive via MCP23017 ---
   nixieInit();    // Wire.begin() muss vor readRTC()/setDisplayTime() stehen
@@ -345,6 +355,9 @@ void loop() {
 
   // --- Einstellmodus ---
   handleEditMode();
+
+  // --- Nacht-Modus ---
+  updateNightMode();
 
   // --- RTC alle 500ms lesen (außerhalb Einstellmodus) ---
   if (editState == EDIT_NONE && millis() - lastRtcRead >= 500) {

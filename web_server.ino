@@ -356,7 +356,7 @@ void setupWebServer() {
     char dateBuf[9];
     snprintf(dateBuf, sizeof(dateBuf), "%02d.%02d.%02d", curDay, curMonth, curYear);
     doc["date"]       = dateBuf;
-    doc["nightState"] = 0;
+    doc["nightState"] = (int)nightState;
     String out; serializeJson(doc, out);
     req->send(200, "application/json", out);
   });
