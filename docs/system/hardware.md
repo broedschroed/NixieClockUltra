@@ -28,7 +28,7 @@ und alle Nutzerschnittstellen (Taster, IR, USB). Es versorgt das Nixie Display B
 | J2   | USB Micro-B         | 5V-Einspeisung und Firmware-Upload              |
 | J3   | Logic (8-polig)     | Inter-Board: Logik-Signale → Nixie Display      |
 | J4   | HV (4-polig)        | Inter-Board: ~170V Anodenversorgung → Display   |
-| J5   | LDR (2-polig)       | Optionaler Helligkeitssensor (nicht bestückt)   |
+| J5   | LDR (2-polig)       | Helligkeitssensor, bestückt: LDR→VCC, 100 kΩ→GND, Messung an GPIO6 |
 
 ### Versorgungsschienen
 
@@ -125,11 +125,12 @@ Die 10 LEDs sind als verkettete Kette an GPIO21 angeschlossen:
 | 2    | RTC_CE    | DS1302 Chip Enable (ThreeWire)         |
 | 4    | RTC_IO    | DS1302 Data (ThreeWire)                |
 | 5    | RTC_CLK   | DS1302 Clock (ThreeWire)               |
+| 6    | LDR_ADC   | LDR-Helligkeitssensor (ADC1, LDR→VCC, 100 kΩ→GND) |
 | 8    | I2C_SDA   | I²C Daten → 4× MCP23017               |
 | 9    | I2C_SCL   | I²C Takt → 4× MCP23017                |
+| 10   | BTN_LIGHT | Taster LIGHT (INPUT_PULLUP, aktiv LOW) |
+| 11   | BTN_DOWN  | Taster DOWN (INPUT_PULLUP, aktiv LOW)  |
+| 12   | BTN_UP    | Taster UP (INPUT_PULLUP, aktiv LOW)    |
 | 13   | BTN_SET   | Taster SET (INPUT_PULLUP, aktiv LOW)   |
-| 14   | BTN_UP    | Taster UP (INPUT_PULLUP, aktiv LOW)    |
-| 15   | BTN_DOWN  | Taster DOWN (INPUT_PULLUP, aktiv LOW)  |
-| 16   | BTN_LIGHT | Taster LIGHT (INPUT_PULLUP, aktiv LOW) |
 | 21   | NEO_DATA  | WS2812B DIN (10 LEDs in Kette)         |
 | 48   | IR_RECV   | VS1838B demodulierter Ausgang          |
