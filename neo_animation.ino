@@ -25,28 +25,39 @@ void updateNeoPixel() {
   if (now - lastNeoUpdate < 20) return;
   lastNeoUpdate = now;
 
+  // Temporäre Skalierung für Nacht-Modus (kein NVS-Schreiben)
+  uint8_t effNeoBright   = neoBright;
+  uint8_t effColonBright = colonBright;
+  if (nightState == NIGHT_DARK) {
+    effNeoBright   = 0;
+    effColonBright = 0;
+  } else if (nightState == NIGHT_DIM) {
+    effNeoBright   = neoBright   * NIGHT_DIM_NEO_PCT / 100;
+    effColonBright = colonBright * NIGHT_DIM_NEO_PCT / 100;
+  }
+
   switch (animMode) {
 
     case ANIM_RAINBOW: {
       for (int i = 0; i < 6; i++) {
         uint8_t hue = neoHue + i * 40;
-        strip.setPixelColor(i, scaleColor(strip.ColorHSV(hue * 256, neoSat, 255), neoBright));
+        strip.setPixelColor(i, scaleColor(strip.ColorHSV(hue * 256, neoSat, 255), effNeoBright));
       }
       neoHue++;
       bool colonOn = colonAlwaysOn || (curSec % 2 == 0);
       uint32_t colonColor = colonOn
         ? strip.ColorHSV((neoHue + 128) * 256, 200, 255)
         : strip.Color(0, 0, 0);
-      for (int i = 6; i < 10; i++) strip.setPixelColor(i, rgbSwap(scaleColor(colonColor, colonBright)));
+      for (int i = 6; i < 10; i++) strip.setPixelColor(i, rgbSwap(scaleColor(colonColor, effColonBright)));
       break;
     }
 
     case ANIM_STATIC: {
       uint32_t warm = strip.Color(BG_WARM_R, BG_WARM_G, BG_WARM_B);
-      for (int i = 0; i < 6; i++) strip.setPixelColor(i, scaleColor(warm, neoBright));
+      for (int i = 0; i < 6; i++) strip.setPixelColor(i, scaleColor(warm, effNeoBright));
       bool colonOn = colonAlwaysOn || (curSec % 2 == 0);
       uint32_t colonColor = colonOn ? strip.Color(COLON_WARM_R, COLON_WARM_G, COLON_WARM_B) : strip.Color(0, 0, 0);
-      for (int i = 6; i < 10; i++) strip.setPixelColor(i, rgbSwap(scaleColor(colonColor, colonBright)));
+      for (int i = 6; i < 10; i++) strip.setPixelColor(i, rgbSwap(scaleColor(colonColor, effColonBright)));
       break;
     }
 
@@ -54,12 +65,12 @@ void updateNeoPixel() {
       float phase = (millis() % 2000) / 2000.0f;
       uint8_t val = (uint8_t)(127.5f + 127.5f * sinf(phase * 2 * M_PI));
       uint32_t col = strip.ColorHSV(neoHue * 256, neoSat, val);
-      for (int i = 0; i < 6; i++) strip.setPixelColor(i, scaleColor(col, neoBright));
+      for (int i = 0; i < 6; i++) strip.setPixelColor(i, scaleColor(col, effNeoBright));
       neoHue++;
       bool colonOn = colonAlwaysOn || (curSec % 2 == 0);
       uint32_t colonColor = colonOn ? col : strip.Color(0, 0, 0);
       for (int i = 6; i < 10; i++)
-        strip.setPixelColor(i, rgbSwap(scaleColor(colonColor, colonBright)));
+        strip.setPixelColor(i, rgbSwap(scaleColor(colonColor, effColonBright)));
       break;
     }
 
@@ -69,8 +80,8 @@ void updateNeoPixel() {
   // Slot-Effekt überschreibt Hintergrundanimation solange slotActive
   if (slotActive) {
     uint32_t col = strip.ColorHSV((millis() / 5) % 65536, 255, 255);
-    for (int i = 0; i < 6;  i++) strip.setPixelColor(i, scaleColor(col, neoBright));
-    for (int i = 6; i < 10; i++) strip.setPixelColor(i, rgbSwap(scaleColor(col, colonBright)));
+    for (int i = 0; i < 6;  i++) strip.setPixelColor(i, scaleColor(col, effNeoBright));
+    for (int i = 6; i < 10; i++) strip.setPixelColor(i, rgbSwap(scaleColor(col, effColonBright)));
   }
 
   // Statischer Modus: Trennpunkte warmweiß – colonAlwaysOn steuert weiterhin das Blinken
@@ -78,7 +89,7 @@ void updateNeoPixel() {
     bool colonOn = colonAlwaysOn || (curSec % 2 == 0);
     uint32_t warmwhite = colonOn ? strip.Color(COLON_WARM_R, COLON_WARM_G, COLON_WARM_B) : strip.Color(0, 0, 0);
     for (int i = 6; i < 10; i++)
-      strip.setPixelColor(i, rgbSwap(scaleColor(warmwhite, colonBright)));
+      strip.setPixelColor(i, rgbSwap(scaleColor(warmwhite, effColonBright)));
   }
 
   strip.show();
