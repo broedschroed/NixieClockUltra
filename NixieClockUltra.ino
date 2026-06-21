@@ -100,6 +100,11 @@ const uint8_t BRIGHTNESS_LEVELS[4] = {10, 30, 50, 80};
 // Einstellmodus Timeout (ms)
 #define EDIT_TIMEOUT_MS   15000
 
+// Nacht-Modus: Nixie Software-PWM
+#define NIGHT_DIM_DUTY_PCT    25   // Nixie Ein-Anteil in % (Software-PWM)
+#define NIGHT_DIM_PWM_PERIOD  20   // PWM-Periode in ms (~50 Hz)
+#define NIGHT_DIM_NEO_PCT     15   // NeoPixel-Helligkeit im Dimm-Modus in % der Normalhelligkeit
+
 // Datum-Anzeige Dauer nach Slot-Animation
 #define DATE_SHOW_MS  5000
 
@@ -177,6 +182,11 @@ uint32_t dateShowStart  = 0;
 // Fade-In beim Start
 bool startFadeIn = true;
 uint8_t startFadeStep = 0;
+
+// Nacht-Modus: Nixie Software-PWM Zustand
+static bool        nixiePwmOn      = true;
+static uint32_t    lastPwmToggle   = 0;
+static NightState  prevNightState  = NIGHT_NORMAL;
 
 // ═══════════════════════════════════════════════════════════
 //  IR-FERNBEDIENUNG
@@ -358,6 +368,39 @@ void loop() {
 
   // --- Nacht-Modus ---
   updateNightMode();
+
+  // --- Nacht-Modus: Nixie-Ausgabe steuern ---
+  if (nightState != prevNightState) {
+    prevNightState = nightState;
+    if (nightState == NIGHT_DARK) {
+      uint8_t blank[6] = {10, 10, 10, 10, 10, 10};
+      nixieWrite(blank);
+      nixiePwmOn = false;
+    } else if (nightState == NIGHT_DIM) {
+      nixiePwmOn    = true;
+      lastPwmToggle = millis();
+      nixieWrite(displayDigits);
+    } else {  // NIGHT_NORMAL
+      nixiePwmOn = true;
+      nixieWrite(displayDigits);
+    }
+  }
+
+  if (nightState == NIGHT_DIM) {
+    const uint32_t onTime  = NIGHT_DIM_PWM_PERIOD * NIGHT_DIM_DUTY_PCT / 100;
+    const uint32_t offTime = NIGHT_DIM_PWM_PERIOD - onTime;
+    uint32_t elapsed = millis() - lastPwmToggle;
+    if (nixiePwmOn && elapsed >= onTime) {
+      nixiePwmOn    = false;
+      lastPwmToggle = millis();
+      uint8_t blank[6] = {10, 10, 10, 10, 10, 10};
+      nixieWrite(blank);
+    } else if (!nixiePwmOn && elapsed >= offTime) {
+      nixiePwmOn    = true;
+      lastPwmToggle = millis();
+      nixieWrite(displayDigits);
+    }
+  }
 
   // --- RTC alle 500ms lesen (außerhalb Einstellmodus) ---
   if (editState == EDIT_NONE && millis() - lastRtcRead >= 500) {
