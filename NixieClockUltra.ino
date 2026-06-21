@@ -140,7 +140,8 @@ enum SlotInterval { SLOT_OFF, SLOT_10S, SLOT_1MIN, SLOT_15MIN, SLOT_1HR };
 SlotInterval slotInterval = SLOT_OFF;
 
 // Einstellmodus
-enum EditState { EDIT_NONE, EDIT_HOUR, EDIT_MIN, EDIT_SEC };
+enum EditState { EDIT_NONE, EDIT_HOUR, EDIT_MIN, EDIT_SEC,
+                 EDIT_DAY, EDIT_MONTH, EDIT_YEAR };
 EditState editState = EDIT_NONE;
 unsigned long editEnterTime = 0;
 
