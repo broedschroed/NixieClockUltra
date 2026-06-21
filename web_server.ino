@@ -114,6 +114,30 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
 </div>
 
 <div class="card">
+  <h2>🌙 Nacht-Modus</h2>
+  <div class="row"><label>Aktuell</label><span class="badge" id="nightStateBadge">Normal</span></div>
+  <div class="row"><label>Zeitbereich aktiv</label>
+    <label class="toggle"><input type="checkbox" id="ntEn"><span class="slider"></span></label></div>
+  <div class="row"><label>Von (Stunde 0–23)</label>
+    <input type="number" id="ntFrom" min="0" max="23" value="23"></div>
+  <div class="row"><label>Bis (Stunde 0–23)</label>
+    <input type="number" id="ntTo" min="0" max="23" value="7"></div>
+  <div class="row"><label>Modus</label>
+    <select id="ntMode">
+      <option value="0">Gedimmt</option>
+      <option value="1">Dunkel</option>
+    </select></div>
+  <div class="row"><label>LDR-Sensor aktiv</label>
+    <label class="toggle"><input type="checkbox" id="ldrEn"><span class="slider"></span></label></div>
+  <div class="row"><label>Schwellwert (0–4095)</label>
+    <input type="range" id="ldrThr" min="0" max="4095" value="512"
+      oninput="document.getElementById('ldrThrVal').textContent=this.value">
+    <span id="ldrThrVal">512</span></div>
+  <div class="row"><label>LDR-Rohwert</label><span class="badge" id="ldrVal">--</span></div>
+  <div class="row"><button onclick="saveNightMode()">Übernehmen</button></div>
+</div>
+
+<div class="card">
   <h2>📡 IR-Fernbedienung</h2>
   <table style="width:100%;border-collapse:collapse">
     <thead><tr>
@@ -171,6 +195,7 @@ async function refreshClock(){
       document.getElementById('dateDisp').textContent = d.date;
     }
   }
+  if(d.nightState!==undefined) document.getElementById('nightStateBadge').textContent=NS_LABELS[d.nightState]||'Normal';
 }
 
 async function setTime(){
@@ -288,10 +313,36 @@ async function setColonStatic(enabled){
   await api('/api/colonstatic',{enabled});
 }
 
+const NS_LABELS=['Normal','Gedimmt','Dunkel'];
+async function refreshNightMode(){
+  let d=await get('/api/nightmode');
+  if(d.ntEn===undefined)return;
+  document.getElementById('ntEn').checked  = d.ntEn;
+  document.getElementById('ntFrom').value  = d.ntFrom;
+  document.getElementById('ntTo').value    = d.ntTo;
+  document.getElementById('ntMode').value  = d.ntMode;
+  document.getElementById('ldrEn').checked = d.ldrEn;
+  document.getElementById('ldrThr').value  = d.ldrThr;
+  document.getElementById('ldrThrVal').textContent = d.ldrThr;
+  document.getElementById('ldrVal').textContent    = d.ldrVal!==undefined?d.ldrVal:'--';
+}
+async function saveNightMode(){
+  let r=await api('/api/nightmode',{
+    ntEn:  document.getElementById('ntEn').checked,
+    ntFrom:parseInt(document.getElementById('ntFrom').value),
+    ntTo:  parseInt(document.getElementById('ntTo').value),
+    ntMode:parseInt(document.getElementById('ntMode').value),
+    ldrEn: document.getElementById('ldrEn').checked,
+    ldrThr:parseInt(document.getElementById('ldrThr').value)
+  });
+  document.getElementById('statusMsg').textContent=r.ok?'Nacht-Modus gespeichert ✓':'Fehler ✗';
+}
+
 setInterval(refreshClock,1000);
 refreshClock();
 refreshWifi();
 refreshIR();
+refreshNightMode();
 </script>
 </body>
 </html>
@@ -580,6 +631,46 @@ void setupWebServer() {
       if (!deserializeJson(doc, data, len)) {
         colonStatic = (bool)doc["enabled"];
         prefs.putBool("colonStatic", colonStatic);
+        req->send(200, "application/json", "{\"ok\":true}");
+      } else {
+        req->send(400, "application/json", "{\"ok\":false}");
+      }
+    }
+  );
+
+  // --- Nacht-Modus: Status lesen ---
+  server.on("/api/nightmode", HTTP_GET, [](AsyncWebServerRequest *req) {
+    StaticJsonDocument<256> doc;
+    doc["ntEn"]   = nightTimeEnabled;
+    doc["ntFrom"] = nightStart;
+    doc["ntTo"]   = nightEnd;
+    doc["ntMode"] = nightTimeMode;
+    doc["ldrEn"]  = ldrEnabled;
+    doc["ldrThr"] = ldrThreshold;
+    doc["ldrVal"] = ldrReading;
+    doc["state"]  = (int)nightState;
+    String out; serializeJson(doc, out);
+    req->send(200, "application/json", out);
+  });
+
+  // --- Nacht-Modus: Einstellungen speichern ---
+  server.on("/api/nightmode", HTTP_POST, [](AsyncWebServerRequest *req){},
+    nullptr,
+    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
+      StaticJsonDocument<256> doc;
+      if (!deserializeJson(doc, data, len)) {
+        nightTimeEnabled = doc["ntEn"].as<bool>();
+        nightStart       = constrain((int)doc["ntFrom"], 0, 23);
+        nightEnd         = constrain((int)doc["ntTo"],   0, 23);
+        nightTimeMode    = constrain((int)doc["ntMode"], 0, 1);
+        ldrEnabled       = doc["ldrEn"].as<bool>();
+        ldrThreshold     = (uint16_t)constrain((int)doc["ldrThr"], 0, 4095);
+        prefs.putBool("ntEn",     nightTimeEnabled);
+        prefs.putUChar("ntFrom",  nightStart);
+        prefs.putUChar("ntTo",    nightEnd);
+        prefs.putUChar("ntMode",  nightTimeMode);
+        prefs.putBool("ldrEn",    ldrEnabled);
+        prefs.putUShort("ldrThr", ldrThreshold);
         req->send(200, "application/json", "{\"ok\":true}");
       } else {
         req->send(400, "application/json", "{\"ok\":false}");
