@@ -39,6 +39,7 @@
 // IR-Empfänger
 #include <IRremoteESP8266.h>
 #include <IRrecv.h>
+#include <ESPmDNS.h>
 
 // ═══════════════════════════════════════════════════════════
 //  PIN-DEFINITIONEN
@@ -88,8 +89,9 @@
 const uint8_t BRIGHTNESS_LEVELS[4] = {10, 30, 50, 80};
 
 // WiFi AP (Fallback-Hotspot, immer aktiv)
-#define WIFI_SSID   "NixieClock"
-#define WIFI_PASS   "nixie1234"
+#define WIFI_SSID     "NixieClockCS"
+#define WIFI_PASS     "nixie1234"
+#define WIFI_HOSTNAME "nixieclockcs"   // mDNS + DHCP-Hostname → http://nixieclock.local
 
 // NTP
 #define NTP_SERVER  "pool.ntp.org"
@@ -141,6 +143,11 @@ unsigned long editEnterTime = 0;
 
 // Uhrzeit (lokal gecacht)
 uint8_t  curHour = 0, curMin = 0, curSec = 0;
+
+// Datum (lokal gecacht)
+uint8_t  curDay   = 1;    // 1-basiert
+uint8_t  curMonth = 1;    // 1-basiert
+uint8_t  curYear  = 24;   // zweistellig: 0–99
 
 // WiFi / NTP Status
 bool wifiStaConnected = false;
