@@ -146,6 +146,17 @@ SlotInterval slotInterval = SLOT_OFF;
 
 enum NightState { NIGHT_NORMAL, NIGHT_DIM, NIGHT_DARK };
 
+// Nacht-Modus Konfiguration (aus NVS geladen)
+NightState nightState       = NIGHT_NORMAL;
+bool     nightTimeEnabled   = false;
+uint8_t  nightStart         = 23;
+uint8_t  nightEnd           = 7;
+uint8_t  nightTimeMode      = 0;
+bool     ldrEnabled         = false;
+uint16_t ldrThreshold       = 512;
+uint16_t ldrReading         = 4095;
+uint32_t lastLdrRead        = 0;
+
 // Einstellmodus
 enum EditState { EDIT_NONE, EDIT_HOUR, EDIT_MIN, EDIT_SEC,
                  EDIT_DAY, EDIT_MONTH, EDIT_YEAR };

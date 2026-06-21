@@ -7,20 +7,7 @@
 #define LDR_PIN        6
 #define LDR_SAMPLE_MS  500
 
-// NightState-Enum ist in NixieClockUltra.ino definiert
-NightState nightState = NIGHT_NORMAL;
-
-// Konfiguration (aus NVS geladen)
-bool     nightTimeEnabled = false;
-uint8_t  nightStart       = 23;
-uint8_t  nightEnd         = 7;
-uint8_t  nightTimeMode    = 0;    // 0 = DIM, 1 = DARK
-bool     ldrEnabled       = false;
-uint16_t ldrThreshold     = 512;
-
-// Interner Zustand
-uint16_t ldrReading    = 4095;   // default = hell → kein Trigger
-uint32_t lastLdrRead   = 0;
+// Alle globalen Variablen sind in NixieClockUltra.ino deklariert
 
 static bool timeInNightRange(uint8_t h) {
   if (nightStart <= nightEnd)
