@@ -274,3 +274,32 @@ main { padding: 2.5rem 0 4rem; }
   .hero-tagline { font-size: 1.1rem; }
   .highlight-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== FEATURES ===== */
+.werbetext { font-size: 1.05rem; line-height: 1.75; margin-bottom: 2.5rem; }
+.feature-groups { display: flex; flex-direction: column; gap: 1.2rem; }
+.feature-group-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-nixie);
+  margin-bottom: 0.7rem;
+}
+.feature-list { list-style: none; padding: 0; margin: 0; }
+.feature-list li {
+  padding: 0.35rem 0 0.35rem 1.6rem;
+  position: relative;
+  color: var(--text-primary);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.feature-list li::before {
+  content: '\203A';
+  color: var(--accent-nixie);
+  position: absolute;
+  left: 0.2rem;
+  font-size: 1.3rem;
+  line-height: 1.3;
+  font-weight: bold;
+}

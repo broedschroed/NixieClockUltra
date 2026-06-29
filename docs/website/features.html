@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Features – Nixie Clock Ultra</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="features">
+  <header id="site-header"></header>
+  <nav id="site-nav"></nav>
+  <main>
+    <div class="container">
+      <div class="page-title"><h1>Features</h1></div>
+      <div class="gear-divider">&#9881;</div>
+
+      <div class="panel werbetext">
+        <p>Nixie-Röhren gehören zu den faszinierendsten Anzeigetechnologien, die je entwickelt wurden: warmes, leicht diffuses Licht, das Ziffern plastisch aus dem Glas herausleuchten lässt &mdash; unverwechselbar, zeitlos und heute begehrter denn je. Die Nixie Clock Ultra bringt dieses Feeling ins 21. Jahrhundert, ohne seinen Charakter zu verlieren.</p>
+        <p>Sechs IN-12A-Nixieröhren zeigen Stunden, Minuten und Sekunden &mdash; und auf Wunsch auch das Datum. Hinter jeder Röhre sitzt eine individuell ansteuerbare RGB-LED, die das Glas von innen in warmem Licht erstrahlen lässt: statisch, im sanften Atemrhythmus oder als fließendes Farbspektrum. Vier weitere LEDs beleuchten die Trennpunkte zwischen den Zifferngruppen.</p>
+        <p>Was diese Uhr von den meisten anderen Nixie-Projekten unterscheidet, ist die Art der Röhrenansteuerung: Kein Multiplexing, keine Kompromisse. Jede der 60 Kathoden besitzt ihren eigenen Hochvolt-Transistor &mdash; die Ziffern leuchten dauerhaft, ohne jegliches Ghosting oder Flimmern. Das Ergebnis ist ein sauberes, stabiles Bild, das man sofort sieht und lange nicht vergisst.</p>
+        <p>Die Uhr denkt mit: Ein ESP32-S3 verbindet sich mit dem Heimnetz, synchronisiert die Uhrzeit vollautomatisch per NTP aus dem Internet und ist über jeden Browser erreichbar &mdash; kein App-Download, kein Pairing. Wer lieber zur Fernbedienung greift: fast jede handelsübliche IR-Fernbedienung lässt sich anlernen.</p>
+        <p>Die Nixie Clock Ultra ist ein Unikat &mdash; handgefertigte Einzelplatinen, sorgfältig bestückt und getestet. Kein Bausatz, keine Kompromisse.</p>
+      </div>
+
+      <div class="gear-divider">&#9881;</div>
+      <h2>Features auf einen Blick</h2>
+
+      <div class="feature-groups">
+
+        <div class="panel">
+          <div class="feature-group-label">Anzeige</div>
+          <ul class="feature-list">
+            <li>6 &times; IN-12A Nixie-Röhren &mdash; direkte Kathodensteuerung ohne Multiplexing, kein Ghosting, kein Flimmern</li>
+            <li>Stunden &middot; Minuten &middot; Sekunden sowie Datumsanzeige (TT MM JJ)</li>
+            <li>Sanfter Fade-In beim Einschalten</li>
+          </ul>
+        </div>
+
+        <div class="panel">
+          <div class="feature-group-label">Beleuchtung</div>
+          <ul class="feature-list">
+            <li>6 &times; WS2812B RGB-LEDs als Röhrenhintergrundbeleuchtung (individuell pro Röhre)</li>
+            <li>4 &times; WS2812B RGB-LEDs für die Trennpunkt-Beleuchtung</li>
+            <li>Animationsmodi: Rainbow, Statisch (warmweiß), Puls</li>
+            <li>Slot-Machine-Effekt: konfigurierbar (aus / alle 10 s / 1 min / 15 min / 1 h), zeigt danach automatisch das Datum</li>
+          </ul>
+        </div>
+
+        <div class="panel">
+          <div class="feature-group-label">Konnektivität &amp; Bedienung</div>
+          <ul class="feature-list">
+            <li>ESP32-S3 mit integriertem WLAN (2,4 GHz)</li>
+            <li>Gleichzeitig eigener WLAN-Accesspoint (kein Heimnetz notwendig) und WLAN-Client</li>
+            <li>Automatische Zeitsynchronisation per NTP</li>
+            <li>Vollständiges Web-Interface im Browser &mdash; kein App-Download, funktioniert auf Smartphone, Tablet und PC</li>
+            <li>Erreichbar per IP oder als <code>nixieclockcs.local</code> im Heimnetz (mDNS)</li>
+            <li>IR-Fernbedienung: 8 Funktionen frei auf jede handelsübliche Fernbedienung anlernbar</li>
+            <li>4 Bedientaster direkt an der Uhr</li>
+          </ul>
+        </div>
+
+        <div class="panel">
+          <div class="feature-group-label">Nacht-Modus</div>
+          <ul class="feature-list">
+            <li>Zeitgesteuertes Dimmen oder vollständiges Ausschalten der Röhren</li>
+            <li>Automatische Helligkeitsanpassung über eingebauten Lichtsensor (LDR)</li>
+            <li>NeoPixel-Helligkeit wird im Nacht-Modus proportional mitgedimmt</li>
+          </ul>
+        </div>
+
+        <div class="panel">
+          <div class="feature-group-label">Technik</div>
+          <ul class="feature-list">
+            <li>Zweiplatinen-Design: Logic Board (Rev 2.1) + Nixie Display Board (Rev 2.01)</li>
+            <li>DS1302 Echtzeituhr mit CR2032-Batterie-Backup &mdash; hält Zeit auch ohne Strom</li>
+            <li>Hochvolt-Versorgung: 5 V USB &rarr; DC-DC-Konverter &rarr; 10 V &rarr; HV-Modul &rarr; ~170 V Nixie-Anoden</li>
+            <li>60 diskrete SMBTA42-Hochvolt-Transistoren (je eine Kathode, je eine Röhrenziffer)</li>
+            <li>Alle Einstellungen bleiben nach Stromunterbrechung erhalten (NVS-Flash)</li>
+            <li>Stromversorgung: Micro-USB, 5 V</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </main>
+  <footer id="site-footer"></footer>
+  <script src="js/nav.js"></script>
+</body>
+</html>
