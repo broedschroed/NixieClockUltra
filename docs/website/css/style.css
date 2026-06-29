@@ -160,7 +160,6 @@ main { padding: 2.5rem 0 4rem; }
   background: var(--accent-gold);
   color: var(--bg-base);
   box-shadow: 0 0 14px rgba(200,150,26,0.35);
-  color: var(--bg-base);
 }
 .btn-primary {
   background: var(--accent-gold);
