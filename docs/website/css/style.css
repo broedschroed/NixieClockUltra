@@ -275,6 +275,46 @@ main { padding: 2.5rem 0 4rem; }
   .highlight-grid { grid-template-columns: 1fr; }
 }
 
+/* ===== AUFBAU ===== */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+  margin-bottom: 2rem;
+}
+.two-col-text h3 { margin-top: 0; }
+.pcb-thumbs { display: flex; flex-direction: column; gap: 0.8rem; }
+.pcb-thumb {
+  width: 100%;
+  border: 1px solid var(--border-gold);
+  cursor: pointer;
+  display: block;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.pcb-thumb:hover {
+  border-color: var(--accent-copper);
+  box-shadow: 0 0 10px rgba(205,127,50,0.3);
+}
+.pcb-caption {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 0.3rem;
+}
+.voltage-diagram {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-gold);
+  border-radius: 2px;
+  padding: 2rem;
+  text-align: center;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+}
+@media (max-width: 768px) {
+  .two-col { grid-template-columns: 1fr; }
+}
+
 /* ===== FEATURES ===== */
 .werbetext { font-size: 1.05rem; line-height: 1.75; margin-bottom: 2.5rem; }
 .feature-groups { display: flex; flex-direction: column; gap: 1.2rem; }
