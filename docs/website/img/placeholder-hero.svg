@@ -1,17 +1,5 @@
-<svg width="1200" height="400" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <style>
-      .hero-bg { fill: #0e0a05; }
-      .hero-accent { fill: #c8961a; }
-      .hero-text { font-family: Cinzel, serif; font-size: 48px; fill: #e8d5a3; text-anchor: middle; }
-      .hero-subtitle { font-family: 'Crimson Text', serif; font-size: 24px; fill: #a08c6a; text-anchor: middle; }
-    </style>
-  </defs>
-  <rect class="hero-bg" width="1200" height="400"/>
-  <rect class="hero-accent" x="0" y="0" width="1200" height="4"/>
-  <rect class="hero-accent" x="0" y="396" width="1200" height="4"/>
-  <text class="hero-text" x="600" y="160">NIXIE CLOCK ULTRA</text>
-  <text class="hero-subtitle" x="600" y="240">Retro-Elektronik trifft moderne Technik</text>
-  <circle cx="100" cy="80" r="8" class="hero-accent" opacity="0.6"/>
-  <circle cx="1100" cy="320" r="8" class="hero-accent" opacity="0.6"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <rect width="1200" height="600" fill="#1c1408"/>
+  <text x="600" y="270" font-family="serif" font-size="28" fill="#6b4f12" text-anchor="middle">[ hero.jpg hier einsetzen ]</text>
+  <text x="600" y="320" font-family="serif" font-size="18" fill="#3a2a10" text-anchor="middle">docs/website/img/hero.jpg</text>
 </svg>

@@ -203,6 +203,59 @@ main { padding: 2.5rem 0 4rem; }
 }
 .footer-text { font-size: 0.85rem; color: var(--text-muted); letter-spacing: 0.03em; }
 
+/* ===== STARTSEITE ===== */
+.hero {
+  position: relative;
+  height: 70vh;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-color: #1a1008;
+}
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(8,6,2,0.35) 0%, rgba(8,6,2,0.75) 100%);
+}
+.hero-content {
+  position: relative;
+  text-align: center;
+  padding: 2rem;
+  max-width: 700px;
+}
+.hero-title {
+  font-family: 'Cinzel', serif;
+  font-size: 3.5rem;
+  color: var(--accent-gold);
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 40px rgba(200,150,26,0.55);
+  margin-bottom: 0.5rem;
+}
+.hero-tagline {
+  font-style: italic;
+  font-size: 1.4rem;
+  color: var(--accent-copper);
+  margin-bottom: 1.8rem;
+}
+.highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin: 2.5rem 0;
+}
+.highlight-card h3 { color: var(--accent-nixie); margin-top: 0; }
+.highlight-card p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 0; }
+.teaser-section { font-size: 1.05rem; }
+.teaser-section p:last-child { margin-bottom: 0; }
+
 /* === Responsive === */
 @media (max-width: 768px) {
   body { font-size: 16px; }
@@ -216,4 +269,8 @@ main { padding: 2.5rem 0 4rem; }
   h1 { font-size: 1.7rem; }
   h2 { font-size: 1.3rem; }
   .panel { padding: 1rem 1.2rem; }
+  .hero { height: 50vh; }
+  .hero-title { font-size: 2rem; letter-spacing: 0.08em; }
+  .hero-tagline { font-size: 1.1rem; }
+  .highlight-grid { grid-template-columns: 1fr; }
 }
