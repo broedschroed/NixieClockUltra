@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geschichte – Nixie Clock Ultra</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="geschichte">
+  <header id="site-header"></header>
+  <nav id="site-nav"></nav>
+  <main>
+    <div class="container">
+      <div class="page-title"><h1>Entwicklungsgeschichte</h1></div>
+      <div class="gear-divider">&#9881;</div>
+      <div class="panel">
+        <p>Die Nixie Clock Ultra entstand in sieben Entwicklungsphasen zwischen April und Juni 2026. Jede Phase brachte neue Erkenntnisse &mdash; und neue Probleme, die es zu lösen galt.</p>
+      </div>
+
+      <div class="timeline">
+
+        <div class="timeline-item">
+          <div class="timeline-date">2026-04-22</div>
+          <div class="timeline-title">Phase 1 &mdash; Firmware-Grundgerüst</div>
+          <div class="timeline-body">
+            <p>Vollständige Basis-Firmware in einer einzigen <code>.ino</code>-Datei: Nixie-Ansteuerung via Multiplex-ISR, NeoPixel-Animationen, Web-Interface (WiFi AP, AsyncWebServer), IR-Fernbedienung mit 7 Funktionen, DS1302 RTC-Integration.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-date">2026-04-23</div>
+          <div class="timeline-title">Phase 2 &mdash; Modularisierung</div>
+          <div class="timeline-body">
+            <p>Die wachsende Datei wurde in sieben Module aufgeteilt: <code>rtc.ino</code>, <code>display.ino</code>, <code>neo_animation.ino</code>, <code>buttons.ino</code>, <code>ir_remote.ino</code>, <code>web_server.ino</code> und den Multiplex-Timer.</p>
+            <div class="akkordeon">
+              <input type="checkbox" id="acc-1">
+              <label class="akkordeon-label" for="acc-1">Problem: Forward Declarations <span class="akkordeon-arrow">&#9654;</span></label>
+              <div class="akkordeon-content">Der Arduino-Präprozessor erkennt Forward Declarations für <code>IRAM_ATTR</code>-Funktionen und Web-Server-Callbacks nicht automatisch. Lösung: Forward Declarations manuell in <code>NixieClockUltra.ino</code> ergänzt.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-date">2026-05-03</div>
+          <div class="timeline-title">Phase 3 &mdash; Hardware-Inbetriebnahme</div>
+          <div class="timeline-body">
+            <p>Erste Tests an der echten Hardware brachten mehrere Korrekturen: RGB-Bytereihenfolge der THT-WS2812B (RGB statt GRB), Kathoden-Mapping-Korrektur, separate Helligkeitsregelung für Hintergrund und Trennpunkte.</p>
+            <div class="akkordeon">
+              <input type="checkbox" id="acc-2">
+              <label class="akkordeon-label" for="acc-2">Problem: NeoPixel RGB-Swap <span class="akkordeon-arrow">&#9654;</span></label>
+              <div class="akkordeon-content">Die 4 Trennpunkt-LEDs (THT WS2812B YF923) zeigten falsche Farben. Ursache: THT-Variante verwendet RGB-Bytereihenfolge statt GRB wie die SMD-Version. Lösung: <code>rgbSwap</code> für Pixel 6&ndash;9 in <code>neo_animation.ino</code>.</div>
+            </div>
+            <div class="akkordeon">
+              <input type="checkbox" id="acc-3">
+              <label class="akkordeon-label" for="acc-3">Problem: Ghosting (erste Versuche) <span class="akkordeon-arrow">&#9654;</span></label>
+              <div class="akkordeon-content">Nixie-Röhren zeigten Geisterziffern durch den Multiplex-Betrieb. Zwei Versuche: (1) Anode vor Kathode schalten &mdash; kein Erfolg. (2) Blank-Phase verlängern &mdash; reduziert, aber nicht beseitigt. Strukturelle Lösung erst in Phase 4.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-date">2026-05-09</div>
+          <div class="timeline-title">Phase 4 &mdash; Anti-Ghosting: MCP23017 Direct Drive</div>
+          <div class="timeline-body">
+            <p>Kompletter Umbau der Nixie-Ansteuerung: statt eines 74HC595-Schieberegisters mit Multiplex-ISR nun vier MCP23017 I²C-Port-Expander mit je eigenem SMBTA42-Transistor pro Kathode. Kein Multiplexing mehr &mdash; alle Röhren leuchten dauerhaft.</p>
+            <div class="akkordeon">
+              <input type="checkbox" id="acc-4">
+              <label class="akkordeon-label" for="acc-4">Ergebnis (getestet 2026-06-15) <span class="akkordeon-arrow">&#9654;</span></label>
+              <div class="akkordeon-content">Ghosting vollständig beseitigt. Die direkte Ansteuerung via MCP23017 löst das Problem strukturell: Da keine Kathode mehr gemeinsam genutzt wird, gibt es keine Übersprecher zwischen den Röhren.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-date">2026-06-15</div>
+          <div class="timeline-title">Phase 5 &mdash; Dokumentation</div>
+          <div class="timeline-body">
+            <p>Vollständige Bedienungsanleitung im Steampunk-Design (HTML &rarr; PDF) sowie technische Systemdokumentation (ODT) mit eingebetteten Schaltplänen, API-Dokumentation und Bibliotheksübersicht.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-date">2026-06-17</div>
+          <div class="timeline-title">Phase 6 &mdash; Slot-Intervall &amp; Feinschliff</div>
+          <div class="timeline-body">
+            <p>Slot-Machine-Animation als eigenständige Einstellung (<code>SlotInterval</code>-Enum) ausgelagert. Mehrere Hardware-Bugs behoben: IR-Empfang nach <code>strip.show()</code>, Taster-Entprellung, Pin-Korrekturen, Warmweiß-Farbabgleich.</p>
+            <div class="akkordeon">
+              <input type="checkbox" id="acc-5">
+              <label class="akkordeon-label" for="acc-5">Problem: IR-Empfang nach NeoPixel-Update <span class="akkordeon-arrow">&#9654;</span></label>
+              <div class="akkordeon-content">IR-Codes wurden nach <code>strip.show()</code> nicht mehr empfangen. Ursache: <code>irrecv.pause()/resume()</code> um <code>strip.show()</code> resettete den RMT-Empfänger alle 20 ms. Lösung: pause/resume vollständig entfernt. Auf dem ESP32-S3 sind RMT-TX (NeoPixel) und RMT-RX (IR) unabhängige Kanäle &mdash; kein Konflikt.</div>
+            </div>
+            <div class="akkordeon">
+              <input type="checkbox" id="acc-6">
+              <label class="akkordeon-label" for="acc-6">Problem: Taster-Entprellung <span class="akkordeon-arrow">&#9654;</span></label>
+              <div class="akkordeon-content"><code>pressed</code> wurde nie <code>true</code>. Ursache: Logikfehler in der Button-FSM &mdash; das <code>debounced</code>-Flag wurde nie gesetzt, weil die Bedingung <code>lastState == HIGH</code> innerhalb des Debounce-Fensters niemals zutraf. Lösung: <code>Button</code>-Struct um <code>debounced</code>-Flag erweitert.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-date">2026-06-20</div>
+          <div class="timeline-title">Phase 7 &mdash; WiFi-Fixes &amp; mDNS</div>
+          <div class="timeline-body">
+            <p>WiFi-Scan entfernt (Blocking-Probleme mit ESPAsyncWebServer), STA-Timeout auf 20 s erhöht, DHCP-Hostname und mDNS implementiert. Die Uhr ist jetzt als <code>nixieclockcs.local</code> im Heimnetz erreichbar.</p>
+            <div class="akkordeon">
+              <input type="checkbox" id="acc-7">
+              <label class="akkordeon-label" for="acc-7">Problem: WiFi-Scan lieferte keine Ergebnisse <span class="akkordeon-arrow">&#9654;</span></label>
+              <div class="akkordeon-content">Zwei Ursachen: (1) <code>WiFi.mode(WIFI_AP)</code> deaktiviert das STA-Radio &mdash; kein Scan möglich. (2) Synchroner <code>scanNetworks()</code>-Aufruf im ESPAsyncWebServer-Handler blockiert den LWIP/WiFi-Task. Lösung: Scan-Funktion vollständig entfernt, SSID wird manuell eingegeben.</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /timeline -->
+    </div>
+  </main>
+  <footer id="site-footer"></footer>
+  <script src="js/nav.js"></script>
+</body>
+</html>
