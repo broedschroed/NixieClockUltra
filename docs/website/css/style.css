@@ -546,3 +546,14 @@ main { padding: 2.5rem 0 4rem; }
 .lightbox-next { right: 1rem; }
 @media (max-width: 1024px) { .gallery-grid { columns: 2; } }
 @media (max-width: 600px)  { .gallery-grid { columns: 1; } }
+
+/* === Code === */
+code {
+  font-family: 'Courier New', Courier, monospace;
+  background: var(--bg-panel);
+  color: var(--accent-copper);
+  padding: 0.1em 0.35em;
+  border: 1px solid var(--border-dim);
+  border-radius: 2px;
+  font-size: 0.88em;
+}

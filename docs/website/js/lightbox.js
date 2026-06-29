@@ -44,7 +44,7 @@
     images = Array.from(document.querySelectorAll('[data-lightbox]'));
     images.forEach((el, i) => {
       el.style.cursor = 'pointer';
-      el.addEventListener('click', () => show(i));
+      el.addEventListener('click', (e) => { e.preventDefault(); show(i); });
     });
   });
 })();
