@@ -67,6 +67,9 @@
 #define I2C_SDA      8
 #define I2C_SCL      9
 
+// HV-Dimmer (TLP627 → Anodenspannung)
+#define HV_SWITCH_PIN  7
+
 // ═══════════════════════════════════════════════════════════
 //  KONSTANTEN & KONFIGURATION
 // ═══════════════════════════════════════════════════════════
@@ -100,10 +103,11 @@ const uint8_t BRIGHTNESS_LEVELS[4] = {10, 30, 50, 80};
 // Einstellmodus Timeout (ms)
 #define EDIT_TIMEOUT_MS   15000
 
-// Nacht-Modus: Nixie Software-PWM
-#define NIGHT_DIM_DUTY_PCT    25   // Nixie Ein-Anteil in % (Software-PWM)
-#define NIGHT_DIM_PWM_PERIOD  20   // PWM-Periode in ms (~50 Hz)
+// Nacht-Modus: NeoPixel-Skalierung (Nixie-Dimmung siehe hv_dimmer.ino)
 #define NIGHT_DIM_NEO_PCT     15   // NeoPixel-Helligkeit im Dimm-Modus in % der Normalhelligkeit
+
+// HV-Dimmer (TLP627, LEDC-Hardware-PWM auf HV_SWITCH_PIN)
+#define HV_PWM_FREQ_HZ        200  // Hz — nach Hardwareaufbau per Oszilloskop verifizieren
 
 // Datum-Anzeige Dauer nach Slot-Animation
 #define DATE_SHOW_MS  5000
@@ -285,6 +289,9 @@ void setup() {
   strip.setBrightness(255);  // Skalierung erfolgt per Pixel in neo_animation
   strip.clear();
   strip.show();
+
+  // --- HV-Dimmer (TLP627) ---
+  hvDimmerInit();
 
   // --- Preferences laden ---
   prefs.begin("nixie", false);
