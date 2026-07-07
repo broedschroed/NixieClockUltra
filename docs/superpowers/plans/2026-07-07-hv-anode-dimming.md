@@ -112,7 +112,7 @@ git commit -m "feat: hv_dimmer.ino – LEDC-Hardware-PWM für TLP627 auf HV_SWIT
 ### Task 2: Nacht-Modus nutzt `hvDimmerSetDuty()` statt Software-PWM
 
 **Files:**
-- Modify: `NixieClockUltra.ino:150-158` (Nacht-Modus-Globals), `NixieClockUltra.ino:197-200` (PWM-Zustand-Globals), `NixieClockUltra.ino:283-313` (setup(), NVS-Laden), `NixieClockUltra.ino:384-415` (loop(), Nacht-Modus-Block)
+- Modify: `NixieClockUltra.ino:150-158` (Nacht-Modus-Globals), `NixieClockUltra.ino:197-200` (PWM-Zustand-Globals), `NixieClockUltra.ino:283-313` (setup(), NVS-Laden), `NixieClockUltra.ino:384-415` (loop(), Nacht-Modus-Block), `display.ino:5-11` (`nixieWriteSafe()` — referenziert `nixiePwmOn`, das mit diesem Task entfällt)
 
 **Interfaces:**
 - Consumes: `void hvDimmerSetDuty(uint8_t duty0to255)` aus Task 1.
@@ -217,23 +217,43 @@ Mit Step 4 verschwindet die letzte Verwendung von `NIGHT_DIM_DUTY_PCT`/`NIGHT_DI
 
 vollständig entfernen (der Kommentar „Nacht-Modus: Nixie Software-PWM“ gehört mit dazu, `NIGHT_DIM_NEO_PCT` bleibt unverändert stehen).
 
-- [ ] **Step 6: Strukturprüfung (grep)**
+- [ ] **Step 6: `nixieWriteSafe()` in `display.ino` anpassen**
 
-Run: `grep -n "nixiePwmOn\|lastPwmToggle\|hvDimmerSetDuty\|hvDimPct\|NIGHT_DIM_DUTY_PCT\|NIGHT_DIM_PWM_PERIOD" NixieClockUltra.ino`
+`display.ino:5-11` referenziert das mit Step 2 entfernte `nixiePwmOn` — ohne Anpassung kompiliert das Sketch nicht (Arduino verkettet alle `.ino`-Dateien zu einer Übersetzungseinheit). Die Funktion diente dazu, kurze Aufblitzer während der PWM-Off-Phase im (jetzt entfallenen) Kathoden-Blanking zu verhindern; das ist überflüssig, da jetzt die Anodenspannung selbst die Helligkeit/Dunkelheit bestimmt — ein Schreiben der echten Ziffern hat keine sichtbare Wirkung, solange die Anode per `hvDimmerSetDuty()` abgeschaltet ist. Den Block
+
+```cpp
+static void nixieWriteSafe() {
+  if (nightState == NIGHT_DARK) return;
+  if (nightState == NIGHT_DIM && !nixiePwmOn) return;
+  nixieWrite(displayDigits);
+}
+```
+
+ersetzen durch:
+
+```cpp
+static void nixieWriteSafe() {
+  nixieWrite(displayDigits);
+}
+```
+
+- [ ] **Step 7: Strukturprüfung (grep)**
+
+Run: `grep -rn "nixiePwmOn\|lastPwmToggle\|hvDimmerSetDuty\|hvDimPct\|NIGHT_DIM_DUTY_PCT\|NIGHT_DIM_PWM_PERIOD" --include=*.ino .`
 
 Expected:
-- `nixiePwmOn`, `lastPwmToggle`, `NIGHT_DIM_DUTY_PCT`, `NIGHT_DIM_PWM_PERIOD` liefern **keine** Treffer mehr.
-- `hvDimmerSetDuty` erscheint dreimal (DARK/DIM/NORMAL-Fälle).
-- `hvDimPct` erscheint in Global-Deklaration, NVS-Laden und im `NIGHT_DIM`-Case.
+- `nixiePwmOn`, `lastPwmToggle`, `NIGHT_DIM_DUTY_PCT`, `NIGHT_DIM_PWM_PERIOD` liefern **keine** Treffer mehr in irgendeiner `.ino`-Datei (nicht nur `NixieClockUltra.ino`).
+- `hvDimmerSetDuty` erscheint dreimal in `NixieClockUltra.ino` (DARK/DIM/NORMAL-Fälle).
+- `hvDimPct` erscheint dreimal in `NixieClockUltra.ino` (Global-Deklaration, NVS-Laden, `NIGHT_DIM`-Case).
 
-- [ ] **Step 7: Manueller Kompilier-Check (durch User)**
+- [ ] **Step 8: Manueller Kompilier-Check (durch User)**
 
 Wie Task 1, Step 6 — zusätzlich prüfen, dass `nixieWrite`/`displayDigits` weiterhin nur dort referenziert werden, wo sie schon vorher standen (kein verwaistes Vorkommen mehr im entfernten Block).
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add NixieClockUltra.ino
+git add NixieClockUltra.ino display.ino
 git commit -m "feat: Nacht-Modus-Dimmung über hv_dimmer.ino statt Kathoden-Blanking"
 ```
 
