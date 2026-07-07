@@ -127,6 +127,10 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
       <option value="0">Gedimmt</option>
       <option value="1">Dunkel</option>
     </select></div>
+  <div class="row"><label>Dimm-Helligkeit</label>
+    <input type="range" id="hvDimPct" min="5" max="95" value="25"
+      oninput="document.getElementById('hvDimPctVal').textContent=this.value">
+    <span id="hvDimPctVal">25</span>%</div>
   <div class="row"><label>Lichtsensor aktiv</label>
     <label class="toggle"><input type="checkbox" id="ldrEn"><span class="slider"></span></label></div>
   <div class="row"><label>Schwellwert (0–4095)</label>
@@ -323,6 +327,8 @@ async function refreshNightMode(){
   document.getElementById('ntFrom').value  = d.ntFrom;
   document.getElementById('ntTo').value    = d.ntTo;
   document.getElementById('ntMode').value  = d.ntMode;
+  document.getElementById('hvDimPct').value = d.hvDimPct;
+  document.getElementById('hvDimPctVal').textContent = d.hvDimPct;
   document.getElementById('ldrEn').checked = d.ldrEn;
   document.getElementById('ldrThr').value  = d.ldrThr;
   document.getElementById('ldrThrVal').textContent = d.ldrThr;
@@ -334,6 +340,7 @@ async function saveNightMode(){
     ntFrom:parseInt(document.getElementById('ntFrom').value),
     ntTo:  parseInt(document.getElementById('ntTo').value),
     ntMode:parseInt(document.getElementById('ntMode').value),
+    hvDimPct:parseInt(document.getElementById('hvDimPct').value),
     ldrEn: document.getElementById('ldrEn').checked,
     ldrThr:parseInt(document.getElementById('ldrThr').value)
   });
