@@ -353,12 +353,13 @@ void loop() {
   if (startFadeIn) {
     if (millis() - lastFadeMs >= FADE_INTERVAL_MS) {
       lastFadeMs = millis();
-      // NeoPixel langsam aufblenden
-      uint8_t b = map(startFadeStep, 0, FADE_STEPS, 0, neoBright);
-      strip.setBrightness(b);
-      strip.show();
       startFadeStep++;
-      if (startFadeStep >= FADE_STEPS) startFadeIn = false;
+      if (startFadeStep >= FADE_STEPS) {
+        startFadeIn = false;
+        // Strip-interne Skalierung bleibt deaktiviert (255) – Skalierung
+        // erfolgt ausschließlich per Pixel in neo_animation via scaleColor().
+        strip.setBrightness(255);
+      }
     }
     return;
   }
