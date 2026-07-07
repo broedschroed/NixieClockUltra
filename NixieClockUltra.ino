@@ -103,7 +103,9 @@ const uint8_t BRIGHTNESS_LEVELS[4] = {10, 30, 50, 80};
 // Einstellmodus Timeout (ms)
 #define EDIT_TIMEOUT_MS   15000
 
-// Nacht-Modus: NeoPixel-Skalierung (Nixie-Dimmung siehe hv_dimmer.ino)
+// Nacht-Modus: Nixie Software-PWM (Entfernung folgt in Task 2, siehe hv_dimmer.ino)
+#define NIGHT_DIM_DUTY_PCT    25   // Nixie Ein-Anteil in % (Software-PWM)
+#define NIGHT_DIM_PWM_PERIOD  20   // PWM-Periode in ms (~50 Hz)
 #define NIGHT_DIM_NEO_PCT     15   // NeoPixel-Helligkeit im Dimm-Modus in % der Normalhelligkeit
 
 // HV-Dimmer (TLP627, LEDC-Hardware-PWM auf HV_SWITCH_PIN)
