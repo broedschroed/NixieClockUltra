@@ -103,9 +103,6 @@ const uint8_t BRIGHTNESS_LEVELS[4] = {10, 30, 50, 80};
 // Einstellmodus Timeout (ms)
 #define EDIT_TIMEOUT_MS   15000
 
-// Nacht-Modus: Nixie Software-PWM (Entfernung folgt in Task 2, siehe hv_dimmer.ino)
-#define NIGHT_DIM_DUTY_PCT    25   // Nixie Ein-Anteil in % (Software-PWM)
-#define NIGHT_DIM_PWM_PERIOD  20   // PWM-Periode in ms (~50 Hz)
 #define NIGHT_DIM_NEO_PCT     15   // NeoPixel-Helligkeit im Dimm-Modus in % der Normalhelligkeit
 
 // HV-Dimmer (TLP627, LEDC-Hardware-PWM auf HV_SWITCH_PIN)
@@ -162,6 +159,7 @@ bool     ldrEnabled         = false;
 uint16_t ldrThreshold       = 512;
 uint16_t ldrReading         = 4095;
 uint32_t lastLdrRead        = 0;
+uint8_t  hvDimPct           = 25;   // Röhren-Dimm-Helligkeit in % (5–95), NVS-Key "hvDimPct"
 
 // Einstellmodus
 enum EditState { EDIT_NONE, EDIT_HOUR, EDIT_MIN, EDIT_SEC,
@@ -200,9 +198,7 @@ uint32_t dateShowStart  = 0;
 bool startFadeIn = true;
 uint8_t startFadeStep = 0;
 
-// Nacht-Modus: Nixie Software-PWM Zustand
-static bool        nixiePwmOn      = true;
-static uint32_t    lastPwmToggle   = 0;
+// Nacht-Modus: letzter angewendeter Zustand (für Übergangserkennung)
 static NightState  prevNightState  = NIGHT_NORMAL;
 
 // ═══════════════════════════════════════════════════════════
@@ -317,6 +313,7 @@ void setup() {
   nightTimeMode    = prefs.getUChar("ntMode",   0);
   ldrEnabled       = prefs.getBool("ldrEn",     false);
   ldrThreshold     = prefs.getUShort("ldrThr",  512);
+  hvDimPct         = (uint8_t)constrain((int)prefs.getUChar("hvDimPct", 25), 5, 95);
 
   // --- Nixie Direct Drive via MCP23017 ---
   nixieInit();    // Wire.begin() muss vor readRTC()/setDisplayTime() stehen
@@ -391,36 +388,13 @@ void loop() {
   // --- Nacht-Modus ---
   updateNightMode();
 
-  // --- Nacht-Modus: Nixie-Ausgabe steuern ---
+  // --- Nacht-Modus: Röhren-Helligkeit per HV-Dimmer steuern ---
   if (nightState != prevNightState) {
     prevNightState = nightState;
-    if (nightState == NIGHT_DARK) {
-      uint8_t blank[6] = {10, 10, 10, 10, 10, 10};
-      nixieWrite(blank);
-      nixiePwmOn = false;
-    } else if (nightState == NIGHT_DIM) {
-      nixiePwmOn    = true;
-      lastPwmToggle = millis();
-      nixieWrite(displayDigits);
-    } else {  // NIGHT_NORMAL
-      nixiePwmOn = true;
-      nixieWrite(displayDigits);
-    }
-  }
-
-  if (nightState == NIGHT_DIM) {
-    const uint32_t onTime  = NIGHT_DIM_PWM_PERIOD * NIGHT_DIM_DUTY_PCT / 100;
-    const uint32_t offTime = NIGHT_DIM_PWM_PERIOD - onTime;
-    uint32_t elapsed = millis() - lastPwmToggle;
-    if (nixiePwmOn && elapsed >= onTime) {
-      nixiePwmOn    = false;
-      lastPwmToggle = millis();
-      uint8_t blank[6] = {10, 10, 10, 10, 10, 10};
-      nixieWrite(blank);
-    } else if (!nixiePwmOn && elapsed >= offTime) {
-      nixiePwmOn    = true;
-      lastPwmToggle = millis();
-      nixieWrite(displayDigits);
+    switch (nightState) {
+      case NIGHT_DARK:   hvDimmerSetDuty(0);                        break;
+      case NIGHT_DIM:    hvDimmerSetDuty(hvDimPct * 255 / 100);     break;
+      case NIGHT_NORMAL: hvDimmerSetDuty(255);                      break;
     }
   }
 
