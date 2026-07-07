@@ -655,6 +655,7 @@ void setupWebServer() {
     doc["ntFrom"] = nightStart;
     doc["ntTo"]   = nightEnd;
     doc["ntMode"] = nightTimeMode;
+    doc["hvDimPct"] = hvDimPct;
     doc["ldrEn"]  = ldrEnabled;
     doc["ldrThr"] = ldrThreshold;
     doc["ldrVal"] = ldrReading;
@@ -673,14 +674,17 @@ void setupWebServer() {
         nightStart       = constrain((int)doc["ntFrom"], 0, 23);
         nightEnd         = constrain((int)doc["ntTo"],   0, 23);
         nightTimeMode    = constrain((int)doc["ntMode"], 0, 1);
+        hvDimPct         = (uint8_t)constrain((int)doc["hvDimPct"], 5, 95);
         ldrEnabled       = doc["ldrEn"].as<bool>();
         ldrThreshold     = (uint16_t)constrain((int)doc["ldrThr"], 0, 4095);
         prefs.putBool("ntEn",     nightTimeEnabled);
         prefs.putUChar("ntFrom",  nightStart);
         prefs.putUChar("ntTo",    nightEnd);
         prefs.putUChar("ntMode",  nightTimeMode);
+        prefs.putUChar("hvDimPct", hvDimPct);
         prefs.putBool("ldrEn",    ldrEnabled);
         prefs.putUShort("ldrThr", ldrThreshold);
+        if (nightState == NIGHT_DIM) hvDimmerSetDuty(hvDimPct * 255 / 100);
         req->send(200, "application/json", "{\"ok\":true}");
       } else {
         req->send(400, "application/json", "{\"ok\":false}");
