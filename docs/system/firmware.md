@@ -73,14 +73,16 @@ Die `setup()`-Funktion läuft einmalig nach dem Start in dieser Reihenfolge:
 #define EDIT_TIMEOUT_MS  15000    // 15 s Timeout im Einstellmodus
 #define DATE_SHOW_MS      5000    // Datumsanzeige-Dauer nach Slot-Animation
 
-// Nacht-Modus Software-PWM
-#define NIGHT_DIM_DUTY_PCT    25  // Nixie Ein-Anteil in % (Software-PWM, ~50 Hz)
-#define NIGHT_DIM_PWM_PERIOD  20  // PWM-Periode in ms
+// Nacht-Modus: NeoPixel-Skalierung (Nixie-Dimmung: siehe HV-Dimmer unten)
 #define NIGHT_DIM_NEO_PCT     15  // NeoPixel-Helligkeit im Dimm-Modus in %
 
 // LDR (night_mode.ino)
 #define LDR_PIN        6          // ADC1-Kanal (GPIO6), LDR→VCC, 100kΩ→GND
 #define LDR_SAMPLE_MS  500        // Abtastintervall
+
+// HV-Dimmer (TLP627, LEDC-Hardware-PWM auf Anodenspannung)
+#define HV_SWITCH_PIN   7         // GPIO → TLP627 → Anodenspannung
+#define HV_PWM_FREQ_HZ  200       // Hz, LEDC 8-Bit-Auflösung (Duty 0–255)
 
 const uint8_t BRIGHTNESS_LEVELS[4] = {10, 30, 50, 80};  // NeoPixel-Helligkeiten
 ```
@@ -112,7 +114,7 @@ const uint8_t BRIGHTNESS_LEVELS[4] = {10, 30, 50, 80};  // NeoPixel-Helligkeiten
 | `ldrEnabled`        | `bool`        | Lichtsensor-Steuerung aktiv                                   |
 | `ldrThreshold`      | `uint16_t`    | ADC-Schwellwert (0–4095); bei ≤ Schwellwert → Dimmen          |
 | `ldrReading`        | `uint16_t`    | Aktueller ADC-Messwert (wird immer alle 500 ms gelesen)       |
-| `nixiePwmOn`        | `bool`        | Software-PWM: Nixies gerade eingeschaltet                     |
+| `hvDimPct`          | `uint8_t`     | Röhren-Dimm-Helligkeit im Nacht-Modus in % (5–95, Default 25) |
 | `irCodes[8]`        | `uint64_t[8]` | Angelernte IR-Codes, Index = IR_ACTION_SET..IR_ACTION_DATE    |
 | `wifiStaConnected`  | `bool`        | STA-Verbindung aktiv                                          |
 | `ntpSynced`         | `bool`        | NTP-Synchronisierung erfolgreich                              |
