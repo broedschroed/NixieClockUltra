@@ -11,8 +11,11 @@
 Ersatz der bisherigen Software-PWM-Dimmung der Nixie-Röhren (zyklisches
 Kathoden-Blanking über die MCP23017, nur im Nacht-Modus aktiv) durch
 echtes Hardware-PWM auf der Anodenspannung. Ein neuer GPIO steuert über
-einen TLP627-Optokoppler einen HV-tauglichen Schalter, der die
-Anodenspannung selbst schaltet.
+einen TLP627-Optokoppler direkt die Anodenspannung – der
+Photodarlington-Ausgang des TLP627 ist laut Datenblatt
+(„Recommended Operating Conditions“, Supply Voltage max. 200V) für die
+~170V-Anodenspannung ausreichend spannungsfest, ein zusätzlicher
+HV-Schalter ist nicht nötig.
 
 **Scope:** Ausschließlich Ersatz von `NIGHT_DIM`/`NIGHT_DARK` für die
 Nixie-Röhren. Volle Helligkeit (`NIGHT_NORMAL`) bleibt fest an. Die
@@ -44,11 +47,14 @@ Bereits in der Nacht-Modus-Spec vom 2026-06-21 als Option B vermerkt
 
 ### 1.3 Downstream-Hinweis (nicht Teil dieser Firmware-Änderung)
 
-Der TLP627 hat eine VCEO von nur ~55–70 V und darf **nicht** direkt in
-Reihe mit der ~170-V-Anodenspannung liegen. Er dient als isolierter
-Treiber für einen HV-tauglichen Schalter (z.B. MOSFET/HV-Transistor),
-der die eigentliche Anodenspannung schaltet. Diese Analog-/HV-Stufe ist
-Hardware-Sache des Users und nicht Gegenstand dieser Spec.
+Der TLP627-Photodarlington-Ausgang liegt direkt in Reihe mit der
+Anodenspannung (kein zusätzlicher HV-Schalter nötig). Zwei Punkte, die
+bei der analogen Dimensionierung zu beachten sind (Hardware-Sache des
+Users, nicht Gegenstand dieser Spec):
+- **Collector Current max. 120mA** – Summe des Anodenstroms aller 6
+  Röhren muss darunter bleiben.
+- **Forward Current typ. 16mA** – bestimmt den Vorwiderstand von
+  GPIO7 zur TLP627-LED.
 
 ---
 
@@ -157,8 +163,9 @@ Manueller Testablauf nach Hardware-Aufbau:
 1. **Isoliert (ohne HV):** GPIO7-Signal mit Oszilloskop/Logic-Analyzer
    prüfen – 200 Hz, korrekter Duty bei jedem `nightState`-Übergang
    (0 / `hvDimPct` / 255) und bei Slider-Änderung.
-2. **HV-Schalter-Stufe separat:** TLP627-LED-Strom und sauberes
-   Schalten der Anodenspannung messen, bevor die Röhren dranhängen.
+2. **TLP627-Stufe separat:** LED-Vorwärtsstrom und sauberes Schalten
+   der Anodenspannung am TLP627-Ausgang messen, bevor die Röhren
+   dranhängen.
 3. **Am fertigen Gerät:** Nacht-Modus-Zeitfenster testweise aktivieren,
    `hvDimPct`-Slider 5–95% durchfahren → sichtbares, flackerfreies
    Dimmen. Dunkel-Modus prüfen → Röhren komplett aus, kein Nachglühen.
@@ -174,6 +181,7 @@ Manueller Testablauf nach Hardware-Aufbau:
   (der Web-UI-„Nixie-Helligkeit“-Dropdown bleibt wirkungslos für die
   Röhren, wie bisher).
 - Änderungen an der NeoPixel-Dimmung.
-- Auslegung der HV-Schalterstufe hinter dem TLP627 (Bauteilwahl,
-  Widerstände) – reine Hardware-Aufgabe des Users.
+- Dimensionierung des LED-Vorwiderstands am GPIO7/TLP627 sowie Prüfung
+  des Anodenstroms gegen die 120mA-Collector-Current-Grenze – reine
+  Hardware-Aufgabe des Users.
 - Nicht-blockierendes WiFi-Connect (separates, bereits besprochenes Thema).
