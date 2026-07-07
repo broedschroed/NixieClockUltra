@@ -41,21 +41,9 @@ In `NixieClockUltra.ino`, nach Zeile 68 (`#define I2C_SCL 9`), im Block „PIN-D
 
 - [ ] **Step 2: Nacht-Modus-Defines ersetzen**
 
-In `NixieClockUltra.ino`, Zeilen 103–106 ersetzen:
+In `NixieClockUltra.ino`, nach Zeile 106 (`#define NIGHT_DIM_NEO_PCT ...`) ergänzen — `NIGHT_DIM_DUTY_PCT`/`NIGHT_DIM_PWM_PERIOD` bleiben vorerst unverändert bestehen, da `loop()` sie noch verwendet und erst Task 2 diese Verwendung entfernt (self-contained/kompilierbarer Zwischenstand):
 
 ```cpp
-// Nacht-Modus: Nixie Software-PWM
-#define NIGHT_DIM_DUTY_PCT    25   // Nixie Ein-Anteil in % (Software-PWM)
-#define NIGHT_DIM_PWM_PERIOD  20   // PWM-Periode in ms (~50 Hz)
-#define NIGHT_DIM_NEO_PCT     15   // NeoPixel-Helligkeit im Dimm-Modus in % der Normalhelligkeit
-```
-
-durch:
-
-```cpp
-// Nacht-Modus: NeoPixel-Skalierung (Nixie-Dimmung siehe hv_dimmer.ino)
-#define NIGHT_DIM_NEO_PCT     15   // NeoPixel-Helligkeit im Dimm-Modus in % der Normalhelligkeit
-
 // HV-Dimmer (TLP627, LEDC-Hardware-PWM auf HV_SWITCH_PIN)
 #define HV_PWM_FREQ_HZ        200  // Hz — nach Hardwareaufbau per Oszilloskop verifizieren
 ```
@@ -106,7 +94,7 @@ Run: `grep -n "HV_SWITCH_PIN\|HV_PWM_FREQ_HZ\|hvDimmerInit\|NIGHT_DIM_DUTY_PCT\|
 Expected:
 - `HV_SWITCH_PIN` und `HV_PWM_FREQ_HZ` je genau einmal als `#define` in `NixieClockUltra.ino`, je einmal referenziert in `hv_dimmer.ino`.
 - `hvDimmerInit` erscheint in `hv_dimmer.ino` (Definition) und in `NixieClockUltra.ino` (Aufruf in `setup()`).
-- `NIGHT_DIM_DUTY_PCT` und `NIGHT_DIM_PWM_PERIOD` liefern **keine** Treffer mehr (vollständig entfernt).
+- `NIGHT_DIM_DUTY_PCT` und `NIGHT_DIM_PWM_PERIOD` bleiben unverändert vorhanden (je ein `#define` + Verwendung in `loop()`) — ihre Entfernung ist Teil von Task 2, zusammen mit der Verwendung.
 
 - [ ] **Step 6: Manueller Kompilier-Check (durch User)**
 
@@ -217,20 +205,32 @@ durch:
   }
 ```
 
-- [ ] **Step 5: Strukturprüfung (grep)**
+- [ ] **Step 5: Jetzt verwaiste Defines entfernen**
 
-Run: `grep -n "nixiePwmOn\|lastPwmToggle\|hvDimmerSetDuty\|hvDimPct" NixieClockUltra.ino`
+Mit Step 4 verschwindet die letzte Verwendung von `NIGHT_DIM_DUTY_PCT`/`NIGHT_DIM_PWM_PERIOD` (Task 1 hatte sie bewusst noch stehen lassen, um kompilierbar zu bleiben). In `NixieClockUltra.ino` die Zeile
+
+```cpp
+// Nacht-Modus: Nixie Software-PWM
+#define NIGHT_DIM_DUTY_PCT    25   // Nixie Ein-Anteil in % (Software-PWM)
+#define NIGHT_DIM_PWM_PERIOD  20   // PWM-Periode in ms (~50 Hz)
+```
+
+vollständig entfernen (der Kommentar „Nacht-Modus: Nixie Software-PWM“ gehört mit dazu, `NIGHT_DIM_NEO_PCT` bleibt unverändert stehen).
+
+- [ ] **Step 6: Strukturprüfung (grep)**
+
+Run: `grep -n "nixiePwmOn\|lastPwmToggle\|hvDimmerSetDuty\|hvDimPct\|NIGHT_DIM_DUTY_PCT\|NIGHT_DIM_PWM_PERIOD" NixieClockUltra.ino`
 
 Expected:
-- `nixiePwmOn` und `lastPwmToggle` liefern **keine** Treffer mehr.
+- `nixiePwmOn`, `lastPwmToggle`, `NIGHT_DIM_DUTY_PCT`, `NIGHT_DIM_PWM_PERIOD` liefern **keine** Treffer mehr.
 - `hvDimmerSetDuty` erscheint dreimal (DARK/DIM/NORMAL-Fälle).
 - `hvDimPct` erscheint in Global-Deklaration, NVS-Laden und im `NIGHT_DIM`-Case.
 
-- [ ] **Step 6: Manueller Kompilier-Check (durch User)**
+- [ ] **Step 7: Manueller Kompilier-Check (durch User)**
 
 Wie Task 1, Step 6 — zusätzlich prüfen, dass `nixieWrite`/`displayDigits` weiterhin nur dort referenziert werden, wo sie schon vorher standen (kein verwaistes Vorkommen mehr im entfernten Block).
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add NixieClockUltra.ino
