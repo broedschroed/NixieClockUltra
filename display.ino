@@ -2,11 +2,7 @@
 //  DISPLAY-UPDATE (displayDigits befüllen)
 // ═══════════════════════════════════════════════════════════
 
-// Schreibt displayDigits nur wenn Nixie-PWM gerade eingeschaltet ist.
-// Verhindert kurze Aufblitzer während der PWM-Off-Phase im Dimm-Modus.
 static void nixieWriteSafe() {
-  if (nightState == NIGHT_DARK) return;
-  if (nightState == NIGHT_DIM && !nixiePwmOn) return;
   nixieWrite(displayDigits);
 }
 
