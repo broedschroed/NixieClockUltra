@@ -89,7 +89,7 @@
 #define FADE_INTERVAL_MS      2   // ms zwischen Fade-Schritten
 
 // Helligkeitsstufen (PWM 0–255 → werden als Duty-Cycle-Anteil genutzt)
-const uint8_t BRIGHTNESS_LEVELS[4] = {10, 30, 50, 80};
+const uint8_t BRIGHTNESS_LEVELS[4] = {10, 40, 80, 200};
 
 // WiFi AP (Fallback-Hotspot, immer aktiv)
 #define WIFI_SSID     "NixieClockCS"
