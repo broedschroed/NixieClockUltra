@@ -38,8 +38,8 @@
         <div class="two-col-text">
           <h3>Komponenten</h3>
           <p>Herzstück ist der <strong>ESP32-S3-WROOM-1</strong> (U1) mit integriertem WLAN. Die batteriegepufferte <strong>DS1302 Echtzeituhr</strong> (U2) hält die Zeit auch bei Stromausfall. Der <strong>VS1838B</strong> (U3) empfängt und demoduliert IR-Signale.</p>
-          <p>Die Spannungsversorgung erfolgt dreistufig: <strong>AMS1117-3.3</strong> (U5) liefert 3,3 V für die Logik; der <strong>DC-DC-Konverter</strong> (U6) hebt 5 V auf 10 V an; das <strong>HV-Modul</strong> (U4) erzeugt daraus ~170 V für die Nixie-Anoden.</p>
-          <p>Neu in Rev 2.1: Lichtsensor-Anschluss <strong>J5</strong> (LDR, GPIO6) für den automatischen Nacht-Modus.</p>
+          <p>Die Spannungsversorgung erfolgt dreistufig: <strong>AMS1117-3.3</strong> (U5) liefert 3,3 V für die Logik; der <strong>DC-DC-Konverter</strong> (U6) hebt 5 V auf 10 V an; das <strong>HV-Modul</strong> (U4) erzeugt daraus ~170 V, die über einen <strong>TLP627</strong>-Optokoppler für den Nacht-Modus dimmbar an die Nixie-Anoden weitergegeben werden.</p>
+          <p>Neu in Rev 2.1: Lichtsensor-Anschluss <strong>J5</strong> (LDR, GPIO6) für den automatischen Nacht-Modus. Neu ergänzt: <strong>TLP627</strong>-Optokoppler (GPIO7) dimmt die Anodenspannung per Hardware-PWM (2&ndash;60&nbsp;%) &mdash; aktuell als Erweiterung handverdrahtet, noch nicht mit eigener Referenz im Schaltplan.</p>
           <div class="warning-box">
             <strong>USB-CDC-Hinweis:</strong> Der ESP32-S3 verwendet native USB (kein UART-Chip). In der Arduino IDE muss <strong>USB CDC On Boot: Enabled</strong> gesetzt sein &mdash; sonst ist nach dem ersten Flash keine erneute Programmierung über USB möglich (BOOT-Taster nicht bestückt).
           </div>
@@ -78,7 +78,7 @@
       <!-- Spannungsversorgung -->
       <h2>Spannungsversorgung</h2>
       <div class="voltage-diagram">
-        <svg width="640" height="130" viewBox="0 0 640 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Spannungsfluss-Diagramm">
+        <svg width="760" height="130" viewBox="0 0 760 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Spannungsfluss-Diagramm">
           <!-- Farben -->
           <!-- Boxen: fill=#1c1408, stroke=#6b4f12 -->
           <!-- Pfeile: stroke=#c8961a -->
@@ -110,13 +110,23 @@
 
           <!-- Label ~170V -->
           <text x="420" y="26" font-family="serif" font-size="10" fill="#ff8c00" text-anchor="middle">~170 V</text>
-          <!-- Pfeil HV-MOD → Nixie -->
+          <!-- Pfeil HV-MOD → TLP627 -->
           <line x1="390" y1="32" x2="448" y2="32" stroke="#c8961a" stroke-width="1.5" marker-end="url(#arr)"/>
 
-          <!-- Nixie Box -->
+          <!-- TLP627 Box -->
           <rect x="450" y="10" width="90" height="44" rx="2" fill="#1c1408" stroke="#6b4f12" stroke-width="1.5"/>
-          <text x="495" y="28" font-family="Cinzel,serif" font-size="10" fill="#c8961a" text-anchor="middle">Nixie</text>
-          <text x="495" y="46" font-family="Cinzel,serif" font-size="10" fill="#e8d5a3" text-anchor="middle">Anoden</text>
+          <text x="495" y="28" font-family="Cinzel,serif" font-size="10" fill="#c8961a" text-anchor="middle">TLP627</text>
+          <text x="495" y="46" font-family="Cinzel,serif" font-size="10" fill="#a08c6a" text-anchor="middle">Dimmer</text>
+
+          <!-- Label dimmbar -->
+          <text x="570" y="26" font-family="serif" font-size="9" fill="#ff8c00" text-anchor="middle">dimmbar</text>
+          <!-- Pfeil TLP627 → Nixie -->
+          <line x1="540" y1="32" x2="598" y2="32" stroke="#c8961a" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- Nixie Box -->
+          <rect x="600" y="10" width="90" height="44" rx="2" fill="#1c1408" stroke="#6b4f12" stroke-width="1.5"/>
+          <text x="645" y="28" font-family="Cinzel,serif" font-size="10" fill="#c8961a" text-anchor="middle">Nixie</text>
+          <text x="645" y="46" font-family="Cinzel,serif" font-size="10" fill="#e8d5a3" text-anchor="middle">Anoden</text>
 
           <!-- Zeile 2: USB → AMS1117 → Logik -->
           <!-- Linie von USB nach unten -->
