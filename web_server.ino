@@ -58,15 +58,6 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
 <div class="card">
   <h2>💡 Helligkeit &amp; Animation</h2>
   <div class="row">
-    <label>Nixie-Helligkeit</label>
-    <select id="bright" onchange="setBright()">
-      <option value="0">Sehr dunkel</option>
-      <option value="1">Dunkel</option>
-      <option value="2">Hell</option>
-      <option value="3" selected>Sehr hell</option>
-    </select>
-  </div>
-  <div class="row">
     <label>NeoPixel-Helligkeit</label>
     <input type="range" id="neoBright" min="10" max="255" value="80" oninput="setNeoBright(this.value)">
     <span id="neoBrightVal">80</span>
@@ -117,28 +108,27 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
   <h2>🌙 Nacht-Modus</h2>
   <div class="row"><label>Aktuell</label><span class="badge" id="nightStateBadge">Normal</span></div>
   <div class="row"><label>Zeitbereich aktiv</label>
-    <label class="toggle"><input type="checkbox" id="ntEn"><span class="slider"></span></label></div>
+    <label class="toggle"><input type="checkbox" id="ntEn" onchange="saveNightMode()"><span class="slider"></span></label></div>
   <div class="row"><label>Von (Stunde 0–23)</label>
-    <input type="number" id="ntFrom" min="0" max="23" value="23"></div>
+    <input type="number" id="ntFrom" min="0" max="23" value="23" onchange="saveNightMode()"></div>
   <div class="row"><label>Bis (Stunde 0–23)</label>
-    <input type="number" id="ntTo" min="0" max="23" value="7"></div>
+    <input type="number" id="ntTo" min="0" max="23" value="7" onchange="saveNightMode()"></div>
   <div class="row"><label>Modus</label>
-    <select id="ntMode">
+    <select id="ntMode" onchange="saveNightMode()">
       <option value="0">Gedimmt</option>
       <option value="1">Dunkel</option>
     </select></div>
   <div class="row"><label>Dimm-Helligkeit</label>
-    <input type="range" id="hvDimPct" min="5" max="95" value="25"
-      oninput="document.getElementById('hvDimPctVal').textContent=this.value">
+    <input type="range" id="hvDimPct" min="2" max="60" value="25"
+      oninput="setHvDimPct(this.value)">
     <span id="hvDimPctVal">25</span>%</div>
   <div class="row"><label>Lichtsensor aktiv</label>
-    <label class="toggle"><input type="checkbox" id="ldrEn"><span class="slider"></span></label></div>
+    <label class="toggle"><input type="checkbox" id="ldrEn" onchange="saveNightMode()"><span class="slider"></span></label></div>
   <div class="row"><label>Schwellwert (0–4095)</label>
     <input type="range" id="ldrThr" min="0" max="4095" value="512"
-      oninput="document.getElementById('ldrThrVal').textContent=this.value">
+      oninput="setLdrThr(this.value)">
     <span id="ldrThrVal">512</span></div>
   <div class="row"><label>Umgebungshelligkeit</label><span class="badge" id="ldrVal">--</span></div>
-  <div class="row"><button onclick="saveNightMode()">Übernehmen</button></div>
 </div>
 
 <div class="card">
@@ -182,7 +172,6 @@ function get(path){return fetch(path).then(r=>r.json()).catch(()=>({}));}
 async function refreshClock(){
   let d=await get('/api/status');
   if(d.time) document.getElementById('clkDisp').textContent=d.time;
-  if(d.bright!==undefined) document.getElementById('bright').value=d.bright;
   if(d.neoBright!==undefined){document.getElementById('neoBright').value=d.neoBright;document.getElementById('neoBrightVal').textContent=d.neoBright;}
   if(d.anim!==undefined) document.getElementById('anim').value=d.anim;
   if(d.slotIval!==undefined) document.getElementById('slotIval').value=d.slotIval;
@@ -222,10 +211,6 @@ function syncBrowser(){
   document.getElementById('imo').value = now.getMonth()+1;
   document.getElementById('iy').value  = now.getFullYear()%100;
   setTime();
-}
-async function setBright(){
-  let v=parseInt(document.getElementById('bright').value);
-  await api('/api/bright',{level:v});
 }
 async function setNeoBright(v){
   document.getElementById('neoBrightVal').textContent=v;
@@ -334,6 +319,14 @@ async function refreshNightMode(){
   document.getElementById('ldrThrVal').textContent = d.ldrThr;
   document.getElementById('ldrVal').textContent    = d.ldrVal!==undefined?d.ldrVal:'--';
 }
+async function setHvDimPct(v){
+  document.getElementById('hvDimPctVal').textContent=v;
+  await saveNightMode();
+}
+async function setLdrThr(v){
+  document.getElementById('ldrThrVal').textContent=v;
+  await saveNightMode();
+}
 async function saveNightMode(){
   let r=await api('/api/nightmode',{
     ntEn:  document.getElementById('ntEn').checked,
@@ -405,7 +398,6 @@ void setupWebServer() {
     char buf[10];
     snprintf(buf, sizeof(buf), "%02d:%02d:%02d", curHour, curMin, curSec);
     doc["time"]       = buf;
-    doc["bright"]     = brightLevel;
     doc["neoBright"]  = neoBright;
     doc["anim"]       = (int)animMode;
     doc["slot"]       = slotActive;
@@ -435,19 +427,6 @@ void setupWebServer() {
         if (doc.containsKey("y"))  curYear  = constrain((int)doc["y"],  0, 99);
         writeRTC();
         setDisplayTime(curHour, curMin, curSec);
-      }
-      req->send(200, "application/json", "{\"ok\":true}");
-    }
-  );
-
-  server.on("/api/bright", HTTP_POST, [](AsyncWebServerRequest *req){},
-    nullptr,
-    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
-      StaticJsonDocument<64> doc;
-      if (!deserializeJson(doc, data, len)) {
-        brightLevel = constrain((int)doc["level"], 0, 3);
-        neoBright   = BRIGHTNESS_LEVELS[brightLevel];
-        prefs.putUChar("bright", brightLevel);
       }
       req->send(200, "application/json", "{\"ok\":true}");
     }
@@ -674,7 +653,7 @@ void setupWebServer() {
         nightStart       = constrain((int)doc["ntFrom"], 0, 23);
         nightEnd         = constrain((int)doc["ntTo"],   0, 23);
         nightTimeMode    = constrain((int)doc["ntMode"], 0, 1);
-        hvDimPct         = (uint8_t)constrain((int)doc["hvDimPct"], 5, 95);
+        hvDimPct         = (uint8_t)constrain((int)doc["hvDimPct"], 2, 60);
         ldrEnabled       = doc["ldrEn"].as<bool>();
         ldrThreshold     = (uint16_t)constrain((int)doc["ldrThr"], 0, 4095);
         prefs.putBool("ntEn",     nightTimeEnabled);

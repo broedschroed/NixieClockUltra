@@ -159,7 +159,7 @@ bool     ldrEnabled         = false;
 uint16_t ldrThreshold       = 512;
 uint16_t ldrReading         = 4095;
 uint32_t lastLdrRead        = 0;
-uint8_t  hvDimPct           = 25;   // Röhren-Dimm-Helligkeit in % (5–95), NVS-Key "hvDimPct"
+uint8_t  hvDimPct           = 25;   // Röhren-Dimm-Helligkeit in % (2–60), NVS-Key "hvDimPct"
 
 // Einstellmodus
 enum EditState { EDIT_NONE, EDIT_HOUR, EDIT_MIN, EDIT_SEC,
@@ -313,7 +313,7 @@ void setup() {
   nightTimeMode    = prefs.getUChar("ntMode",   0);
   ldrEnabled       = prefs.getBool("ldrEn",     false);
   ldrThreshold     = prefs.getUShort("ldrThr",  512);
-  hvDimPct         = (uint8_t)constrain((int)prefs.getUChar("hvDimPct", 25), 5, 95);
+  hvDimPct         = (uint8_t)constrain((int)prefs.getUChar("hvDimPct", 25), 2, 60);
 
   // --- Nixie Direct Drive via MCP23017 ---
   nixieInit();    // Wire.begin() muss vor readRTC()/setDisplayTime() stehen
