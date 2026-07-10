@@ -713,7 +713,7 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
     <thead><tr><th>Funktion</th><th>Beschreibung</th></tr></thead>
     <tbody>
       <tr><td><strong>Zeit &amp; Datum stellen</strong></td><td>Stunden/Minuten/Sekunden und Tag/Monat/Jahr manuell eingeben oder Browser-Zeit übernehmen</td></tr>
-      <tr><td><strong>Helligkeit</strong></td><td>4 Stufen per Dropdown sowie Feinstufenregler 10–255</td></tr>
+      <tr><td><strong>NeoPixel-Helligkeit</strong></td><td>Feinstufenregler 10–255 (die 4 Grundstufen werden weiterhin per Taster oder IR-Fernbedienung durchgeschaltet)</td></tr>
       <tr><td><strong>Animation</strong></td><td>Animationsmodus (Rainbow / Warmweiß / Puls) und Slot-Intervall</td></tr>
       <tr><td><strong>Trennpunkte</strong></td><td>Blinken, dauerhaft an, oder statisch warmweiß</td></tr>
       <tr><td><strong>Nacht-Modus</strong></td><td>Zeitbereich und/oder Lichtsensor konfigurieren (siehe Kapitel VIII)</td></tr>
@@ -752,10 +752,14 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
     <thead><tr><th>Modus</th><th>Nixie-Röhren</th><th>NeoPixel</th></tr></thead>
     <tbody>
       <tr><td><strong>Normal</strong></td><td>Volle Helligkeit (Einstellung)</td><td>Volle Helligkeit (Einstellung)</td></tr>
-      <tr><td><strong>Gedimmt</strong></td><td>25 % per Software-PWM</td><td>15 % der eingestellten Helligkeit</td></tr>
+      <tr><td><strong>Gedimmt</strong></td><td>2–60 % einstellbar (Standard 25 %)</td><td>15 % der eingestellten Helligkeit</td></tr>
       <tr><td><strong>Dunkel</strong></td><td>Vollständig aus</td><td>Vollständig aus</td></tr>
     </tbody>
   </table>
+
+  <div class="info-box no-break">
+    Die Röhren-Dimmung erfolgt direkt über die Anodenspannung: Ein TLP627-Optokoppler schaltet sie per Hardware-PWM (≈200 Hz). Eine Software-PWM auf den Kathoden ist dafür nicht mehr nötig. Die Dimm-Helligkeit lässt sich im Web-Interface stufenlos zwischen 2 % und 60 % einstellen — die Änderung wird sofort übernommen.
+  </div>
 
   <h2>Zeitbereich</h2>
   <p>Innerhalb eines konfigurierbaren Zeitfensters wechselt die Uhr automatisch in den gewählten Modus (Gedimmt oder Dunkel):</p>
@@ -812,7 +816,7 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
       <tr><td><strong>Animationsmodus</strong></td><td>Rainbow / Statisch Warmweiß / Puls</td></tr>
       <tr><td><strong>Slot-Intervall</strong></td><td>Aus / 10 Sek. / 1 Min. / 15 Min. / 1 Std.</td></tr>
       <tr><td><strong>Trennpunkt-LEDs</strong></td><td>Blinken, dauerhaft an oder statisch warmweiß</td></tr>
-      <tr><td><strong>Nacht-Modus</strong></td><td>Zeitbereich (Von/Bis/Modus) und Lichtsensor (aktiv/Schwellwert)</td></tr>
+      <tr><td><strong>Nacht-Modus</strong></td><td>Zeitbereich (Von/Bis/Modus), Dimm-Helligkeit (2–60 %) und Lichtsensor (aktiv/Schwellwert)</td></tr>
       <tr><td><strong>WLAN-Zugangsdaten</strong></td><td>SSID und Passwort des Heimnetzes</td></tr>
       <tr><td><strong>IR-Codes</strong></td><td>Alle 8 angelernten Funktionen</td></tr>
     </tbody>
@@ -849,6 +853,7 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
       <tr><td><strong>Nixie-Ansteuerung</strong></td><td>4× MCP23017 I²C Port-Expander (0x20–0x23), direkte Ansteuerung ohne Multiplexing</td></tr>
       <tr><td><strong>Nixie-Röhren</strong></td><td>6 Stück</td></tr>
       <tr><td><strong>Nixie-Hochspannung</strong></td><td>170–180 V DC</td></tr>
+      <tr><td><strong>Anoden-Dimmung</strong></td><td>TLP627-Optokoppler, Hardware-PWM ≈200 Hz (LEDC), GPIO7</td></tr>
       <tr><td><strong>Echtzeituhr</strong></td><td>DS1302 (ThreeWire-Interface, batteriegepuffert)</td></tr>
       <tr><td><strong>NeoPixel</strong></td><td>10× WS2812B (6 Hintergrund + 4 Trennpunkte), GPIO21</td></tr>
       <tr><td><strong>IR-Empfänger</strong></td><td>VS1838 (38 kHz), GPIO48</td></tr>
