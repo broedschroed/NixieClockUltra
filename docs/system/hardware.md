@@ -17,6 +17,7 @@ und alle Nutzerschnittstellen (Taster, IR, USB). Es versorgt das Nixie Display B
 | U3   | VS1838B             | IR-Empfänger/-Demodulator 38 kHz                |
 | U4   | HV-MOD              | Boost-Converter, erzeugt ~170 V DC für Nixie-Anoden |
 | U5   | AMS1117-3.3 (SOT-223)| LDO-Linearregler 5V → 3,3V                    |
+| –    | TLP627 (DIP-4)      | Optokoppler schaltet Anodenspannung per Hardware-PWM (Nacht-Modus-Dimmung) — aktuell handverdrahtet, noch nicht im KiCad-Schaltplan mit eigener Referenz geführt |
 | U22  | USBLC6-2SC6 (SOT-23-6)| USB-ESD-/TVS-Schutz                          |
 | BT1  | CR2032              | RTC-Backup-Batterie                             |
 | Y1   | 32,768 kHz Quarz    | RTC-Taktquelle                                  |
@@ -47,7 +48,9 @@ und alle Nutzerschnittstellen (Taster, IR, USB). Es versorgt das Nixie Display B
 
 Das Display Board enthält die eigentliche Anzeigeelektronik. Die vier MCP23017 treiben
 je 16 NPN-Transistoren, die die Nixie-Kathoden individuell auf GND schalten. Die Anoden
-aller Röhren liegen permanent an ~170V.
+aller Röhren liegen gemeinsam an der über J4 eingespeisten Hochspannung (~170V), die
+auf dem Logic Board per TLP627-Hardware-PWM gedimmt werden kann (siehe Nacht-Modus in
+[firmware.md](firmware.md)).
 
 ### Hauptkomponenten
 
@@ -126,6 +129,7 @@ Die 10 LEDs sind als verkettete Kette an GPIO21 angeschlossen:
 | 4    | RTC_IO    | DS1302 Data (ThreeWire)                |
 | 5    | RTC_CLK   | DS1302 Clock (ThreeWire)               |
 | 6    | LDR_ADC   | LDR-Helligkeitssensor (ADC1, LDR→VCC, 100 kΩ→GND) |
+| 7    | HV_SWITCH | TLP627-Optokoppler: Hardware-PWM (~200 Hz, LEDC) schaltet Anodenspannung für Nacht-Modus-Dimmung |
 | 8    | I2C_SDA   | I²C Daten → 4× MCP23017               |
 | 9    | I2C_SCL   | I²C Takt → 4× MCP23017                |
 | 10   | BTN_LIGHT | Taster LIGHT (INPUT_PULLUP, aktiv LOW) |

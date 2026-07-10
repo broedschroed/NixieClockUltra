@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generiert NixieClockUltra-Systemdokumentation.odt"""
 
-import zipfile, base64, os
+import zipfile, base64, os, struct, zlib
 from pathlib import Path
 
 WD   = Path("/home/andreas/Dokumente/_Develop/Arduino/NixieClockUltra")
@@ -10,6 +10,21 @@ OUT  = WD / "docs/system/NixieClockUltra-Systemdokumentation.odt"
 
 # Kollektion aller verwendeten Spaltenbreiten (für Auto-Style-Generierung)
 _used_col_widths: set = set()
+
+MAX_IMG_W_CM = 15.5   # maximale Bildbreite auf der Seite
+
+# Mapping logischer Bildname → tatsächlicher Dateipfad; wird in create_odt() gefüllt
+_img_paths: dict = {}
+
+def _png_size(path: Path):
+    """Liest Breite und Höhe eines PNG aus dem IHDR-Chunk (ohne Pillow)."""
+    with open(path, "rb") as f:
+        f.read(8)           # PNG-Signatur
+        f.read(4)           # IHDR-Länge
+        f.read(4)           # "IHDR"
+        w = struct.unpack(">I", f.read(4))[0]
+        h = struct.unpack(">I", f.read(4))[0]
+    return w, h
 
 # ─── XML-Hilfsfunktionen ────────────────────────────────────────────────────
 
@@ -41,7 +56,12 @@ def code_block(*lines):
 def note(text):
     return f'<text:p text:style-name="Note">&#x26A0; {esc(text)}</text:p>\n'
 
-def img(name, w_cm, h_cm, cap):
+def img(name, cap):
+    """Bettet ein PNG ein. Breite = MAX_IMG_W_CM, Höhe aus echtem Seitenverhältnis."""
+    path = _img_paths.get(f"{name}.png", IMGS / f"{name}.png")
+    pw, ph = _png_size(path)
+    w_cm = MAX_IMG_W_CM
+    h_cm = round(w_cm * ph / pw, 2)
     return (
         f'<text:p text:style-name="Text_Body">'
         f'<draw:frame draw:name="{name}" draw:style-name="Graphics" '
@@ -239,7 +259,7 @@ def build_content():
     c.append(table(
         ["Platine", "KiCAD-Projekt", "Rev.", "Hauptfunktion"],
         [
-            ["Logic Board", "nixieclocklogic_V2", "0.9", "ESP32-S3, DS1302 RTC, HV-MOD, Taster, IR, USB"],
+            ["Logic Board", "nixieclocklogic_V2-1", "2.1", "ESP32-S3, DS1302 RTC, DC-DC 5V→10V, HV-MOD, LDR, Taster, IR, USB"],
             ["Nixie Display Board", "nixieclockin12_V2", "2.01", "4× MCP23017, 60× SMBTA42, 6× IN-12A, WS2812B"],
         ],
         [3.2, 4.5, 1.2, 7.1]
@@ -260,22 +280,27 @@ def build_content():
 
     # ── Kapitel 2: PCB 1 – Logic Board ─────────────────────────────────────
     c.append(h1("PCB 1 – Logic Board"))
-    c.append(p("Das Logic Board (Rev 0.9, 2026-05-07) trägt alle zentralen Komponenten "
-               "des Systems: den ESP32-S3-WROOM-1 Mikrocontroller, die DS1302 "
-               "Echtzeituhr mit CR2032-Backup-Batterie, das HV-Boost-Modul, den "
-               "AMS1117-3.3 LDO-Regler, den VS1838B IR-Empfänger, vier Taster sowie "
-               "den Micro-USB-Anschluss mit ESD-Schutz."))
+    c.append(p("Das Logic Board (Rev 2.1, KiCAD: nixieclocklogic_V2-1) trägt alle "
+               "zentralen Komponenten des Systems: den ESP32-S3-WROOM-1 Mikrocontroller "
+               "(U1), die DS1302 Echtzeituhr (U2), den VS1838B IR-Empfänger (U3), "
+               "das HV-Boost-Modul (U4, 10 V → ~170 V), den AMS1117-3.3 LDO-Regler "
+               "(U5, 5 V → 3,3 V), den DC-DC-Boost-Konverter (U6, 5 V → 10 V), "
+               "den USB-ESD-Schutz (U22), einen LDR-Helligkeitssensor (J5), "
+               "vier Taster sowie den Micro-USB-Anschluss (J2)."))
+    c.append(p("Gegenüber Rev 2.0 wurden zwei Änderungen vorgenommen: Das HV-Modul "
+               "benötigt mindestens 10 V Eingangsspannung, um stabile 170 V für die "
+               "IN-12A-Röhren zu liefern — direkt aus USB-5 V war dies nicht "
+               "erreichbar. Daher wurde ein DC-DC-Konverter (5 V → 10 V) ergänzt. "
+               "Außerdem wurde der LDR-Helligkeitssensor (J5) neu bestückt, der in "
+               "Rev 2.0 noch nicht vorhanden war."))
 
     c.append(h2("Schaltplan"))
-    c.append(img("logic_sch", 15.5, 11.0,
-                 "Abb. 1 – Logic Board Schaltplan (nixieclocklogic_V2-SCH.pdf)"))
+    c.append(img("logic_sch", "Abb. 1 – Logic Board Rev 2.1 Schaltplan (nixieclocklogic_V2-1)"))
 
     c.append(h2("PCB-Layout"))
-    c.append(img("logic_pcb_top", 15.5, 11.0,
-                 "Abb. 2a – Logic Board PCB-Layout Oberseite (nixieclocklogic_V2_BPHL.pdf)"))
+    c.append(img("logic_pcb_top", "Abb. 2a – Logic Board Rev 2.1 PCB-Layout Oberseite"))
     if (IMGS / "logic_pcb-2.png").exists():
-        c.append(img("logic_pcb_bot", 15.5, 11.0,
-                     "Abb. 2b – Logic Board PCB-Layout Unterseite"))
+        c.append(img("logic_pcb_bot", "Abb. 2b – Logic Board Rev 2.1 PCB-Layout Unterseite"))
 
     c.append(h2("Komponenten"))
     c.append(table(
@@ -284,8 +309,10 @@ def build_content():
             ["U1",  "ESP32-S3-WROOM-1",   "Modul",      "Mikrocontroller, WiFi/BT, 4 MB Flash"],
             ["U2",  "DS1302N+",            "DIP-8",      "Batteriegepufferte Echtzeituhr (ThreeWire)"],
             ["U3",  "VS1838B",             "TO-92",      "IR-Empfänger/-Demodulator 38 kHz"],
-            ["U4",  "HV-MOD",              "Custom",     "Boost-Converter ~170 V DC für Nixie-Anoden"],
+            ["U4",  "HV-MOD",              "Custom",     "Boost-Converter 10 V → ~170 V DC für Nixie-Anoden"],
             ["U5",  "AMS1117-3.3",         "SOT-223",    "LDO-Linearregler 5 V → 3,3 V"],
+            ["U6",  "DC-DC-MOD",           "Custom",     "Boost-Konverter 5 V → 10 V (Vorstufe für HV-Modul)"],
+            ["–",   "TLP627",              "DIP-4",      "Optokoppler schaltet Anodenspannung per Hardware-PWM (Nacht-Modus-Dimmung); aktuell handverdrahtet, noch nicht mit eigener Referenz im Schaltplan"],
             ["U22", "USBLC6-2SC6",         "SOT-23-6",   "USB-ESD-/TVS-Schutz"],
             ["BT1", "CR2032",              "SMD-Halter", "RTC-Backup-Batterie (~3 V)"],
             ["Y1",  "32,768 kHz Quarz",    "Radial",     "RTC-Taktquelle"],
@@ -294,25 +321,39 @@ def build_content():
             ["J2",  "USB Micro-B",         "Custom",     "5 V-Einspeisung & Firmware-Upload"],
             ["J3",  "PinHeader 1×8",       "2,54 mm",    "Inter-Board Logik-Signale"],
             ["J4",  "PinHeader 1×4",       "2,54 mm",    "Inter-Board HV-Versorgung"],
-            ["J5",  "PinHeader 1×2",       "2,54 mm",    "LDR-Helligkeitssensor, bestückt: LDR→VCC, 100 kΩ→GND, Messung GPIO6"],
+            ["J5",  "PinHeader 1×2",       "2,54 mm",    "LDR-Helligkeitssensor (neu in Rev 2.1): LDR→VCC, 100 kΩ→GND, Messung GPIO6"],
         ],
         [1.2, 3.5, 2.5, 8.8]
     ))
 
     c.append(h2("Spannungsversorgungskonzept"))
     c.append(p("Die Versorgung erfolgt über den Micro-USB-Anschluss J2 (5 V). "
-               "Aus der 5-V-Schiene erzeugen zwei Wandler die benötigten Spannungen:"))
+               "Aus der 5-V-Schiene erzeugen drei Wandler die benötigten Spannungen:"))
     c.append(h3("3,3-V-Logikversorgung (AMS1117-3.3)"))
     c.append(p("Der AMS1117-3.3 (U5) ist ein Low-Dropout-Regler im SOT-223-Gehäuse. "
                "Er versorgt den ESP32-S3, den DS1302, den IR-Empfänger sowie alle "
                "Pull-up-Widerstände. Abblockkondensatoren (100 nF + 100 µF) "
                "stabilisieren die Ausgangsspannung."))
+    c.append(h3("10-V-Zwischenstufe (DC-DC-MOD)"))
+    c.append(p("Das HV-Boost-Modul (U4) benötigt eine Eingangsspannung von mindestens "
+               "10 V, um zuverlässig ~170 V für die IN-12A-Röhren zu erzeugen — die "
+               "USB-Einspannung von 5 V reicht dafür nicht aus. Der DC-DC-Konverter "
+               "(U6) hebt die 5-V-USB-Schiene auf stabile 10 V an. "
+               "Diese 10-V-Schiene speist ausschließlich das HV-Modul."))
     c.append(h3("Hochspannung ~170 V DC (HV-MOD)"))
-    c.append(p("Der HV-MOD (U4) ist ein Boost-Converter-Modul, das aus 5 V eine "
+    c.append(p("Der HV-MOD (U4) ist ein Boost-Converter-Modul, das aus 10 V eine "
                "geregelte Gleichspannung von ca. 170–180 V erzeugt. Diese Spannung "
-               "liegt dauerhaft an den Anoden aller sechs Nixie-Röhren an. "
+               "wird auf dem Logic Board über einen TLP627-Optokoppler geführt, bevor "
+               "sie über J4 an die Anoden aller sechs Nixie-Röhren gelangt. "
                "Die Kathoden der jeweils anzuzeigenden Ziffer werden durch "
                "NPN-Transistoren auf dem Display Board auf GND gezogen."))
+    c.append(h3("Anoden-Dimmung (TLP627, Hardware-PWM)"))
+    c.append(p("Der TLP627-Optokoppler schaltet die vom HV-MOD kommende Anodenspannung "
+               "per Hardware-PWM (LEDC, ~200 Hz) auf GPIO7 (HV_SWITCH_PIN). Im "
+               "Nacht-Modus reduziert die Firmware den Duty-Cycle auf einen "
+               "einstellbaren Wert zwischen 2 % und 60 % (Standard 25 %, siehe "
+               "hv_dimmer.ino in firmware.md) statt wie zuvor die Kathoden per "
+               "Software-PWM zu takten."))
     c.append(note("Hochspannungswarnung: Der HV-Ausgang führt ~170 V DC — "
                   "lebensgefährlich bei Berührung. Vor Arbeiten an der Schaltung "
                   "die Versorgung trennen und Kondensatoren entladen."))
@@ -325,6 +366,7 @@ def build_content():
             ["4",  "RTC_IO",    "Bi-Dir.", "DS1302 Datenleitung (ThreeWire)"],
             ["5",  "RTC_CLK",   "Output", "DS1302 Takt (ThreeWire)"],
             ["6",  "LDR_ADC",   "Input",  "LDR-Helligkeitssensor (ADC1, LDR→VCC, 100 kΩ→GND)"],
+            ["7",  "HV_SWITCH", "Output", "TLP627-Optokoppler: Hardware-PWM (~200 Hz, LEDC) schaltet Anodenspannung"],
             ["8",  "I2C_SDA",   "Bi-Dir.", "I²C Daten → 4× MCP23017"],
             ["9",  "I2C_SCL",   "Output", "I²C Takt → 4× MCP23017"],
             ["10", "BTN_LIGHT", "Input",  "Taster LIGHT (INPUT_PULLUP, aktiv LOW)"],
@@ -365,15 +407,12 @@ def build_content():
                "zwischen den Zifferngruppen."))
 
     c.append(h2("Schaltplan"))
-    c.append(img("nixie_sch", 15.5, 11.0,
-                 "Abb. 3 – Nixie Display Board Schaltplan (nixieclockin12_V2-Sch.pdf)"))
+    c.append(img("nixie_sch", "Abb. 3 – Nixie Display Board Rev 2.01 Schaltplan"))
 
     c.append(h2("PCB-Layout"))
-    c.append(img("nixie_pcb_top", 15.5, 11.0,
-                 "Abb. 4a – Nixie Display Board PCB-Layout Oberseite (nixieclockin12_V2-BPHL.pdf)"))
+    c.append(img("nixie_pcb_top", "Abb. 4a – Nixie Display Board Rev 2.01 PCB-Layout Oberseite"))
     if (IMGS / "nixie_pcb-2.png").exists():
-        c.append(img("nixie_pcb_bot", 15.5, 11.0,
-                     "Abb. 4b – Nixie Display Board PCB-Layout Unterseite"))
+        c.append(img("nixie_pcb_bot", "Abb. 4b – Nixie Display Board Rev 2.01 PCB-Layout Unterseite"))
 
     c.append(h2("Komponenten"))
     c.append(table(
@@ -468,15 +507,16 @@ def build_content():
     c.append(table(
         ["Datei", "Zeilen", "Inhalt / Verantwortlichkeit"],
         [
-            ["NixieClockUltra.ino", "477", "Globals, setup(), loop(), Edit-Mode-FSM (Zeit+Datum), Software-PWM, Nacht-Modus-Globals"],
+            ["NixieClockUltra.ino", "461", "Globals, setup(), loop(), Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals"],
             ["nixie_driver.ino",    "91",  "nixieInit(), nixieWrite(), MCP23017-I²C-Abstraktion, Shadow-Register, Mutex"],
-            ["display.ino",         "66",  "setDisplayTime(), setDisplayDate(), nixieWriteSafe(), Slot-Animation"],
+            ["display.ino",         "62",  "setDisplayTime(), setDisplayDate(), nixieWriteSafe(), Slot-Animation"],
             ["buttons.ino",         "127", "Entprell-FSM für 4 Taster, Kurz-/Langdruck, Edit-Mode Zeit+Datum"],
             ["rtc.ino",             "18",  "readRTC(), writeRTC() via DS1302/ThreeWire, liest auch Tag/Monat/Jahr"],
             ["night_mode.ino",      "34",  "LDR-Abtastung (GPIO6, ADC1), updateNightMode(), Zeitbereich-Logik"],
+            ["hv_dimmer.ino",       "12",  "hvDimmerInit(), hvDimmerSetDuty() — LEDC-Hardware-PWM für TLP627 auf Anodenspannung"],
             ["neo_animation.ino",   "107", "Rainbow, Statisch, Puls, Slot, Nacht-Modus-Dimming, Datumsanzeige-Override"],
             ["ir_remote.ino",       "107", "executeAction(), dispatchIRAction(), handleIR(), 8 IR-Aktionen"],
-            ["web_server.ino",      "685", "Eingebettetes HTML/JS, alle API-Handler, WiFi-Setup, NTP, mDNS"],
+            ["web_server.ino",      "675", "Eingebettetes HTML/JS, alle API-Handler, WiFi-Setup, NTP, mDNS"],
         ],
         [4.5, 1.5, 10.0]
     ))
@@ -505,13 +545,14 @@ def build_content():
             ["1",  "Serial.begin(115200)",        "Debug-Ausgabe aktivieren"],
             ["2",  "pinMode(BTN_*, INPUT_PULLUP)", "Alle 4 Taster-GPIOs konfigurieren (IO10–IO13)"],
             ["3",  "strip.begin() / clear()",      "NeoPixel initialisieren, alle LEDs aus"],
-            ["4",  "prefs.begin(\"nixie\")",       "NVS öffnen: Helligkeit, Anim, SlotIval, IR-Codes, WiFi, Nacht-Modus-Konfiguration laden"],
-            ["5",  "nixieInit()",                  "I²C starten, alle 4 MCP23017 auf Output, alle Bits 0"],
-            ["6",  "Rtc.Begin() + readRTC()",      "DS1302 starten, Uhrzeit + Datum in curHour/Min/Sec/Day/Month/Year laden"],
-            ["7",  "setupWifi()",                  "AP starten (SSID NixieClockCS); STA verbinden + NTP; mDNS als nixieclockcs.local"],
-            ["8",  "setupWebServer()",             "Alle API-Routen registrieren, server.begin()"],
-            ["9",  "irrecv.enableIRIn()",          "IR-Empfänger aktivieren (GPIO48)"],
-            ["10", "startFadeIn = true",           "Fade-In-Flag setzen → Röhren blenden in loop() ein"],
+            ["4",  "hvDimmerInit()",               "LEDC-PWM auf HV_SWITCH_PIN (GPIO7) anlegen, Duty zunächst 255 (volle Anodenspannung)"],
+            ["5",  "prefs.begin(\"nixie\")",       "NVS öffnen: Helligkeit, Anim, SlotIval, IR-Codes, WiFi, Nacht-Modus-Konfiguration inkl. hvDimPct laden"],
+            ["6",  "nixieInit()",                  "I²C starten, alle 4 MCP23017 auf Output, alle Bits 0"],
+            ["7",  "Rtc.Begin() + readRTC()",      "DS1302 starten, Uhrzeit + Datum in curHour/Min/Sec/Day/Month/Year laden"],
+            ["8",  "setupWifi()",                  "AP starten (SSID NixieClockCS); STA verbinden + NTP; mDNS als nixieclockcs.local"],
+            ["9",  "setupWebServer()",             "Alle API-Routen registrieren, server.begin()"],
+            ["10", "irrecv.enableIRIn()",          "IR-Empfänger aktivieren (GPIO48)"],
+            ["11", "startFadeIn = true",           "Fade-In-Flag setzen → Röhren blenden in loop() ein"],
         ],
         [1.2, 4.5, 10.3]
     ))
@@ -539,7 +580,7 @@ def build_content():
             ["ldrEnabled",         "bool",        "Lichtsensor-Steuerung aktiv"],
             ["ldrThreshold",       "uint16_t",    "ADC-Schwellwert (0–4095); <= Schwellwert → Dimmen"],
             ["ldrReading",         "uint16_t",    "Aktueller ADC-Messwert (alle 500 ms aktualisiert)"],
-            ["nixiePwmOn",         "bool",        "Software-PWM: Nixie-Ausgabe gerade eingeschaltet"],
+            ["hvDimPct",           "uint8_t",     "Röhren-Dimm-Helligkeit im Nacht-Modus in % (2–60, Default 25)"],
             ["irCodes[8]",         "uint64_t[8]", "Angelernte IR-Codes, Index = IrAction-Enum (0–7)"],
             ["wifiStaConnected",   "bool",        "STA-Verbindung zum Heimnetz aktiv"],
             ["ntpSynced",          "bool",        "NTP-Synchronisierung erfolgreich"],
@@ -569,21 +610,28 @@ def build_content():
         "};",
     ))
 
-    c.append(h2("nixieWriteSafe() – Blitzschutz im Dimm-Modus"))
-    c.append(p("Um Aufblitzer bei Sekundenwechsel im Dimm-Modus zu verhindern, wrappen "
-               "alle Schreibaufrufe nixieWriteSafe() statt nixieWrite() direkt:"))
+    c.append(h2("hv_dimmer.ino – Hardware-PWM-Dimmung der Anodenspannung"))
+    c.append(p("Die Röhren-Dimmung im Nacht-Modus erfolgt über einen TLP627-Optokoppler, "
+               "der die Anodenspannung selbst per LEDC-Hardware-PWM (~200 Hz) auf "
+               "HV_SWITCH_PIN (GPIO7) schaltet — nicht mehr über eine Software-PWM auf "
+               "den Kathoden:"))
     c.append(code_block(
-        "static void nixieWriteSafe() {",
-        "    if (nightState == NIGHT_DARK)             return; // komplett aus",
-        "    if (nightState == NIGHT_DIM && !nixiePwmOn) return; // PWM Off-Phase",
-        "    nixieWrite(displayDigits);",
+        "void hvDimmerInit() {",
+        "    ledcAttach(HV_SWITCH_PIN, HV_PWM_FREQ_HZ, 8);",
+        "    ledcWrite(HV_SWITCH_PIN, 255);   // volle Helligkeit (Anode dauerhaft an)",
+        "}",
+        "",
+        "void hvDimmerSetDuty(uint8_t duty0to255) {",
+        "    ledcWrite(HV_SWITCH_PIN, duty0to255);",
         "}",
     ))
-    c.append(p("Der Software-PWM in loop() schaltet nixiePwmOn im 20-ms-Rhythmus "
-               "ein und aus (5 ms ein / 15 ms aus = 25 % Duty-Cycle, ~50 Hz). "
-               "Ohne den Guard würde ein Sekundenwechsel die Röhren für eine kurze "
-               "Zeit mit voller Helligkeit aufblitzen lassen, bevor das PWM wieder "
-               "in die Off-Phase schaltet."))
+    c.append(p("loop() ruft hvDimmerSetDuty() nur bei einem Wechsel von nightState auf "
+               "(Guard nightState != prevNightState), nicht bei jedem Durchlauf: "
+               "NIGHT_NORMAL → Duty 255, NIGHT_DIM → Duty hvDimPct*255/100 (2–60 %), "
+               "NIGHT_DARK → Duty 0. Da die Anodenspannung und nicht die "
+               "Kathoden-Ansteuerung gedimmt wird, ist nixieWriteSafe() in display.ino "
+               "auf einen reinen Passthrough zu nixieWrite() reduziert — ein "
+               "Blitzschutz für Sekundenwechsel ist nicht mehr nötig."))
 
     c.append(h2("Nacht-Modus (night_mode.ino)"))
     c.append(p("updateNightMode() wird jeden Loop-Durchlauf aufgerufen und "
@@ -643,9 +691,8 @@ def build_content():
         ["Pfad", "Methode", "Request-Body / Antwort"],
         [
             ["/",                  "GET",  "Vollständiges Web-Interface (HTML/CSS/JS eingebettet als PROGMEM)"],
-            ["/api/status",        "GET",  "{time, date, bright, neoBright, animMode, slotIval, colonOn, colonStatic, colonBright, slot, nightState, ldrVal, wifiSta, ntpSynced}"],
+            ["/api/status",        "GET",  "{time, date, neoBright, animMode, slotIval, colonOn, colonStatic, colonBright, slot, nightState, ldrVal, wifiSta, ntpSynced}"],
             ["/api/settime",       "POST", "{\"h\":H,\"m\":M,\"s\":S} + optional {\"d\":D,\"mo\":Mo,\"y\":Y} → RTC schreiben"],
-            ["/api/bright",        "POST", "{\"level\":0..3}  → Helligkeitsstufe + NVS"],
             ["/api/neobright",     "POST", "{\"val\":10..255}  → NeoPixel-Feinwert + NVS"],
             ["/api/anim",          "POST", "{\"mode\":0..2}  → Animationsmodus + NVS"],
             ["/api/slotinterval",  "POST", "{\"interval\":0..4}  → Slot-Intervall (SlotInterval-Enum) + NVS"],
@@ -653,8 +700,8 @@ def build_content():
             ["/api/colonon",       "POST", "{\"enabled\":true|false}  → Dauerhaft an/aus + NVS"],
             ["/api/colonstatic",   "POST", "{\"enabled\":true|false}  → Statisch warmweiß + NVS"],
             ["/api/slot",          "POST", "(kein Body) → Slot-Machine-Animation sofort starten"],
-            ["/api/nightmode",     "GET",  "{ntEn, ntFrom, ntTo, ntMode, ldrEn, ldrThr, ldrVal, state}"],
-            ["/api/nightmode",     "POST", "{ntEn, ntFrom, ntTo, ntMode, ldrEn, ldrThr} → Nacht-Modus + NVS"],
+            ["/api/nightmode",     "GET",  "{ntEn, ntFrom, ntTo, ntMode, hvDimPct, ldrEn, ldrThr, ldrVal, state}"],
+            ["/api/nightmode",     "POST", "{ntEn, ntFrom, ntTo, ntMode, hvDimPct, ldrEn, ldrThr} → Nacht-Modus + NVS"],
             ["/api/wifi",          "GET",  "{mode, staSsid, staIp, ntp}"],
             ["/api/wifi",          "POST", "{\"ssid\":\"…\",\"pass\":\"…\"} → STA verbinden, Neustart"],
             ["/api/ir/status",     "GET",  "8 IR-Code-Einträge (je action + code)"],
@@ -682,6 +729,7 @@ def build_content():
             ["ntFrom",        "UInt8",  "23",    "Nacht-Modus Startzeit (Stunde 0–23)"],
             ["ntTo",          "UInt8",  "7",     "Nacht-Modus Endzeit (Stunde 0–23)"],
             ["ntMode",        "UInt8",  "0",     "Nacht-Modus Typ (0=Gedimmt, 1=Dunkel)"],
+            ["hvDimPct",      "UInt8",  "25",    "Röhren-Dimm-Helligkeit (2–60 %)"],
             ["ldrEn",         "Bool",   "false", "Lichtsensor-Steuerung aktiv"],
             ["ldrThr",        "UInt16", "512",   "LDR-Schwellwert ADC (0–4095)"],
             ["wifiSsid",      "String", "\"\"",  "Heimnetz SSID"],
@@ -728,13 +776,43 @@ def build_content():
     ))
     c.append(note("ArduinoJson: Explizit Version 6.x wählen — Version 7 ist API-inkompatibel."))
 
+    c.append(h2("ESP32-S3 USB-Einstellungen — kritisch!"))
+    c.append(p("Das Logic Board verwendet die native USB-Schnittstelle des ESP32-S3 "
+               "(USB-OTG, GPIO19/20) — es gibt keinen separaten USB-UART-Chip. "
+               "Der ROM-Bootloader des ESP32-S3 meldet sich ab Werk als USB-CDC-Port, "
+               "sodass das erste Flashen problemlos funktioniert."))
+    c.append(p("Die Gefahr liegt im zweiten Schritt: Wird die Firmware mit der Einstellung "
+               "«USB CDC On Boot: Disabled» kompiliert und geflasht, schaltet die "
+               "laufende Firmware das CDC ab. Beim nächsten Start erscheint kein "
+               "COM-Port mehr — die Arduino IDE kann keinen automatischen Reset in den "
+               "Bootloader-Modus auslösen. Da der BOOT-Taster SW5 nicht bestückt ist, "
+               "gibt es keinen manuellen Ausweg: der ESP32-S3 ist danach über USB "
+               "nicht mehr programmierbar."))
+    c.append(note("SW5 (BOOT) ist nicht bestückt. Einmal mit «USB CDC On Boot: Disabled» "
+                  "geflasht bedeutet: nie wieder über USB flashbar — bis GPIO0 über "
+                  "einen Lötpunkt manuell auf GND gezogen wird."))
+    c.append(p("Folgende Einstellungen müssen unter Werkzeuge vor jedem Kompilieren "
+               "und Hochladen gesetzt sein:"))
+    c.append(table(
+        ["Einstellung", "Wert", "Bemerkung"],
+        [
+            ["Board",            "ESP32S3 Dev Module",     "Espressif ESP32-S3-Paket v3.x"],
+            ["USB Mode",         "Hardware CDC and JTAG",  "Natives USB des ESP32-S3 aktivieren"],
+            ["Upload Mode",      "UART0 / Hardware CDC",   "Upload über dieselbe USB-Buchse"],
+            ["USB CDC On Boot",  "Enabled",                "KRITISCH: Disabled sperrt USB-Zugang dauerhaft (SW5 nicht bestückt)"],
+            ["USB DFU On Boot",  "Disabled",               "Nicht benötigt"],
+            ["Flash Size",       "4 MB (32 Mb)",           "Passend zum ESP32-S3-WROOM-1"],
+            ["Upload Speed",     "921600",                  ""],
+        ],
+        [4.0, 4.5, 7.5]
+    ))
+
     c.append(h2("Firmware flashen"))
     c.append(p("1. Micro-USB-Kabel am Logic Board J2 anschließen (5 V + Datenleitungen)."))
-    c.append(p("2. Falls der COM-Port nicht erkannt wird: BOOT-Taster (SW5) beim "
-               "Einschalten gedrückt halten."))
-    c.append(p("3. In der Arduino IDE: Werkzeuge → Board → ESP32S3 Dev Module, "
-               "Upload Speed 921600, Flash Size 4 MB (32 Mb)."))
-    c.append(p("4. Sketch → Hochladen (oder Strg+U)."))
+    c.append(p("2. Sicherstellen, dass alle USB-Einstellungen korrekt gesetzt sind "
+               "(siehe Abschnitt oben) — insbesondere «USB CDC On Boot: Enabled»."))
+    c.append(p("3. Sketch → Hochladen (Strg+U). Die IDE erkennt den COM-Port "
+               "automatisch und löst den Reset in den Bootloader-Modus aus."))
 
     c.append(h2("Serial Monitor / Debugging"))
     c.append(p("Baudrate: 115200. Nach dem Start gibt die Firmware auf dem seriellen "
@@ -756,6 +834,7 @@ def build_content():
             ["Uhrzeit falsch nach Reset", "RTC leer / Batterie schwach",       "Zeit über Web-UI stellen; CR2032 BT1 prüfen"],
             ["Kompilierungsfehler JSON",  "ArduinoJson v7 installiert",        "ArduinoJson auf v6.x downgraden"],
             ["IR-Fernbedienung reagiert nicht", "Code noch nicht angelernt",   "Im Web-UI unter IR-Fernbedienung Codes anlernen"],
+            ["ESP32 nach erstem Flash nicht mehr erreichbar, kein COM-Port", "Mit «USB CDC On Boot: Disabled» kompiliert → Firmware schaltet CDC ab", "GPIO0-Testpunkt auf GND halten, USB neu einstecken → ROM-Bootloader → mit korrekten Einstellungen neu flashen"],
         ],
         [4.5, 4.5, 7.0]
     ))
@@ -829,7 +908,7 @@ META_XML = """\
 <office:meta>
   <dc:title>Nixie Clock Ultra – Systemdokumentation</dc:title>
   <dc:creator>broed digital media</dc:creator>
-  <dc:date>2026-06-16</dc:date>
+  <dc:date>2026-06-29</dc:date>
   <meta:generator>gen_sysdoc.py</meta:generator>
 </office:meta>
 </office:document-meta>"""
@@ -855,7 +934,7 @@ def build_manifest(images):
 
 
 def create_odt():
-    global _used_col_widths
+    global _used_col_widths, _img_paths
     _used_col_widths = set()   # reset before each run
 
     images = {
@@ -870,6 +949,8 @@ def create_odt():
     ]:
         if path.exists():
             images[key] = path
+
+    _img_paths = images   # img() in build_content() schlägt hier nach
 
     body = build_content()    # populates _used_col_widths as side-effect
     auto_styles = build_auto_styles(_used_col_widths)
