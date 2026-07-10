@@ -14,7 +14,7 @@
       <div class="page-title"><h1>Entwicklungsgeschichte</h1></div>
       <div class="gear-divider">&#9881;</div>
       <div class="panel">
-        <p>Die Nixie Clock Ultra entstand in sieben Entwicklungsphasen zwischen April und Juni 2026. Jede Phase brachte neue Erkenntnisse &mdash; und neue Probleme, die es zu lösen galt.</p>
+        <p>Die Nixie Clock Ultra entstand in acht Entwicklungsphasen zwischen April und Juli 2026. Jede Phase brachte neue Erkenntnisse &mdash; und neue Probleme, die es zu lösen galt.</p>
       </div>
 
       <div class="timeline">
@@ -106,6 +106,19 @@
               <input type="checkbox" id="acc-7">
               <label class="akkordeon-label" for="acc-7">Problem: WiFi-Scan lieferte keine Ergebnisse <span class="akkordeon-arrow">&#9654;</span></label>
               <div class="akkordeon-content">Zwei Ursachen: (1) <code>WiFi.mode(WIFI_AP)</code> deaktiviert das STA-Radio &mdash; kein Scan möglich. (2) Synchroner <code>scanNetworks()</code>-Aufruf im ESPAsyncWebServer-Handler blockiert den LWIP/WiFi-Task. Lösung: Scan-Funktion vollständig entfernt, SSID wird manuell eingegeben.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-date">2026-07-07</div>
+          <div class="timeline-title">Phase 8 &mdash; HV-Anodendimmung</div>
+          <div class="timeline-body">
+            <p>Der Nacht-Modus dimmt die Röhren jetzt nicht mehr per Software-PWM auf den Kathoden, sondern über einen TLP627-Optokoppler direkt auf der ~170-V-Anodenspannung (<code>hv_dimmer.ino</code>, LEDC-Hardware-PWM ~200 Hz). Dazu: Web-UI-Regler für die Dimm-Helligkeit (stufenlos 2&ndash;60&nbsp;%) mit sofortiger AJAX-Übernahme, veraltetes Nixie-Helligkeit-Dropdown entfernt, NeoPixel-Helligkeitsstufen für Taster/IR auf 10/40/80/200 nachjustiert.</p>
+            <div class="akkordeon">
+              <input type="checkbox" id="acc-8">
+              <label class="akkordeon-label" for="acc-8">Beobachtung: Web-UI-Verzögerung nach dem Umbau <span class="akkordeon-arrow">&#9654;</span></label>
+              <div class="akkordeon-content">Nach dem Umbau wirkte die Web-UI sowohl im AP- als auch im WLAN-Modus spürbar verzögert. Erste Hypothese: Das Schalten der vollen Anodenlast mit 200 Hz koppelt Störungen in den WLAN-Funkteil ein. Berechtigter Einwand: Sowohl beim alten Kathoden-Software-PWM als auch beim neuen Anoden-Hardware-PWM wird pro leuchtender Ziffer dieselbe Strommenge geschaltet &mdash; die Störquelle wäre also nicht grundsätzlich neu. Bei einem erneuten Test trat die Verzögerung nicht mehr auf; mangels Reproduzierbarkeit bleibt die genaue Ursache ungeklärt.</div>
             </div>
           </div>
         </div>
