@@ -7,6 +7,8 @@
 // läuft ein weicher HV-Dimmer-Crossfade (digit_fade.ino), sonst sofort
 // hart über nixieWrite(). Kein Effekt, wenn sich nichts ändert.
 static void commitDigits(uint8_t newDigits[6], uint16_t fadeMs) {
+  // memcmp hier (statt nur nixieWrite()'s eigenem Register-Diffing zu vertrauen),
+  // weil unveränderte Ziffern sonst unnötig einen Fade anstoßen würden.
   bool changed = memcmp(newDigits, displayDigits, 6) != 0;
   memcpy(displayDigits, newDigits, 6);
   if (!changed) return;

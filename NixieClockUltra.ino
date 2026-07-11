@@ -129,7 +129,7 @@ Preferences prefs;
 // ═══════════════════════════════════════════════════════════
 
 // Anzuzeigende Ziffern [0]=HZ [1]=HE [2]=MZ [3]=ME [4]=SZ [5]=SE
-uint8_t displayDigits[6] = {0, 0, 0, 0, 0, 0};
+uint8_t displayDigits[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};  // Sentinel: kein gültiger Ziffernwert, erzwingt harten Schreibvorgang beim ersten commitDigits()-Aufruf
 
 // Helligkeit (Index in BRIGHTNESS_LEVELS)
 uint8_t brightLevel = 3;
