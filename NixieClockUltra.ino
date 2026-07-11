@@ -146,6 +146,7 @@ AnimMode animMode = ANIM_RAINBOW;
 
 enum SlotInterval { SLOT_OFF, SLOT_10S, SLOT_1MIN, SLOT_15MIN, SLOT_1HR };
 SlotInterval slotInterval = SLOT_OFF;
+uint8_t slotSpeedPct = 100;   // 20–100, NVS-Key "slotSpeed" (100 = aktuelles/unverändertes Tempo)
 
 enum NightState { NIGHT_NORMAL, NIGHT_DIM, NIGHT_DARK };
 
@@ -191,6 +192,8 @@ bool slotActive = false;
 unsigned long slotStartMs = 0;
 uint8_t slotTarget[6] = {0};
 uint8_t slotCurrent[6] = {0};
+uint16_t slotRollIntervalMs   = 60;
+uint16_t slotStopMs[6]        = {600, 780, 960, 1140, 1320, 1500};
 
 // Datum-Anzeige nach Slot
 bool     dateShowActive = false;
@@ -302,6 +305,7 @@ void setup() {
   animMode     = (savedAnim < (uint8_t)ANIM_COUNT) ? (AnimMode)savedAnim : ANIM_RAINBOW;
   uint8_t savedSlot = prefs.getUChar("slotIval", 0);
   slotInterval = (savedSlot <= (uint8_t)SLOT_1HR) ? (SlotInterval)savedSlot : SLOT_OFF;
+  slotSpeedPct = (uint8_t)constrain((int)prefs.getUChar("slotSpeed", 100), 20, 100);
 
   for (int i = 0; i < IR_ACTION_COUNT; i++) {
     irCodes[i] = prefs.getULong64(IR_ACTION_KEYS[i], 0);

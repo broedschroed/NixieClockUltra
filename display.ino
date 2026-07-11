@@ -55,6 +55,10 @@ void startSlotAnimation(uint8_t h, uint8_t m, uint8_t s) {
   slotTarget[2] = m / 10; slotTarget[3] = m % 10;
   slotTarget[4] = s / 10; slotTarget[5] = s % 10;
   for (int i = 0; i < 6; i++) slotCurrent[i] = random(10);
+  slotRollIntervalMs = (uint16_t)(60UL * 100 / slotSpeedPct);
+  for (int i = 0; i < 6; i++) {
+    slotStopMs[i] = (uint16_t)((600UL + (unsigned long)i * 180UL) * 100 / slotSpeedPct);
+  }
   slotActive   = true;
   slotStartMs  = millis();
 }
@@ -63,13 +67,13 @@ void updateSlotAnimation() {
   if (!slotActive) return;
   unsigned long elapsed = millis() - slotStartMs;
 
-  // Jede Röhre stoppt zu einem anderen Zeitpunkt
+  // Jede Röhre stoppt zu einem anderen (skalierten) Zeitpunkt
   bool allDone = true;
   for (int i = 0; i < 6; i++) {
-    unsigned long stopTime = 600 + i * 180; // ms
+    unsigned long stopTime = slotStopMs[i];
     if (elapsed < stopTime) {
       // Noch rollend
-      if ((millis() % 60) < 30) {
+      if ((millis() % slotRollIntervalMs) < (slotRollIntervalMs / 2)) {
         slotCurrent[i] = (slotCurrent[i] + 1) % 10;
       }
       displayDigits[i] = slotCurrent[i];
