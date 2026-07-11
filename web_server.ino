@@ -105,6 +105,14 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
 </div>
 
 <div class="card">
+  <h2>✨ Weicher Ziffernwechsel</h2>
+  <div class="row"><label>Bei Sekundentakt</label>
+    <label class="toggle"><input type="checkbox" id="sfSec" onchange="saveSoftFade()"><span class="slider"></span></label></div>
+  <div class="row"><label>Bei Zeit/Datum-Wechsel</label>
+    <label class="toggle"><input type="checkbox" id="sfDate" onchange="saveSoftFade()"><span class="slider"></span></label></div>
+</div>
+
+<div class="card">
   <h2>🌙 Nacht-Modus</h2>
   <div class="row"><label>Aktuell</label><span class="badge" id="nightStateBadge">Normal</span></div>
   <div class="row"><label>Zeitbereich aktiv</label>
@@ -319,6 +327,19 @@ async function refreshNightMode(){
   document.getElementById('ldrThrVal').textContent = d.ldrThr;
   document.getElementById('ldrVal').textContent    = d.ldrVal!==undefined?d.ldrVal:'--';
 }
+async function refreshSoftFade(){
+  let d=await get('/api/softfade');
+  if(d.sec===undefined)return;
+  document.getElementById('sfSec').checked  = d.sec;
+  document.getElementById('sfDate').checked = d.date;
+}
+async function saveSoftFade(){
+  let r=await api('/api/softfade',{
+    sec:  document.getElementById('sfSec').checked,
+    date: document.getElementById('sfDate').checked
+  });
+  document.getElementById('statusMsg').textContent=r.ok?'Ziffernwechsel gespeichert ✓':'Fehler ✗';
+}
 async function setHvDimPct(v){
   document.getElementById('hvDimPctVal').textContent=v;
   await saveNightMode();
@@ -345,6 +366,7 @@ refreshClock();
 refreshWifi();
 refreshIR();
 refreshNightMode();
+refreshSoftFade();
 </script>
 </body>
 </html>
@@ -664,6 +686,32 @@ void setupWebServer() {
         prefs.putBool("ldrEn",    ldrEnabled);
         prefs.putUShort("ldrThr", ldrThreshold);
         if (nightState == NIGHT_DIM) hvDimmerSetDuty(hvDimPct * 255 / 100);
+        req->send(200, "application/json", "{\"ok\":true}");
+      } else {
+        req->send(400, "application/json", "{\"ok\":false}");
+      }
+    }
+  );
+
+  // --- Weicher Ziffernwechsel: Status lesen ---
+  server.on("/api/softfade", HTTP_GET, [](AsyncWebServerRequest *req) {
+    StaticJsonDocument<64> doc;
+    doc["sec"]  = softFadeSecondEnabled;
+    doc["date"] = softFadeDateEnabled;
+    String out; serializeJson(doc, out);
+    req->send(200, "application/json", out);
+  });
+
+  // --- Weicher Ziffernwechsel: Einstellungen speichern ---
+  server.on("/api/softfade", HTTP_POST, [](AsyncWebServerRequest *req){},
+    nullptr,
+    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
+      StaticJsonDocument<64> doc;
+      if (!deserializeJson(doc, data, len)) {
+        softFadeSecondEnabled = doc["sec"].as<bool>();
+        softFadeDateEnabled   = doc["date"].as<bool>();
+        prefs.putBool("sfSecEn",  softFadeSecondEnabled);
+        prefs.putBool("sfDateEn", softFadeDateEnabled);
         req->send(200, "application/json", "{\"ok\":true}");
       } else {
         req->send(400, "application/json", "{\"ok\":false}");
