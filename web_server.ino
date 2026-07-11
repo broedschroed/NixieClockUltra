@@ -99,6 +99,11 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
     </select>
   </div>
   <div class="row">
+    <label>Geschwindigkeit</label>
+    <input type="range" id="slotSpeed" min="20" max="100" value="100" oninput="setSlotSpeed(this.value)">
+    <span id="slotSpeedVal">100</span>%
+  </div>
+  <div class="row">
     <button onclick="triggerSlot()">Slot-Machine!</button>
     <span class="badge" id="slotStatus">bereit</span>
   </div>
@@ -183,6 +188,7 @@ async function refreshClock(){
   if(d.neoBright!==undefined){document.getElementById('neoBright').value=d.neoBright;document.getElementById('neoBrightVal').textContent=d.neoBright;}
   if(d.anim!==undefined) document.getElementById('anim').value=d.anim;
   if(d.slotIval!==undefined) document.getElementById('slotIval').value=d.slotIval;
+  if(d.slotSpeed!==undefined){document.getElementById('slotSpeed').value=d.slotSpeed;document.getElementById('slotSpeedVal').textContent=d.slotSpeed;}
   if(d.colonOn!==undefined)document.getElementById('colonOn').checked=d.colonOn;
   if(d.colonStatic!==undefined)document.getElementById('colonStatic').checked=d.colonStatic;
   if(d.colonBright!==undefined){document.getElementById('colonBright').value=d.colonBright;document.getElementById('colonBrightVal').textContent=d.colonBright;}
@@ -231,6 +237,10 @@ async function setAnim(){
 async function setSlotInterval(){
   let v=parseInt(document.getElementById('slotIval').value);
   await api('/api/slotinterval',{interval:v});
+}
+async function setSlotSpeed(v){
+  document.getElementById('slotSpeedVal').textContent=v;
+  await api('/api/slotspeed',{val:parseInt(v)});
 }
 async function setColonBright(v){
   document.getElementById('colonBrightVal').textContent=v;
@@ -424,6 +434,7 @@ void setupWebServer() {
     doc["anim"]       = (int)animMode;
     doc["slot"]       = slotActive;
     doc["slotIval"]   = (int)slotInterval;
+    doc["slotSpeed"]  = slotSpeedPct;
     doc["colonOn"]     = colonAlwaysOn;
     doc["colonStatic"] = colonStatic;
     doc["colonBright"] = colonBright;
@@ -507,6 +518,20 @@ void setupWebServer() {
         int v = constrain((int)doc["interval"], 0, 4);
         slotInterval = (SlotInterval)v;
         prefs.putUChar("slotIval", v);
+        req->send(200, "application/json", "{\"ok\":true}");
+      } else {
+        req->send(400, "application/json", "{\"ok\":false}");
+      }
+    }
+  );
+
+  server.on("/api/slotspeed", HTTP_POST, [](AsyncWebServerRequest *req){},
+    nullptr,
+    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
+      StaticJsonDocument<64> doc;
+      if (!deserializeJson(doc, data, len)) {
+        slotSpeedPct = (uint8_t)constrain((int)doc["val"], 20, 100);
+        prefs.putUChar("slotSpeed", slotSpeedPct);
         req->send(200, "application/json", "{\"ok\":true}");
       } else {
         req->send(400, "application/json", "{\"ok\":false}");
