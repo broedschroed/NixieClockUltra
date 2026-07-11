@@ -160,6 +160,8 @@ uint16_t ldrThreshold       = 512;
 uint16_t ldrReading         = 4095;
 uint32_t lastLdrRead        = 0;
 uint8_t  hvDimPct           = 25;   // Röhren-Dimm-Helligkeit in % (2–60), NVS-Key "hvDimPct"
+bool softFadeSecondEnabled  = false;   // NVS-Key "sfSecEn"
+bool softFadeDateEnabled    = false;   // NVS-Key "sfDateEn"
 
 // Einstellmodus
 enum EditState { EDIT_NONE, EDIT_HOUR, EDIT_MIN, EDIT_SEC,
@@ -314,6 +316,8 @@ void setup() {
   ldrEnabled       = prefs.getBool("ldrEn",     false);
   ldrThreshold     = prefs.getUShort("ldrThr",  512);
   hvDimPct         = (uint8_t)constrain((int)prefs.getUChar("hvDimPct", 25), 2, 60);
+  softFadeSecondEnabled = prefs.getBool("sfSecEn",  false);
+  softFadeDateEnabled   = prefs.getBool("sfDateEn", false);
 
   // --- Nixie Direct Drive via MCP23017 ---
   nixieInit();    // Wire.begin() muss vor readRTC()/setDisplayTime() stehen
@@ -391,12 +395,14 @@ void loop() {
   // --- Nacht-Modus: Röhren-Helligkeit per HV-Dimmer steuern ---
   if (nightState != prevNightState) {
     prevNightState = nightState;
+    cancelDigitFade();   // laufenden Ziffern-Fade nicht mit Duty-Wechsel kollidieren lassen
     switch (nightState) {
       case NIGHT_DARK:   hvDimmerSetDuty(0);                        break;
       case NIGHT_DIM:    hvDimmerSetDuty(hvDimPct * 255 / 100);     break;
       case NIGHT_NORMAL: hvDimmerSetDuty(255);                      break;
     }
   }
+  updateDigitFade();
 
   // --- RTC alle 500ms lesen (außerhalb Einstellmodus) ---
   if (editState == EDIT_NONE && millis() - lastRtcRead >= 500) {
@@ -416,7 +422,7 @@ void loop() {
       }
       if (!slotActive && !dateShowActive) {
         if (triggerSlot) startSlotAnimation(curHour, curMin, curSec);
-        else             setDisplayTime(curHour, curMin, curSec);
+        else             setDisplayTimeSoft(curHour, curMin, curSec, softFadeSecondEnabled ? 100 : 0);
       }
     }
   }
@@ -427,13 +433,13 @@ void loop() {
   if (wasSlotActive && !slotActive) {
     dateShowActive = true;
     dateShowStart  = millis();
-    setDisplayDate();
+    setDisplayDateSoft(softFadeDateEnabled ? 200 : 0);
   }
 
   // Datum-Anzeige beenden
   if (dateShowActive && millis() - dateShowStart >= DATE_SHOW_MS) {
     dateShowActive = false;
-    setDisplayTime(curHour, curMin, curSec);
+    setDisplayTimeSoft(curHour, curMin, curSec, softFadeDateEnabled ? 200 : 0);
   }
 
   // --- NeoPixel ---
