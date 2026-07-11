@@ -51,6 +51,7 @@ void setDisplayDateSoft(uint16_t fadeMs) {
 //  SLOT-MACHINE ANIMATION
 // ═══════════════════════════════════════════════════════════
 void startSlotAnimation(uint8_t h, uint8_t m, uint8_t s) {
+  cancelDigitFade();
   slotTarget[0] = h / 10; slotTarget[1] = h % 10;
   slotTarget[2] = m / 10; slotTarget[3] = m % 10;
   slotTarget[4] = s / 10; slotTarget[5] = s % 10;

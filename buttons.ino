@@ -37,7 +37,7 @@ void updateButton(Button &b) {
 void handleEditMode() {
   if (btnSet.pressed) {
     switch (editState) {
-      case EDIT_NONE:   editState = EDIT_HOUR;  break;
+      case EDIT_NONE:   cancelDigitFade(); editState = EDIT_HOUR;  break;
       case EDIT_HOUR:   editState = EDIT_MIN;   break;
       case EDIT_MIN:    editState = EDIT_SEC;   break;
       case EDIT_SEC:    editState = EDIT_DAY;   break;
