@@ -507,19 +507,23 @@ def build_content():
     c.append(table(
         ["Datei", "Zeilen", "Inhalt / Verantwortlichkeit"],
         [
-            ["NixieClockUltra.ino", "461", "Globals, setup(), loop(), Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals"],
+            ["NixieClockUltra.ino", "471", "Globals, setup(), loop(), Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals"],
             ["nixie_driver.ino",    "91",  "nixieInit(), nixieWrite(), MCP23017-I²C-Abstraktion, Shadow-Register, Mutex"],
-            ["display.ino",         "62",  "setDisplayTime(), setDisplayDate(), nixieWriteSafe(), Slot-Animation"],
+            ["display.ino",         "88",  "setDisplayTime(), setDisplayDate(), commitDigits() (weicher Ziffernwechsel), Slot-Animation"],
+            ["digit_fade.ino",      "77",  "startDigitFade(), updateDigitFade(), cancelDigitFade() — non-blocking Crossfade über HV-Dimmer-Duty"],
             ["buttons.ino",         "127", "Entprell-FSM für 4 Taster, Kurz-/Langdruck, Edit-Mode Zeit+Datum"],
             ["rtc.ino",             "18",  "readRTC(), writeRTC() via DS1302/ThreeWire, liest auch Tag/Monat/Jahr"],
             ["night_mode.ino",      "34",  "LDR-Abtastung (GPIO6, ADC1), updateNightMode(), Zeitbereich-Logik"],
             ["hv_dimmer.ino",       "12",  "hvDimmerInit(), hvDimmerSetDuty() — LEDC-Hardware-PWM für TLP627 auf Anodenspannung"],
             ["neo_animation.ino",   "107", "Rainbow, Statisch, Puls, Slot, Nacht-Modus-Dimming, Datumsanzeige-Override"],
             ["ir_remote.ino",       "107", "executeAction(), dispatchIRAction(), handleIR(), 8 IR-Aktionen"],
-            ["web_server.ino",      "675", "Eingebettetes HTML/JS, alle API-Handler, WiFi-Setup, NTP, mDNS"],
+            ["web_server.ino",      "748", "Eingebettetes HTML/JS, alle API-Handler, WiFi-Setup, NTP, mDNS"],
         ],
         [4.5, 1.5, 10.0]
     ))
+    c.append(p("Reine Interpolationsmathematik für den Crossfade liegt zusätzlich in "
+               "digit_fade_math.h (header-only, host-testbar ohne Arduino-Framework, "
+               "siehe test/digit_fade_math_test.cpp)."))
 
     c.append(h2("Bibliotheksabhängigkeiten"))
     c.append(table(
@@ -546,7 +550,7 @@ def build_content():
             ["2",  "pinMode(BTN_*, INPUT_PULLUP)", "Alle 4 Taster-GPIOs konfigurieren (IO10–IO13)"],
             ["3",  "strip.begin() / clear()",      "NeoPixel initialisieren, alle LEDs aus"],
             ["4",  "hvDimmerInit()",               "LEDC-PWM auf HV_SWITCH_PIN (GPIO7) anlegen, Duty zunächst 255 (volle Anodenspannung)"],
-            ["5",  "prefs.begin(\"nixie\")",       "NVS öffnen: Helligkeit, Anim, SlotIval, IR-Codes, WiFi, Nacht-Modus-Konfiguration inkl. hvDimPct laden"],
+            ["5",  "prefs.begin(\"nixie\")",       "NVS öffnen: Helligkeit, Anim, SlotIval, IR-Codes, WiFi, Nacht-Modus-Konfiguration inkl. hvDimPct, sowie softFadeSecondEnabled/softFadeDateEnabled/slotSpeedPct laden"],
             ["6",  "nixieInit()",                  "I²C starten, alle 4 MCP23017 auf Output, alle Bits 0"],
             ["7",  "Rtc.Begin() + readRTC()",      "DS1302 starten, Uhrzeit + Datum in curHour/Min/Sec/Day/Month/Year laden"],
             ["8",  "setupWifi()",                  "AP starten (SSID NixieClockCS); STA verbinden + NTP; mDNS als nixieclockcs.local"],
@@ -586,6 +590,9 @@ def build_content():
             ["ntpSynced",          "bool",        "NTP-Synchronisierung erfolgreich"],
             ["slotActive",         "bool",        "Slot-Machine-Animation läuft"],
             ["startFadeIn",        "bool",        "Einblend-Sequenz beim Start aktiv"],
+            ["softFadeSecondEnabled", "bool",     "Weicher Ziffernwechsel im Sekundentakt aktiv"],
+            ["softFadeDateEnabled",   "bool",     "Weicher Ziffernwechsel bei Zeit/Datum-Übergang aktiv"],
+            ["slotSpeedPct",       "uint8_t",     "Slot-Machine-Rollgeschwindigkeit 20–100 % (100 = Standard)"],
         ],
         [4.0, 2.5, 9.5]
     ))
@@ -628,10 +635,40 @@ def build_content():
     c.append(p("loop() ruft hvDimmerSetDuty() nur bei einem Wechsel von nightState auf "
                "(Guard nightState != prevNightState), nicht bei jedem Durchlauf: "
                "NIGHT_NORMAL → Duty 255, NIGHT_DIM → Duty hvDimPct*255/100 (2–60 %), "
-               "NIGHT_DARK → Duty 0. Da die Anodenspannung und nicht die "
-               "Kathoden-Ansteuerung gedimmt wird, ist nixieWriteSafe() in display.ino "
-               "auf einen reinen Passthrough zu nixieWrite() reduziert — ein "
-               "Blitzschutz für Sekundenwechsel ist nicht mehr nötig."))
+               "NIGHT_DARK → Duty 0. Ein separater Blitzschutz für Sekundenwechsel ist "
+               "nicht nötig, da die Kathoden-Ansteuerung unabhängig von der "
+               "Anodendimmung läuft."))
+
+    c.append(h2("digit_fade.ino – Weicher Ziffernwechsel"))
+    c.append(p("commitDigits() in display.ino ist die zentrale Stelle, über die alle "
+               "Ziffernänderungen laufen (setDisplayTime(), setDisplayDate() sowie die "
+               "Soft-Varianten setDisplayTimeSoft()/setDisplayDateSoft()). Sie vergleicht "
+               "per memcmp() gegen displayDigits, um unveränderte Aufrufe zu ignorieren, "
+               "und entscheidet dann: fadeMs == 0 oder nightState != NIGHT_NORMAL → "
+               "sofortiger Hart-Wechsel über nixieWrite() (im Nacht-Modus kein Fade, da "
+               "die Anodenspannung dort bereits gedimmt/aus ist); fadeMs > 0 → "
+               "startDigitFade()."))
+    c.append(p("startDigitFade()/updateDigitFade() bilden eine non-blocking "
+               "State-Machine (angetrieben aus loop()), die den HV-Dimmer-Duty "
+               "(hvDimmerSetDuty()) in 5-ms-Schritten (DIGIT_FADE_STEP_MS) erst auf "
+               "DIGIT_FADE_MIN_DUTY (13, ≈5 %) abblendet, bei Minimalhelligkeit die "
+               "Zielziffern schreibt (nixieWrite()), und wieder auf 255 aufblendet. "
+               "Die Dauer wird über fadeMs gesteuert (je zur Hälfte Ab-/Aufblenden); "
+               "aktuell fest verdrahtet auf 400 ms (softFadeSecondEnabled bzw. "
+               "softFadeDateEnabled in NixieClockUltra.ino). Die reine "
+               "Interpolationsmathematik (fadeDutyForStep()) liegt in digit_fade_math.h "
+               "und ist per Host-Unit-Test ohne Arduino-Framework testbar."))
+    c.append(p("cancelDigitFade() schließt einen laufenden Fade sofort ab (Zielziffern "
+               "schreiben, Duty unangetastet) und wird vor startSlotAnimation() sowie "
+               "beim Eintritt in den Edit-Modus aufgerufen — Absicherung gegen eine Race "
+               "zwischen laufendem Fade und neuer Display-Aktivität."))
+
+    c.append(h2("Slot-Machine-Geschwindigkeit"))
+    c.append(p("slotSpeedPct (20–100 %, Standard 100) skaliert sowohl "
+               "slotRollIntervalMs als auch die gestaffelten Stopp-Zeitpunkte je Röhre "
+               "(slotStopMs[i]) in startSlotAnimation() (display.ino) — bei kleineren "
+               "Werten rollen die Ziffern langsamer und die Animation dauert insgesamt "
+               "länger."))
 
     c.append(h2("Nacht-Modus (night_mode.ino)"))
     c.append(p("updateNightMode() wird jeden Loop-Durchlauf aufgerufen und "
@@ -691,7 +728,7 @@ def build_content():
         ["Pfad", "Methode", "Request-Body / Antwort"],
         [
             ["/",                  "GET",  "Vollständiges Web-Interface (HTML/CSS/JS eingebettet als PROGMEM)"],
-            ["/api/status",        "GET",  "{time, date, neoBright, animMode, slotIval, colonOn, colonStatic, colonBright, slot, nightState, ldrVal, wifiSta, ntpSynced}"],
+            ["/api/status",        "GET",  "{time, date, neoBright, animMode, slotIval, slotSpeed, colonOn, colonStatic, colonBright, slot, nightState, ldrVal, wifiSta, ntpSynced}"],
             ["/api/settime",       "POST", "{\"h\":H,\"m\":M,\"s\":S} + optional {\"d\":D,\"mo\":Mo,\"y\":Y} → RTC schreiben"],
             ["/api/neobright",     "POST", "{\"val\":10..255}  → NeoPixel-Feinwert + NVS"],
             ["/api/anim",          "POST", "{\"mode\":0..2}  → Animationsmodus + NVS"],
@@ -700,6 +737,9 @@ def build_content():
             ["/api/colonon",       "POST", "{\"enabled\":true|false}  → Dauerhaft an/aus + NVS"],
             ["/api/colonstatic",   "POST", "{\"enabled\":true|false}  → Statisch warmweiß + NVS"],
             ["/api/slot",          "POST", "(kein Body) → Slot-Machine-Animation sofort starten"],
+            ["/api/slotspeed",     "POST", "{\"val\":20..100}  → Slot-Machine-Rollgeschwindigkeit + NVS"],
+            ["/api/softfade",      "GET",  "{sec, date} — weicher Ziffernwechsel Sekundentakt/Datum-Übergang"],
+            ["/api/softfade",      "POST", "{\"sec\":true|false,\"date\":true|false} → weicher Ziffernwechsel + NVS"],
             ["/api/nightmode",     "GET",  "{ntEn, ntFrom, ntTo, ntMode, hvDimPct, ldrEn, ldrThr, ldrVal, state}"],
             ["/api/nightmode",     "POST", "{ntEn, ntFrom, ntTo, ntMode, hvDimPct, ldrEn, ldrThr} → Nacht-Modus + NVS"],
             ["/api/wifi",          "GET",  "{mode, staSsid, staIp, ntp}"],
@@ -723,6 +763,9 @@ def build_content():
             ["colonBright",   "UInt8",  "80",    "NeoPixel-Feinwert Trennpunkte"],
             ["animMode",      "UInt8",  "0",     "Animationsmodus (0=Rainbow, 1=Statisch, 2=Puls)"],
             ["slotIval",      "UInt8",  "0",     "Slot-Intervall (SlotInterval-Enum: 0=Aus, 1=10s, 2=1min, 3=15min, 4=1h)"],
+            ["slotSpeed",     "UInt8",  "100",   "Slot-Machine-Rollgeschwindigkeit (20–100 %)"],
+            ["sfSecEn",       "Bool",   "false", "Weicher Ziffernwechsel Sekundentakt aktiv"],
+            ["sfDateEn",      "Bool",   "false", "Weicher Ziffernwechsel Zeit/Datum aktiv"],
             ["colonOn",       "Bool",   "false", "Trennpunkte dauerhaft an"],
             ["colonStatic",   "Bool",   "false", "Trennpunkte statisch warmweiß"],
             ["ntEn",          "Bool",   "false", "Nacht-Modus Zeitbereich aktiv"],

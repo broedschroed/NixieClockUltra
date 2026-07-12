@@ -195,7 +195,26 @@ Technische Dokumentation (ODT) mit eingebetteten Schaltplänen:
 
 ---
 
-## Aktueller Stand (2026-07-10)
+## Phase 9 – Weicher Ziffernwechsel & Slot-Geschwindigkeit (2026-07-11)
+
+**Ziel:** Ziffernwechsel sollen nicht mehr schlagartig, sondern per sanftem Crossfade erfolgen – getrennt zuschaltbar für den Sekundentakt und für den Übergang zwischen Uhrzeit- und Datumsanzeige. Zusätzlich sollte die Slot-Machine-Rollgeschwindigkeit einstellbar werden.
+
+**Umsetzung (Branch `feature/soft-digit-transitions`, gemerged nach `master`):**
+- `digit_fade_math.h` (neu): reine Interpolationsmathematik (`fadeDutyForStep()`), host-testbar ohne Arduino-Framework (`test/digit_fade_math_test.cpp`)
+- `digit_fade.ino` (neu): `startDigitFade()`/`updateDigitFade()`/`cancelDigitFade()` – non-blocking State-Machine, dimmt über den vorhandenen HV-Dimmer-Duty ab (`DIGIT_FADE_MIN_DUTY`, ≈5 %), schreibt die Zielziffern bei Minimalhelligkeit um und blendet wieder auf
+- `display.ino`: `commitDigits()` als zentrale Stelle für alle Ziffernänderungen (ersetzt das bisherige direkte `nixieWrite()`), `setDisplayTimeSoft()`/`setDisplayDateSoft()` neu
+- `NixieClockUltra.ino`: weicher Wechsel im Sekundentakt und beim Zeit/Datum-Übergang verdrahtet; `displayDigits`-Sentinel gegen dunkles Display bei RTC-Kaltstart ergänzt
+- Web-UI-Karte „Weicher Ziffernwechsel“ mit zwei Toggles (Sekundentakt/Datum), `/api/softfade` GET+POST
+- Slot-Machine-Geschwindigkeit skalierbar gemacht (`slotSpeedPct`, 20–100 %) mit eigenem Web-UI-Regler, `/api/slotspeed` POST
+- `cancelDigitFade()` vor `startSlotAnimation()` und beim Eintritt in den Edit-Modus ergänzt (Absicherung gegen Race zwischen laufendem Fade und neuer Display-Aktivität, aus Code-Review)
+
+**Feinschliff nach Hardware-Test:** Fade-Dauer von ursprünglich 100 ms (Sekundentakt) bzw. 200 ms (Datum-Übergang) einheitlich auf 400 ms erhöht.
+
+**Dokumentation:** Bedienungsanleitung, Systemdokumentation (`firmware.md`, `gen_sysdoc.py`, `SUMMARY.md`), Marketing (`gen_werbetext.py`) und Website (`features.html`, `geschichte.html` Phase 9) aktualisiert. Dabei auch einen veralteten Verweis auf das inzwischen entfernte `nixieWriteSafe()` in der Systemdokumentation korrigiert.
+
+---
+
+## Aktueller Stand (2026-07-12)
 
 | Komponente | Status |
 |---|---|
@@ -203,7 +222,8 @@ Technische Dokumentation (ODT) mit eingebetteten Schaltplänen:
 | DS1302 RTC | ✓ funktionsfähig |
 | NeoPixel (10×, Hintergrund + Trennpunkte) | ✓ funktionsfähig |
 | Animationen (Rainbow, Static, Pulse) | ✓ funktionsfähig |
-| Slot-Machine-Animation + Intervall | ✓ funktionsfähig |
+| Slot-Machine-Animation + Intervall, Geschwindigkeit einstellbar | ✓ funktionsfähig |
+| Weicher Ziffernwechsel (Sekundentakt/Datum-Übergang) | ✓ funktionsfähig, auf Hardware getestet |
 | Taster (SET, UP, DOWN, LIGHT) | ✓ funktionsfähig |
 | IR-Fernbedienung (7 Funktionen) | ✓ funktionsfähig |
 | Web-Interface | ✓ funktionsfähig |

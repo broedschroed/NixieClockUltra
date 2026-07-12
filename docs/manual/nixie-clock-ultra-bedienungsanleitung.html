@@ -592,11 +592,14 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
   </table>
 
   <h2>Slot-Animation &amp; Datumsanzeige</h2>
-  <p>Das Slot-Intervall bestimmt, wie häufig die Slot-Machine-Animation automatisch ausgelöst wird. Es ist unabhängig vom Animationsmodus einstellbar (aus, 10 Sek., 1 Min., 15 Min., 1 Std.). Im Anschluss an jede Slot-Animation zeigt die Uhr <strong>5 Sekunden lang das Datum</strong> im Format <strong>TT MM JJ</strong> auf den Röhren an.</p>
+  <p>Das Slot-Intervall bestimmt, wie häufig die Slot-Machine-Animation automatisch ausgelöst wird. Es ist unabhängig vom Animationsmodus einstellbar (aus, 10 Sek., 1 Min., 15 Min., 1 Std.). Im Anschluss an jede Slot-Animation zeigt die Uhr <strong>5 Sekunden lang das Datum</strong> im Format <strong>TT MM JJ</strong> auf den Röhren an. Die Geschwindigkeit, mit der die Ziffern beim Rollen wechseln, lässt sich im Web-Interface stufenlos einstellen.</p>
 
   <div class="info-box no-break">
     Während der Datumsanzeige leuchten ausschließlich die <strong>unteren Trennpunkt-LEDs</strong> in gedämpftem Warmweiß — alle Hintergrund-LEDs und die oberen Trennpunkte sind ausgeschaltet. Dieser Effekt hebt die Datumsanzeige optisch deutlich von der Uhrzeitanzeige ab.
   </div>
+
+  <h2>Weicher Ziffernwechsel</h2>
+  <p>Statt hart umzuschalten, können die Röhren beim Ziffernwechsel sanft überblenden — kurz abdunkeln und mit der neuen Ziffer wieder aufhellen. Das lässt sich getrennt für zwei Situationen im Web-Interface unter <strong>Weicher Ziffernwechsel</strong> ein- und ausschalten: für den ganz normalen <strong>Sekundentakt</strong> und für den <strong>Wechsel zwischen Uhrzeit- und Datumsanzeige</strong>.</p>
 
   <h2>Trennpunkt-LEDs</h2>
   <p>Die vier LEDs zwischen den Zifferngruppen blinken standardmäßig sekundengenau. Ein <strong>langer Druck auf LIGHT</strong> schaltet sie in den Dauerleucht-Modus:</p>
@@ -807,7 +810,8 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
     <tbody>
       <tr><td><strong>NeoPixel-Helligkeit</strong></td><td>Stufe (1–4) und Feinwert (10–255)</td></tr>
       <tr><td><strong>Animationsmodus</strong></td><td>Rainbow / Statisch Warmweiß / Puls</td></tr>
-      <tr><td><strong>Slot-Intervall</strong></td><td>Aus / 10 Sek. / 1 Min. / 15 Min. / 1 Std.</td></tr>
+      <tr><td><strong>Slot-Intervall</strong></td><td>Aus / 10 Sek. / 1 Min. / 15 Min. / 1 Std., inkl. Rollgeschwindigkeit</td></tr>
+      <tr><td><strong>Weicher Ziffernwechsel</strong></td><td>Sekundentakt und Zeit/Datum-Wechsel, je einzeln ein-/ausschaltbar</td></tr>
       <tr><td><strong>Trennpunkt-LEDs</strong></td><td>Blinken, dauerhaft an oder statisch warmweiß</td></tr>
       <tr><td><strong>Nacht-Modus</strong></td><td>Zeitbereich (Von/Bis/Modus), Dimm-Helligkeit (2–60 %) und Lichtsensor (aktiv/Schwellwert)</td></tr>
       <tr><td><strong>WLAN-Zugangsdaten</strong></td><td>SSID und Passwort des Heimnetzes</td></tr>

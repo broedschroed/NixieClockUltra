@@ -12,16 +12,20 @@ deshalb in `NixieClockUltra.ino` deklariert werden.
 
 | Datei                | Zeilen | Inhalt                                                                  |
 |----------------------|--------|-------------------------------------------------------------------------|
-| `NixieClockUltra.ino`| 461    | Globals, `setup()`, `loop()`, Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals |
+| `NixieClockUltra.ino`| 471    | Globals, `setup()`, `loop()`, Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals |
 | `nixie_driver.ino`   | 91     | `nixieInit()`, `nixieWrite()`, MCP23017-Abstraktion, FreeRTOS-Mutex     |
-| `display.ino`        | 62     | `setDisplayTime()`, `setDisplayDate()`, `nixieWriteSafe()`, Slot-Animation |
+| `display.ino`        | 88     | `setDisplayTime()`, `setDisplayDate()`, `commitDigits()` (weicher Ziffernwechsel), Slot-Animation |
+| `digit_fade.ino`     | 77     | `startDigitFade()`, `updateDigitFade()`, `cancelDigitFade()` — non-blocking Crossfade über HV-Dimmer-Duty |
 | `buttons.ino`        | 127    | Entprell-FSM für 4 Taster, Kurz-/Langdruck, Edit-Mode Zeit+Datum       |
 | `rtc.ino`            | 18     | `readRTC()`, `writeRTC()` via DS1302/ThreeWire, liest auch Tag/Monat/Jahr |
 | `night_mode.ino`     | 34     | LDR-Abtastung (GPIO6, ADC1), `updateNightMode()`, Zeitbereich-Logik    |
 | `hv_dimmer.ino`      | 12     | `hvDimmerInit()`, `hvDimmerSetDuty()` — LEDC-Hardware-PWM für TLP627 auf Anodenspannung |
 | `neo_animation.ino`  | 107    | Rainbow, Statisch, Puls, Slot, Nacht-Modus-Dimming, Datumsanzeige-Override |
 | `ir_remote.ino`      | 107    | `executeAction()`, `dispatchIRAction()`, `handleIR()`, 8 IR-Aktionen   |
-| `web_server.ino`     | 675    | Eingebettetes HTML/JS, alle API-Handler, WiFi-Setup, NTP, mDNS         |
+| `web_server.ino`     | 748    | Eingebettetes HTML/JS, alle API-Handler, WiFi-Setup, NTP, mDNS         |
+
+Reine Interpolationsmathematik für den Crossfade liegt zusätzlich in `digit_fade_math.h`
+(header-only, host-testbar ohne Arduino-Framework, siehe `test/digit_fade_math_test.cpp`).
 
 ## Setup-Ablauf
 
@@ -35,7 +39,7 @@ Die `setup()`-Funktion läuft einmalig nach dem Start in dieser Reihenfolge:
 5. NVS laden — Helligkeit, Animation, Slot-Intervall, WiFi-Zugangsdaten, IR-Codes,
    `colonAlwaysOn`, `colonStatic`, sowie Nacht-Modus-Konfiguration
    (`nightTimeEnabled`, `nightStart`, `nightEnd`, `nightTimeMode`, `ldrEnabled`, `ldrThreshold`,
-   `hvDimPct`)
+   `hvDimPct`), außerdem `softFadeSecondEnabled`, `softFadeDateEnabled` und `slotSpeedPct`
 6. `nixieInit()` — I²C initialisieren, alle 4 MCP23017 auf Output-Modus setzen, alle Bits 0
 7. RTC lesen (`readRTC()`), Uhrzeit in `curHour/curMin/curSec` und Datum in
    `curDay/curMonth/curYear` laden
@@ -124,6 +128,9 @@ const uint8_t BRIGHTNESS_LEVELS[4] = {10, 40, 80, 200};  // NeoPixel-Helligkeite
 | `ntpSynced`         | `bool`        | NTP-Synchronisierung erfolgreich                              |
 | `slotActive`        | `bool`        | Slot-Machine-Animation läuft                                  |
 | `startFadeIn`       | `bool`        | Fade-In beim Start noch aktiv                                 |
+| `softFadeSecondEnabled` | `bool`    | Weicher Ziffernwechsel im Sekundentakt aktiv                  |
+| `softFadeDateEnabled`   | `bool`    | Weicher Ziffernwechsel bei Zeit/Datum-Übergang aktiv          |
+| `slotSpeedPct`      | `uint8_t`     | Slot-Machine-Rollgeschwindigkeit 20–100 % (100 = Standard)    |
 
 ### Enumerationen
 
@@ -177,9 +184,39 @@ enum IrAction {
 
 Die Dimmung erfolgt per LEDC-Hardware-PWM (~200 Hz) direkt auf der Anodenspannung über
 einen TLP627-Optokoppler (`HV_SWITCH_PIN`, GPIO7) — nicht mehr per Software-PWM auf den
-Kathoden. `nixieWriteSafe()` in `display.ino` ist dadurch auf einen reinen
-Passthrough zu `nixieWrite()` reduziert; ein Blitzschutz für Sekundenwechsel ist nicht
-mehr nötig, da die Kathoden-Ansteuerung unabhängig von der Anodendimmung läuft.
+Kathoden. Ein separater Blitzschutz für Sekundenwechsel ist nicht mehr nötig, da die
+Kathoden-Ansteuerung unabhängig von der Anodendimmung läuft.
+
+## Weicher Ziffernwechsel (`digit_fade.ino`)
+
+`commitDigits()` in `display.ino` ist die zentrale Stelle, über die alle Ziffernänderungen
+laufen (`setDisplayTime()`, `setDisplayDate()` sowie die Soft-Varianten
+`setDisplayTimeSoft()`/`setDisplayDateSoft()`). Sie vergleicht per `memcmp()` gegen
+`displayDigits`, um unveränderte Aufrufe zu ignorieren, und entscheidet dann:
+
+- `fadeMs == 0` oder `nightState != NIGHT_NORMAL` → sofortiger Hart-Wechsel über `nixieWrite()`
+  (im Nacht-Modus kein Fade, da die Anodenspannung dort bereits gedimmt/aus ist)
+- `fadeMs > 0` → `startDigitFade()` in `digit_fade.ino`
+
+`startDigitFade()`/`updateDigitFade()` bilden eine non-blocking State-Machine (angetrieben aus
+`loop()`), die den HV-Dimmer-Duty (`hvDimmerSetDuty()`) in `DIGIT_FADE_STEP_MS`-Schritten
+(5 ms) erst auf `DIGIT_FADE_MIN_DUTY` (13, ≈5 %) abblendet, bei Minimalhelligkeit die
+Zielziffern schreibt (`nixieWrite()`), und wieder auf 255 aufblendet. Die Dauer wird über
+`fadeMs` gesteuert (je zur Hälfte Ab-/Aufblenden); aktuell fest verdrahtet auf 400 ms, siehe
+`NixieClockUltra.ino` (`softFadeSecondEnabled ? 400 : 0` bzw. `softFadeDateEnabled ? 400 : 0`).
+Die reine Interpolationsmathematik (`fadeDutyForStep()`) liegt in `digit_fade_math.h` und ist
+per Host-Unit-Test (`test/digit_fade_math_test.cpp`) ohne Arduino-Framework testbar.
+
+`cancelDigitFade()` schließt einen laufenden Fade sofort ab (Zielziffern schreiben, Duty
+unangetastet) und wird vor `startSlotAnimation()` sowie beim Eintritt in den Edit-Modus
+aufgerufen — Absicherung gegen eine Race zwischen laufendem Fade und neuer Display-Aktivität.
+
+## Slot-Machine-Geschwindigkeit
+
+`slotSpeedPct` (20–100 %, Standard 100) skaliert sowohl `slotRollIntervalMs` als auch die
+gestaffelten Stopp-Zeitpunkte je Röhre (`slotStopMs[i]`) in `startSlotAnimation()`
+(`display.ino`) — bei kleineren Werten rollen die Ziffern langsamer und die Animation dauert
+insgesamt länger.
 
 ## Datumsanzeige
 
@@ -249,7 +286,7 @@ Alle GET-Endpunkte liefern JSON zurück.
 | Pfad               | Methode | Request-Body / Antwort                                                      |
 |--------------------|---------|-----------------------------------------------------------------------------|
 | `/`                | GET     | Vollständiges Web-Interface (HTML/CSS/JS, eingebettet als PROGMEM)          |
-| `/api/status`      | GET     | `{time, date, neoBright, animMode, slotIval, colonOn, colonStatic, colonBright, slot, nightState, ldrVal, wifiSta, ntpSynced}` |
+| `/api/status`      | GET     | `{time, date, neoBright, animMode, slotIval, slotSpeed, colonOn, colonStatic, colonBright, slot, nightState, ldrVal, wifiSta, ntpSynced}` |
 | `/api/settime`     | POST    | `{"h":H,"m":M,"s":S}` + optional `{"d":D,"mo":Mo,"y":Y}` → RTC schreiben  |
 | `/api/neobright`   | POST    | `{"val":10..255}` → NeoPixel-Feinwert + NVS                                |
 | `/api/anim`        | POST    | `{"mode":0..2}` → Animationsmodus + NVS                                    |
@@ -258,6 +295,9 @@ Alle GET-Endpunkte liefern JSON zurück.
 | `/api/colonon`     | POST    | `{"enabled":true\|false}` → Trennpunkte dauerhaft an/aus + NVS             |
 | `/api/colonstatic` | POST    | `{"enabled":true\|false}` → Trennpunkte statisch warmweiß + NVS            |
 | `/api/slot`        | POST    | — → Slot-Machine-Animation sofort auslösen                                  |
+| `/api/slotspeed`   | POST    | `{"val":20..100}` → Slot-Machine-Rollgeschwindigkeit + NVS                  |
+| `/api/softfade`    | GET     | `{sec, date}` — weicher Ziffernwechsel Sekundentakt/Datum-Übergang          |
+| `/api/softfade`    | POST    | `{"sec":true\|false,"date":true\|false}` → weicher Ziffernwechsel + NVS     |
 | `/api/nightmode`   | GET     | `{ntEn, ntFrom, ntTo, ntMode, hvDimPct, ldrEn, ldrThr, ldrVal, state}`     |
 | `/api/nightmode`   | POST    | `{ntEn, ntFrom, ntTo, ntMode, hvDimPct, ldrEn, ldrThr}` → Nacht-Modus + NVS |
 | `/api/wifi`        | GET     | `{mode, staSsid, staIp, ntp}`                                               |
@@ -279,6 +319,9 @@ geladen.
 | `colonBright`  | UInt8   | 80           | NeoPixel-Feinwert Trennpunkte            |
 | `animMode`     | UInt8   | 0            | Animationsmodus (AnimMode-Enum)          |
 | `slotIval`     | UInt8   | 0            | Slot-Intervall (SlotInterval-Enum)       |
+| `slotSpeed`    | UInt8   | 100          | Slot-Machine-Rollgeschwindigkeit (20–100 %) |
+| `sfSecEn`      | Bool    | false        | Weicher Ziffernwechsel Sekundentakt aktiv |
+| `sfDateEn`     | Bool    | false        | Weicher Ziffernwechsel Zeit/Datum aktiv  |
 | `colonOn`      | Bool    | false        | Trennpunkte dauerhaft an                 |
 | `colonStatic`  | Bool    | false        | Trennpunkte statisch warmweiß            |
 | `ntEn`         | Bool    | false        | Nacht-Modus Zeitbereich aktiv            |

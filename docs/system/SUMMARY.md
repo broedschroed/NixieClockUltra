@@ -21,10 +21,12 @@ Inter-Board-Signaltabellen für J3↔J1 und J4↔J2. Vollständige ESP32-S3 Pin-
 
 ## firmware.md
 
-Firmware-Architektur: 7-Modul-Tabelle mit Zeilenanzahl, korrekter 10-Schritt-Setup-Ablauf,
-alle GPIO-Defines und Konstanten als Codeblock, 14 globale State-Variablen, alle 3
-Enumerationen (`AnimMode`, `EditState`, `IrAction` mit `IR_ACTION_`-Präfix), Erklärung
-der MCP23017-Direktansteuerung (Mutex, Shadow-Register, Lookup-Tabelle), vollständige
-Web-API-Tabelle (16 Endpunkte mit verifizierten JSON-Feldnamen), NVS-Persistenz-Tabelle
-(15 Schlüssel mit korrekten Namen wie `bright`, `colonOn`, `wifiSsid`,
-`ir_SET`…`ir_COLTOGGLE`).
+Firmware-Architektur: 11-Modul-Tabelle mit Zeilenanzahl (inkl. `digit_fade.ino` und
+`hv_dimmer.ino`), korrekter 11-Schritt-Setup-Ablauf, alle GPIO-Defines und Konstanten als
+Codeblock, 32 globale State-Variablen, alle 3 Enumerationen (`AnimMode`, `EditState`,
+`IrAction` mit `IR_ACTION_`-Präfix), Erklärung der MCP23017-Direktansteuerung (Mutex,
+Shadow-Register, Lookup-Tabelle), der HV-Anodendimmung (TLP627/LEDC) und des weichen
+Ziffernwechsels (`digit_fade.ino`-Crossfade-State-Machine, Slot-Machine-Geschwindigkeit),
+vollständige Web-API-Tabelle (19 Endpunkte mit verifizierten JSON-Feldnamen),
+NVS-Persistenz-Tabelle (27 Schlüssel mit korrekten Namen wie `bright`, `colonOn`,
+`wifiSsid`, `sfSecEn`, `sfDateEn`, `slotSpeed`, `ir_SET`…`ir_COLTOGGLE`).
