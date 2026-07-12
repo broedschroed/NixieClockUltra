@@ -82,4 +82,51 @@ const I18N_DE = {
   "aufbau.svg.anoden": "Anoden",
   "aufbau.svg.logik": "Logik",
   "aufbau.svg.voltage33": "3,3 V",
+
+  "geschichte.meta.title": "Geschichte – Nixie Clock Ultra",
+  "geschichte.h1": "Entwicklungsgeschichte",
+  "geschichte.intro": "Die Nixie Clock Ultra entstand in acht Entwicklungsphasen zwischen April und Juli 2026. Jede Phase brachte neue Erkenntnisse &mdash; und neue Probleme, die es zu lösen galt.",
+
+  "geschichte.phase1.title": "Phase 1 &mdash; Firmware-Grundgerüst",
+  "geschichte.phase1.body": "Vollständige Basis-Firmware in einer einzigen <code>.ino</code>-Datei: Nixie-Ansteuerung via Multiplex-ISR, NeoPixel-Animationen, Web-Interface (WiFi AP, AsyncWebServer), IR-Fernbedienung mit 7 Funktionen, DS1302 RTC-Integration.",
+
+  "geschichte.phase2.title": "Phase 2 &mdash; Modularisierung",
+  "geschichte.phase2.body": "Die wachsende Datei wurde in sieben Module aufgeteilt: <code>rtc.ino</code>, <code>display.ino</code>, <code>neo_animation.ino</code>, <code>buttons.ino</code>, <code>ir_remote.ino</code>, <code>web_server.ino</code> und den Multiplex-Timer.",
+  "geschichte.acc1.label": "Problem: Forward Declarations",
+  "geschichte.acc1.content": "Der Arduino-Präprozessor erkennt Forward Declarations für <code>IRAM_ATTR</code>-Funktionen und Web-Server-Callbacks nicht automatisch. Lösung: Forward Declarations manuell in <code>NixieClockUltra.ino</code> ergänzt.",
+
+  "geschichte.phase3.title": "Phase 3 &mdash; Hardware-Inbetriebnahme",
+  "geschichte.phase3.body": "Erste Tests an der echten Hardware brachten mehrere Korrektionen: RGB-Bytereihenfolge der THT-WS2812B (RGB statt GRB), Kathoden-Mapping-Korrektur, separate Helligkeitsregelung für Hintergrund und Trennpunkte.",
+  "geschichte.acc2.label": "Problem: NeoPixel RGB-Swap",
+  "geschichte.acc2.content": "Die 4 Trennpunkt-LEDs (THT WS2812B YF923) zeigten falsche Farben. Ursache: THT-Variante verwendet RGB-Bytereihenfolge statt GRB wie die SMD-Version. Lösung: <code>rgbSwap</code> für Pixel 6&ndash;9 in <code>neo_animation.ino</code>.",
+  "geschichte.acc3.label": "Problem: Ghosting (erste Versuche)",
+  "geschichte.acc3.content": "Nixie-Röhren zeigten Geisterziffern durch den Multiplex-Betrieb. Zwei Versuche: (1) Anode vor Kathode schalten &mdash; kein Erfolg. (2) Blank-Phase verlängern &mdash; reduziert, aber nicht beseitigt. Strukturelle Lösung erst in Phase 4.",
+
+  "geschichte.phase4.title": "Phase 4 &mdash; Anti-Ghosting: MCP23017 Direct Drive",
+  "geschichte.phase4.body": "Kompletter Umbau der Nixie-Ansteuerung: statt eines 74HC595-Schieberegisters mit Multiplex-ISR nun vier MCP23017 I²C-Port-Expander mit je eigenem SMBTA42-Transistor pro Kathode. Kein Multiplexing mehr &mdash; alle Röhren leuchten dauerhaft.",
+  "geschichte.acc4.label": "Ergebnis (getestet 2026-06-15)",
+  "geschichte.acc4.content": "Ghosting vollständig beseitigt. Die direkte Ansteuerung via MCP23017 löst das Problem strukturell: Da keine Kathode mehr gemeinsam genutzt wird, gibt es keine Übersprecher zwischen den Röhren.",
+
+  "geschichte.phase5.title": "Phase 5 &mdash; Dokumentation",
+  "geschichte.phase5.body": "Vollständige Bedienungsanleitung im Steampunk-Design (HTML &rarr; PDF) sowie technische Systemdokumentation (ODT) mit eingebetteten Schaltplänen, API-Dokumentation und Bibliotheksübersicht.",
+
+  "geschichte.phase6.title": "Phase 6 &mdash; Slot-Intervall &amp; Feinschliff",
+  "geschichte.phase6.body": "Slot-Machine-Animation als eigenständige Einstellung (<code>SlotInterval</code>-Enum) ausgelagert. Mehrere Hardware-Bugs behoben: IR-Empfang nach <code>strip.show()</code>, Taster-Entprellung, Pin-Korrektionen, Warmweiß-Farbabgleich.",
+  "geschichte.acc5.label": "Problem: IR-Empfang nach NeoPixel-Update",
+  "geschichte.acc5.content": "IR-Codes wurden nach <code>strip.show()</code> nicht mehr empfangen. Ursache: <code>irrecv.pause()/resume()</code> um <code>strip.show()</code> resettete den RMT-Empfänger alle 20 ms. Lösung: pause/resume vollständig entfernt. Auf dem ESP32-S3 sind RMT-TX (NeoPixel) und RMT-RX (IR) unabhängige Kanäle &mdash; kein Konflikt.",
+  "geschichte.acc6.label": "Problem: Taster-Entprellung",
+  "geschichte.acc6.content": "<code>pressed</code> wurde nie <code>true</code>. Ursache: Logikfehler in der Button-FSM &mdash; das <code>debounced</code>-Flag wurde nie gesetzt, weil die Bedingung <code>lastState == HIGH</code> innerhalb des Debounce-Fensters niemals zutraf. Lösung: <code>Button</code>-Struct um <code>debounced</code>-Flag erweitert.",
+
+  "geschichte.phase7.title": "Phase 7 &mdash; WiFi-Fixes &amp; mDNS",
+  "geschichte.phase7.body": "WiFi-Scan entfernt (Blocking-Probleme mit ESPAsyncWebServer), STA-Timeout auf 20 s erhöht, DHCP-Hostname und mDNS implementiert. Die Uhr ist jetzt als <code>nixieclockcs.local</code> im Heimnetz erreichbar.",
+  "geschichte.acc7.label": "Problem: WiFi-Scan lieferte keine Ergebnisse",
+  "geschichte.acc7.content": "Zwei Ursachen: (1) <code>WiFi.mode(WIFI_AP)</code> deaktiviert das STA-Radio &mdash; kein Scan möglich. (2) Synchroner <code>scanNetworks()</code>-Aufruf im ESPAsyncWebServer-Handler blockiert den LWIP/WiFi-Task. Lösung: Scan-Funktion vollständig entfernt, SSID wird manuell eingegeben.",
+
+  "geschichte.phase8.title": "Phase 8 &mdash; HV-Anodendimmung",
+  "geschichte.phase8.body": "Der Nacht-Modus dimmt die Röhren jetzt nicht mehr per Software-PWM auf den Kathoden, sondern über einen TLP627-Optokoppler direkt auf der ~170-V-Anodenspannung (<code>hv_dimmer.ino</code>, LEDC-Hardware-PWM ~200 Hz). Dazu: Web-UI-Regler für die Dimm-Helligkeit (stufenlos 2&ndash;60&nbsp;%) mit sofortiger AJAX-Übernahme, veraltetes Nixie-Helligkeit-Dropdown entfernt, NeoPixel-Helligkeitsstufen für Taster/IR auf 10/40/80/200 nachjustiert.",
+  "geschichte.acc8.label": "Beobachtung: Web-UI-Verzögerung nach dem Umbau",
+  "geschichte.acc8.content": "Nach dem Umbau wirkte die Web-UI sowohl im AP- als auch im WLAN-Modus spürbar verzögert. Erste Hypothese: Das Schalten der vollen Anodenlast mit 200 Hz koppelt Störungen in den WLAN-Funkteil ein. Berechtigter Einwand: Sowohl beim alten Kathoden-Software-PWM als auch beim neuen Anoden-Hardware-PWM wird pro leuchtender Ziffer dieselbe Strommenge geschaltet &mdash; die Störquelle wäre also nicht grundsätzlich neu. Bei einem erneuten Test trat die Verzögerung nicht mehr auf; mangels Reproduzierbarkeit bleibt die genaue Ursache ungeklärt.",
+
+  "geschichte.phase9.title": "Phase 9 &mdash; Weicher Ziffernwechsel",
+  "geschichte.phase9.body": "Der Wechsel zwischen zwei Ziffern erfolgt jetzt optional nicht mehr schlagartig, sondern als sanfter Crossfade &mdash; getrennt zuschaltbar für den Sekundentakt und für den Wechsel zwischen Uhrzeit- und Datumsanzeige. Technisch über den vorhandenen HV-Dimmer realisiert (<code>digit_fade.ino</code>): kurz abblenden, Ziffern bei Minimalhelligkeit umschalten, wieder aufblenden &mdash; als non-blocking State-Machine, angetrieben aus <code>loop()</code>. Dauer nach einem Hardware-Test auf 400&nbsp;ms festgelegt. Zusätzlich wurde die Rollgeschwindigkeit der Slot-Machine-Animation (<code>slotSpeedPct</code>) über einen eigenen Web-UI-Regler einstellbar gemacht.",
 };

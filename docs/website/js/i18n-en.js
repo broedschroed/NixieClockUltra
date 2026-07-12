@@ -82,4 +82,51 @@ const I18N_EN = {
   "aufbau.svg.anoden": "Anodes",
   "aufbau.svg.logik": "Logic",
   "aufbau.svg.voltage33": "3.3 V",
+
+  "geschichte.meta.title": "History – Nixie Clock Ultra",
+  "geschichte.h1": "Development History",
+  "geschichte.intro": "The Nixie Clock Ultra was developed in eight phases between April and July 2026. Each phase brought new insights &mdash; and new problems that needed solving.",
+
+  "geschichte.phase1.title": "Phase 1 &mdash; Firmware Skeleton",
+  "geschichte.phase1.body": "Complete baseline firmware in a single <code>.ino</code> file: Nixie driving via multiplex ISR, NeoPixel animations, web interface (WiFi AP, AsyncWebServer), IR remote control with 7 functions, DS1302 RTC integration.",
+
+  "geschichte.phase2.title": "Phase 2 &mdash; Modularization",
+  "geschichte.phase2.body": "The growing file was split into seven modules: <code>rtc.ino</code>, <code>display.ino</code>, <code>neo_animation.ino</code>, <code>buttons.ino</code>, <code>ir_remote.ino</code>, <code>web_server.ino</code>, and the multiplex timer.",
+  "geschichte.acc1.label": "Problem: Forward Declarations",
+  "geschichte.acc1.content": "The Arduino preprocessor doesn't automatically detect forward declarations for <code>IRAM_ATTR</code> functions and web-server callbacks. Fix: forward declarations added manually in <code>NixieClockUltra.ino</code>.",
+
+  "geschichte.phase3.title": "Phase 3 &mdash; Hardware Bring-Up",
+  "geschichte.phase3.body": "First tests on real hardware led to several corrections: RGB byte order of the THT WS2812B (RGB instead of GRB), a cathode-mapping fix, and separate brightness control for background and separator LEDs.",
+  "geschichte.acc2.label": "Problem: NeoPixel RGB Swap",
+  "geschichte.acc2.content": "The 4 separator-dot LEDs (THT WS2812B YF923) showed the wrong colors. Cause: the THT variant uses RGB byte order instead of GRB like the SMD version. Fix: <code>rgbSwap</code> for pixels 6&ndash;9 in <code>neo_animation.ino</code>.",
+  "geschichte.acc3.label": "Problem: Ghosting (First Attempts)",
+  "geschichte.acc3.content": "Nixie tubes showed ghost digits due to multiplexed operation. Two attempts: (1) switching anode before cathode &mdash; no success. (2) lengthening the blanking phase &mdash; reduced but not eliminated. A structural fix only came in Phase 4.",
+
+  "geschichte.phase4.title": "Phase 4 &mdash; Anti-Ghosting: MCP23017 Direct Drive",
+  "geschichte.phase4.body": "Complete rework of the Nixie drive: instead of a 74HC595 shift register with a multiplex ISR, now four MCP23017 I²C port expanders with their own SMBTA42 transistor per cathode. No more multiplexing &mdash; all tubes glow continuously.",
+  "geschichte.acc4.label": "Result (tested 2026-06-15)",
+  "geschichte.acc4.content": "Ghosting completely eliminated. Direct drive via MCP23017 solves the problem structurally: since no cathode is shared anymore, there's no crosstalk between tubes.",
+
+  "geschichte.phase5.title": "Phase 5 &mdash; Documentation",
+  "geschichte.phase5.body": "Complete user manual in steampunk design (HTML &rarr; PDF) plus technical system documentation (ODT) with embedded schematics, API documentation, and a library overview.",
+
+  "geschichte.phase6.title": "Phase 6 &mdash; Slot Interval &amp; Polish",
+  "geschichte.phase6.body": "Slot-machine animation extracted as an independent setting (<code>SlotInterval</code> enum). Several hardware bugs fixed: IR reception after <code>strip.show()</code>, button debouncing, pin corrections, warm-white color calibration.",
+  "geschichte.acc5.label": "Problem: IR Reception After NeoPixel Update",
+  "geschichte.acc5.content": "IR codes were no longer received after <code>strip.show()</code>. Cause: <code>irrecv.pause()/resume()</code> around <code>strip.show()</code> reset the RMT receiver every 20 ms. Fix: pause/resume removed entirely. On the ESP32-S3, RMT-TX (NeoPixel) and RMT-RX (IR) are independent channels &mdash; no conflict.",
+  "geschichte.acc6.label": "Problem: Button Debouncing",
+  "geschichte.acc6.content": "<code>pressed</code> was never <code>true</code>. Cause: a logic error in the button FSM &mdash; the <code>debounced</code> flag was never set because the condition <code>lastState == HIGH</code> within the debounce window was never true. Fix: the <code>Button</code> struct was extended with a <code>debounced</code> flag.",
+
+  "geschichte.phase7.title": "Phase 7 &mdash; WiFi Fixes &amp; mDNS",
+  "geschichte.phase7.body": "WiFi scan removed (blocking problems with ESPAsyncWebServer), STA timeout increased to 20 s, DHCP hostname and mDNS implemented. The clock is now reachable as <code>nixieclockcs.local</code> on the home network.",
+  "geschichte.acc7.label": "Problem: WiFi Scan Returned No Results",
+  "geschichte.acc7.content": "Two causes: (1) <code>WiFi.mode(WIFI_AP)</code> disables the STA radio &mdash; no scan possible. (2) a synchronous <code>scanNetworks()</code> call inside the ESPAsyncWebServer handler blocks the LWIP/WiFi task. Fix: the scan function was removed entirely; the SSID is entered manually.",
+
+  "geschichte.phase8.title": "Phase 8 &mdash; HV Anode Dimming",
+  "geschichte.phase8.body": "Night mode no longer dims the tubes via software PWM on the cathodes, but instead via a TLP627 optocoupler directly on the ~170 V anode voltage (<code>hv_dimmer.ino</code>, LEDC hardware PWM ~200 Hz). Also: a web UI slider for dimming brightness (continuously 2&ndash;60&nbsp;%) with instant AJAX apply, the outdated Nixie-brightness dropdown removed, NeoPixel brightness steps for buttons/IR readjusted to 10/40/80/200.",
+  "geschichte.acc8.label": "Observation: Web UI Delay After the Rework",
+  "geschichte.acc8.content": "After the rework, the web UI felt noticeably delayed in both AP and WiFi client mode. Initial hypothesis: switching the full anode load at 200 Hz couples interference into the WiFi radio. Valid objection: both the old cathode software PWM and the new anode hardware PWM switch the same amount of current per lit digit &mdash; so the interference source wouldn't be fundamentally new. On a repeat test, the delay no longer occurred; without reproducibility, the exact cause remains unresolved.",
+
+  "geschichte.phase9.title": "Phase 9 &mdash; Soft Digit Transition",
+  "geschichte.phase9.body": "The transition between two digits can now optionally happen not abruptly but as a smooth crossfade &mdash; independently toggleable for the seconds tick and for switching between time and date display. Implemented technically via the existing HV dimmer (<code>digit_fade.ino</code>): briefly dim down, switch digits at minimum brightness, fade back up &mdash; as a non-blocking state machine, driven from <code>loop()</code>. Duration set to 400&nbsp;ms after a hardware test. Additionally, the slot-machine animation's roll speed (<code>slotSpeedPct</code>) was made adjustable via its own web UI slider.",
 };
