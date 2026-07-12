@@ -426,7 +426,7 @@ void loop() {
       }
       if (!slotActive && !dateShowActive) {
         if (triggerSlot) startSlotAnimation(curHour, curMin, curSec);
-        else             setDisplayTimeSoft(curHour, curMin, curSec, softFadeSecondEnabled ? 100 : 0);
+        else             setDisplayTimeSoft(curHour, curMin, curSec, softFadeSecondEnabled ? 400 : 0);
       }
     }
   }
@@ -437,13 +437,13 @@ void loop() {
   if (wasSlotActive && !slotActive) {
     dateShowActive = true;
     dateShowStart  = millis();
-    setDisplayDateSoft(softFadeDateEnabled ? 200 : 0);
+    setDisplayDateSoft(softFadeDateEnabled ? 400 : 0);
   }
 
   // Datum-Anzeige beenden
   if (dateShowActive && millis() - dateShowStart >= DATE_SHOW_MS) {
     dateShowActive = false;
-    setDisplayTimeSoft(curHour, curMin, curSec, softFadeDateEnabled ? 200 : 0);
+    setDisplayTimeSoft(curHour, curMin, curSec, softFadeDateEnabled ? 400 : 0);
   }
 
   // --- NeoPixel ---
