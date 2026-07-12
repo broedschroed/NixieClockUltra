@@ -55,5 +55,4 @@ your home network once configured) to reach the web interface.
 
 ## License
 
-No license has been chosen yet — all rights reserved by the author unless
-stated otherwise.
+Released under the [MIT License](LICENSE).
