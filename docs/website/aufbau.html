@@ -11,11 +11,11 @@
   <nav id="site-nav"></nav>
   <main>
     <div class="container">
-      <div class="page-title"><h1>Aufbau &amp; Hardware</h1></div>
+      <div class="page-title"><h1 data-i18n="aufbau.h1">Aufbau &amp; Hardware</h1></div>
       <div class="gear-divider">&#9881;</div>
 
       <div class="panel">
-        <p>Die Nixie Clock Ultra besteht aus zwei Platinen, die über zwei Steckverbinder verbunden sind: Das <strong>Logic Board</strong> beherbergt den Mikrocontroller, die Echtzeituhr und die Spannungsversorgung. Das <strong>Nixie Display Board</strong> enthält die Anzeigeelektronik mit vier MCP23017 Port-Expandern, 60 Hochvolt-Transistoren und den WS2812B RGB-LEDs.</p>
+        <p data-i18n="aufbau.intro">Die Nixie Clock Ultra besteht aus zwei Platinen, die über zwei Steckverbinder verbunden sind: Das <strong>Logic Board</strong> beherbergt den Mikrocontroller, die Echtzeituhr und die Spannungsversorgung. Das <strong>Nixie Display Board</strong> enthält die Anzeigeelektronik mit vier MCP23017 Port-Expandern, 60 Hochvolt-Transistoren und den WS2812B RGB-LEDs.</p>
       </div>
 
       <!-- Logic Board -->
@@ -24,23 +24,23 @@
         <div class="pcb-thumbs">
           <div>
             <img class="pcb-thumb" src="img/pcb/logic_sch-1.png" alt="Logic Board Schaltplan" data-lightbox="pcb">
-            <p class="pcb-caption">Schaltplan</p>
+            <p class="pcb-caption" data-i18n="aufbau.caption.schematic">Schaltplan</p>
           </div>
           <div>
             <img class="pcb-thumb" src="img/pcb/logic_pcb-1.png" alt="Logic Board PCB Oberseite" data-lightbox="pcb">
-            <p class="pcb-caption">PCB-Layout Oberseite</p>
+            <p class="pcb-caption" data-i18n="aufbau.caption.pcbtop">PCB-Layout Oberseite</p>
           </div>
           <div>
             <img class="pcb-thumb" src="img/pcb/logic_pcb-2.png" alt="Logic Board PCB Unterseite" data-lightbox="pcb">
-            <p class="pcb-caption">PCB-Layout Unterseite</p>
+            <p class="pcb-caption" data-i18n="aufbau.caption.pcbbottom">PCB-Layout Unterseite</p>
           </div>
         </div>
         <div class="two-col-text">
-          <h3>Komponenten</h3>
-          <p>Herzstück ist der <strong>ESP32-S3-WROOM-1</strong> (U1) mit integriertem WLAN. Die batteriegepufferte <strong>DS1302 Echtzeituhr</strong> (U2) hält die Zeit auch bei Stromausfall. Der <strong>VS1838B</strong> (U3) empfängt und demoduliert IR-Signale.</p>
-          <p>Die Spannungsversorgung erfolgt dreistufig: <strong>AMS1117-3.3</strong> (U5) liefert 3,3 V für die Logik; der <strong>DC-DC-Konverter</strong> (U6) hebt 5 V auf 10 V an; das <strong>HV-Modul</strong> (U4) erzeugt daraus ~170 V, die über einen <strong>TLP627</strong>-Optokoppler für den Nacht-Modus dimmbar an die Nixie-Anoden weitergegeben werden.</p>
-          <p>Neu in Rev 2.1: Lichtsensor-Anschluss <strong>J5</strong> (LDR, GPIO6) für den automatischen Nacht-Modus. Neu ergänzt: <strong>TLP627</strong>-Optokoppler (GPIO7) dimmt die Anodenspannung per Hardware-PWM (2&ndash;60&nbsp;%) &mdash; aktuell als Erweiterung handverdrahtet, noch nicht mit eigener Referenz im Schaltplan.</p>
-          <div class="warning-box">
+          <h3 data-i18n="aufbau.h3.komponenten">Komponenten</h3>
+          <p data-i18n="aufbau.logic.p1">Herzstück ist der <strong>ESP32-S3-WROOM-1</strong> (U1) mit integriertem WLAN. Die batteriegepufferte <strong>DS1302 Echtzeituhr</strong> (U2) hält die Zeit auch bei Stromausfall. Der <strong>VS1838B</strong> (U3) empfängt und demoduliert IR-Signale.</p>
+          <p data-i18n="aufbau.logic.p2">Die Spannungsversorgung erfolgt dreistufig: <strong>AMS1117-3.3</strong> (U5) liefert 3,3 V für die Logik; der <strong>DC-DC-Konverter</strong> (U6) hebt 5 V auf 10 V an; das <strong>HV-Modul</strong> (U4) erzeugt daraus ~170 V, die über einen <strong>TLP627</strong>-Optokoppler für den Nacht-Modus dimmbar an die Nixie-Anoden weitergegeben werden.</p>
+          <p data-i18n="aufbau.logic.p3">Neu in Rev 2.1: Lichtsensor-Anschluss <strong>J5</strong> (LDR, GPIO6) für den automatischen Nacht-Modus. Neu ergänzt: <strong>TLP627</strong>-Optokoppler (GPIO7) dimmt die Anodenspannung per Hardware-PWM (2&ndash;60&nbsp;%) &mdash; aktuell als Erweiterung handverdrahtet, noch nicht mit eigener Referenz im Schaltplan.</p>
+          <div class="warning-box" data-i18n="aufbau.warning.usbcdc">
             <strong>USB-CDC-Hinweis:</strong> Der ESP32-S3 verwendet native USB (kein UART-Chip). In der Arduino IDE muss <strong>USB CDC On Boot: Enabled</strong> gesetzt sein &mdash; sonst ist nach dem ersten Flash keine erneute Programmierung über USB möglich (BOOT-Taster nicht bestückt).
           </div>
         </div>
@@ -54,101 +54,76 @@
         <div class="pcb-thumbs">
           <div>
             <img class="pcb-thumb" src="img/pcb/nixie_sch-1.png" alt="Nixie Display Board Schaltplan" data-lightbox="pcb">
-            <p class="pcb-caption">Schaltplan</p>
+            <p class="pcb-caption" data-i18n="aufbau.caption.schematic">Schaltplan</p>
           </div>
           <div>
             <img class="pcb-thumb" src="img/pcb/nixie_pcb-1.png" alt="Nixie Display Board PCB Oberseite" data-lightbox="pcb">
-            <p class="pcb-caption">PCB-Layout Oberseite</p>
+            <p class="pcb-caption" data-i18n="aufbau.caption.pcbtop">PCB-Layout Oberseite</p>
           </div>
           <div>
             <img class="pcb-thumb" src="img/pcb/nixie_pcb-2.png" alt="Nixie Display Board PCB Unterseite" data-lightbox="pcb">
-            <p class="pcb-caption">PCB-Layout Unterseite</p>
+            <p class="pcb-caption" data-i18n="aufbau.caption.pcbbottom">PCB-Layout Unterseite</p>
           </div>
         </div>
         <div class="two-col-text">
-          <h3>Direct Drive &mdash; kein Ghosting</h3>
-          <p>Vier <strong>MCP23017</strong> I²C-Port-Expander (U1&ndash;U4, Adressen 0x20&ndash;0x23) stellen 64 digitale Ausgänge bereit. 60 davon steuern je einen <strong>SMBTA42</strong>-NPN-Transistor (300 V), der eine Nixie-Kathode direkt auf GND zieht.</p>
-          <p>Da jede Kathode ihren eigenen Transistor besitzt, können mehrere Röhren gleichzeitig leuchten &mdash; kein Multiplexing, keine gemeinsamen Pfade, kein Ghosting.</p>
-          <p>Sechs <strong>WS2812B-SMD-LEDs</strong> (Pixel 0&ndash;5, GRB) beleuchten die Röhren von hinten. Vier <strong>WS2812B-THT-LEDs YF923</strong> (Pixel 6&ndash;9, RGB) dienen als Trennpunkt-LEDs.</p>
+          <h3 data-i18n="aufbau.h3.directdrive">Direct Drive &mdash; kein Ghosting</h3>
+          <p data-i18n="aufbau.nixieboard.p1">Vier <strong>MCP23017</strong> I²C-Port-Expander (U1&ndash;U4, Adressen 0x20&ndash;0x23) stellen 64 digitale Ausgänge bereit. 60 davon steuern je einen <strong>SMBTA42</strong>-NPN-Transistor (300 V), der eine Nixie-Kathode direkt auf GND zieht.</p>
+          <p data-i18n="aufbau.nixieboard.p2">Da jede Kathode ihren eigenen Transistor besitzt, können mehrere Röhren gleichzeitig leuchten &mdash; kein Multiplexing, keine gemeinsamen Pfade, kein Ghosting.</p>
+          <p data-i18n="aufbau.nixieboard.p3">Sechs <strong>WS2812B-SMD-LEDs</strong> (Pixel 0&ndash;5, GRB) beleuchten die Röhren von hinten. Vier <strong>WS2812B-THT-LEDs YF923</strong> (Pixel 6&ndash;9, RGB) dienen als Trennpunkt-LEDs.</p>
         </div>
       </div>
 
       <div class="gear-divider">&#9881;</div>
 
       <!-- Spannungsversorgung -->
-      <h2>Spannungsversorgung</h2>
+      <h2 data-i18n="aufbau.h2.spannung">Spannungsversorgung</h2>
       <div class="voltage-diagram">
         <svg width="760" height="130" viewBox="0 0 760 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Spannungsfluss-Diagramm">
-          <!-- Farben -->
-          <!-- Boxen: fill=#1c1408, stroke=#6b4f12 -->
-          <!-- Pfeile: stroke=#c8961a -->
-          <!-- Text: fill=#e8d5a3, Labels: fill=#ff8c00 -->
-
-          <!-- Zeile 1: USB → DC-DC → HV-MOD → Nixie -->
-          <!-- USB Box -->
           <rect x="10" y="10" width="80" height="44" rx="2" fill="#1c1408" stroke="#6b4f12" stroke-width="1.5"/>
           <text x="50" y="28" font-family="Cinzel,serif" font-size="11" fill="#c8961a" text-anchor="middle">USB</text>
           <text x="50" y="46" font-family="Cinzel,serif" font-size="11" fill="#e8d5a3" text-anchor="middle">5 V</text>
 
-          <!-- Pfeil USB → DC-DC -->
           <line x1="90" y1="32" x2="148" y2="32" stroke="#c8961a" stroke-width="1.5" marker-end="url(#arr)"/>
 
-          <!-- DC-DC Box -->
           <rect x="150" y="10" width="90" height="44" rx="2" fill="#1c1408" stroke="#6b4f12" stroke-width="1.5"/>
           <text x="195" y="28" font-family="Cinzel,serif" font-size="10" fill="#c8961a" text-anchor="middle">DC-DC</text>
           <text x="195" y="46" font-family="Cinzel,serif" font-size="10" fill="#a08c6a" text-anchor="middle">U6</text>
 
-          <!-- Label 10V -->
           <text x="270" y="26" font-family="serif" font-size="10" fill="#ff8c00" text-anchor="middle">10 V</text>
-          <!-- Pfeil DC-DC → HV-MOD -->
           <line x1="240" y1="32" x2="298" y2="32" stroke="#c8961a" stroke-width="1.5" marker-end="url(#arr)"/>
 
-          <!-- HV-MOD Box -->
           <rect x="300" y="10" width="90" height="44" rx="2" fill="#1c1408" stroke="#6b4f12" stroke-width="1.5"/>
           <text x="345" y="28" font-family="Cinzel,serif" font-size="10" fill="#c8961a" text-anchor="middle">HV-MOD</text>
           <text x="345" y="46" font-family="Cinzel,serif" font-size="10" fill="#a08c6a" text-anchor="middle">U4</text>
 
-          <!-- Label ~170V -->
           <text x="420" y="26" font-family="serif" font-size="10" fill="#ff8c00" text-anchor="middle">~170 V</text>
-          <!-- Pfeil HV-MOD → TLP627 -->
           <line x1="390" y1="32" x2="448" y2="32" stroke="#c8961a" stroke-width="1.5" marker-end="url(#arr)"/>
 
-          <!-- TLP627 Box -->
           <rect x="450" y="10" width="90" height="44" rx="2" fill="#1c1408" stroke="#6b4f12" stroke-width="1.5"/>
           <text x="495" y="28" font-family="Cinzel,serif" font-size="10" fill="#c8961a" text-anchor="middle">TLP627</text>
           <text x="495" y="46" font-family="Cinzel,serif" font-size="10" fill="#a08c6a" text-anchor="middle">Dimmer</text>
 
-          <!-- Label dimmbar -->
-          <text x="570" y="26" font-family="serif" font-size="9" fill="#ff8c00" text-anchor="middle">dimmbar</text>
-          <!-- Pfeil TLP627 → Nixie -->
+          <text x="570" y="26" font-family="serif" font-size="9" fill="#ff8c00" text-anchor="middle" data-i18n="aufbau.svg.dimmbar">dimmbar</text>
           <line x1="540" y1="32" x2="598" y2="32" stroke="#c8961a" stroke-width="1.5" marker-end="url(#arr)"/>
 
-          <!-- Nixie Box -->
           <rect x="600" y="10" width="90" height="44" rx="2" fill="#1c1408" stroke="#6b4f12" stroke-width="1.5"/>
-          <text x="645" y="28" font-family="Cinzel,serif" font-size="10" fill="#c8961a" text-anchor="middle">Nixie</text>
-          <text x="645" y="46" font-family="Cinzel,serif" font-size="10" fill="#e8d5a3" text-anchor="middle">Anoden</text>
+          <text x="645" y="28" font-family="Cinzel,serif" font-size="10" fill="#c8961a" text-anchor="middle" data-i18n="aufbau.svg.nixie">Nixie</text>
+          <text x="645" y="46" font-family="Cinzel,serif" font-size="10" fill="#e8d5a3" text-anchor="middle" data-i18n="aufbau.svg.anoden">Anoden</text>
 
-          <!-- Zeile 2: USB → AMS1117 → Logik -->
-          <!-- Linie von USB nach unten -->
           <line x1="50" y1="54" x2="50" y2="86" stroke="#c8961a" stroke-width="1.5"/>
           <line x1="50" y1="86" x2="148" y2="86" stroke="#c8961a" stroke-width="1.5" marker-end="url(#arr)"/>
 
-          <!-- AMS1117 Box -->
           <rect x="150" y="64" width="90" height="44" rx="2" fill="#1c1408" stroke="#6b4f12" stroke-width="1.5"/>
           <text x="195" y="82" font-family="Cinzel,serif" font-size="10" fill="#c8961a" text-anchor="middle">AMS1117</text>
           <text x="195" y="100" font-family="Cinzel,serif" font-size="10" fill="#a08c6a" text-anchor="middle">U5</text>
 
-          <!-- Label 3,3V -->
-          <text x="270" y="80" font-family="serif" font-size="10" fill="#ff8c00" text-anchor="middle">3,3 V</text>
-          <!-- Pfeil AMS1117 → Logik -->
+          <text x="270" y="80" font-family="serif" font-size="10" fill="#ff8c00" text-anchor="middle" data-i18n="aufbau.svg.voltage33">3,3 V</text>
           <line x1="240" y1="86" x2="298" y2="86" stroke="#c8961a" stroke-width="1.5" marker-end="url(#arr)"/>
 
-          <!-- Logik Box -->
           <rect x="300" y="64" width="90" height="44" rx="2" fill="#1c1408" stroke="#6b4f12" stroke-width="1.5"/>
-          <text x="345" y="82" font-family="Cinzel,serif" font-size="10" fill="#c8961a" text-anchor="middle">Logik</text>
+          <text x="345" y="82" font-family="Cinzel,serif" font-size="10" fill="#c8961a" text-anchor="middle" data-i18n="aufbau.svg.logik">Logik</text>
           <text x="345" y="100" font-family="Cinzel,serif" font-size="10" fill="#a08c6a" text-anchor="middle">ESP32-S3</text>
 
-          <!-- Pfeilspitze -->
           <defs>
             <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
               <path d="M0,0 L0,6 L8,3 Z" fill="#c8961a"/>
@@ -161,6 +136,9 @@
   </main>
   <footer id="site-footer"></footer>
   <script src="js/nav.js"></script>
+  <script src="js/i18n-de.js"></script>
+  <script src="js/i18n-en.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/lightbox.js"></script>
 </body>
 </html>
