@@ -138,4 +138,8 @@ const I18N_EN = {
   "dokumentation.anleitung.desc": "Complete user manual in steampunk design: setup, button operation, time setting, lighting control, IR remote, WiFi setup, and technical specifications.",
   "dokumentation.germanonly": "(German only)",
   "dokumentation.note.libreoffice": "&#9432; ODT files can be opened with <a href=\"https://www.libreoffice.org\" target=\"_blank\" rel=\"noopener\">LibreOffice</a> (free).",
+
+  "galerie.meta.title": "Gallery – Nixie Clock Ultra",
+  "galerie.h1": "Gallery",
+  "galerie.empty": "Photos will be added here once img/gallery/ is populated.<br>\n        Add each photo file as <code>&lt;img src=\"img/gallery/xxx.jpg\" data-lightbox=\"gallery\"&gt;</code> inside the gallery-grid div.",
 };

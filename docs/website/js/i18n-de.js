@@ -138,4 +138,8 @@ const I18N_DE = {
   "dokumentation.anleitung.desc": "Vollständige Bedienungsanleitung im Steampunk-Design: Inbetriebnahme, Tastenbedienung, Zeiteinstellung, Beleuchtungssteuerung, IR-Fernbedienung, WLAN-Einrichtung und technische Daten.",
   "dokumentation.germanonly": "(nur auf Deutsch verfügbar)",
   "dokumentation.note.libreoffice": "&#9432; ODT-Dateien können mit <a href=\"https://www.libreoffice.org\" target=\"_blank\" rel=\"noopener\">LibreOffice</a> (kostenlos) geöffnet werden.",
+
+  "galerie.meta.title": "Galerie – Nixie Clock Ultra",
+  "galerie.h1": "Galerie",
+  "galerie.empty": "Fotos werden hier eingetragen sobald img/gallery/ befüllt ist.<br>\n        Jede Fotodatei als <code>&lt;img src=\"img/gallery/xxx.jpg\" data-lightbox=\"gallery\"&gt;</code> in die gallery-grid div einfügen.",
 };
