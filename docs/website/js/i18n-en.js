@@ -73,7 +73,7 @@ const I18N_EN = {
   "aufbau.logic.p3": "New in Rev 2.1: light-sensor connector <strong>J5</strong> (LDR, GPIO6) for automatic night mode. Newly added: <strong>TLP627</strong> optocoupler (GPIO7) dims the anode voltage via hardware PWM (2&ndash;60&nbsp;%) &mdash; currently hand-wired as an add-on, not yet given its own reference designator in the schematic.",
   "aufbau.warning.usbcdc": "<strong>USB CDC note:</strong> The ESP32-S3 uses native USB (no UART chip). In the Arduino IDE, <strong>USB CDC On Boot: Enabled</strong> must be set &mdash; otherwise, after the first flash, no further programming over USB is possible (the BOOT button is not populated).",
   "aufbau.h3.directdrive": "Direct Drive &mdash; No Ghosting",
-  "aufbau.nixieboard.p1": "Four <strong>MCP23017</strong> I&sup2;C port expanders (U1&ndash;U4, addresses 0x20&ndash;0x23) provide 64 digital outputs. 60 of them each drive an <strong>SMBTA42</strong> NPN transistor (300 V) that pulls one Nixie cathode directly to GND.",
+  "aufbau.nixieboard.p1": "Four <strong>MCP23017</strong> I²C port expanders (U1&ndash;U4, addresses 0x20&ndash;0x23) provide 64 digital outputs. 60 of them each drive an <strong>SMBTA42</strong> NPN transistor (300 V) that pulls one Nixie cathode directly to GND.",
   "aufbau.nixieboard.p2": "Since every cathode has its own transistor, multiple tubes can glow at the same time &mdash; no multiplexing, no shared paths, no ghosting.",
   "aufbau.nixieboard.p3": "Six <strong>WS2812B SMD LEDs</strong> (pixels 0&ndash;5, GRB) light the tubes from behind. Four <strong>WS2812B THT LEDs YF923</strong> (pixels 6&ndash;9, RGB) serve as separator-dot LEDs.",
   "aufbau.h2.spannung": "Power Supply",

@@ -73,7 +73,7 @@ const I18N_DE = {
   "aufbau.logic.p3": "Neu in Rev 2.1: Lichtsensor-Anschluss <strong>J5</strong> (LDR, GPIO6) für den automatischen Nacht-Modus. Neu ergänzt: <strong>TLP627</strong>-Optokoppler (GPIO7) dimmt die Anodenspannung per Hardware-PWM (2&ndash;60&nbsp;%) &mdash; aktuell als Erweiterung handverdrahtet, noch nicht mit eigener Referenz im Schaltplan.",
   "aufbau.warning.usbcdc": "<strong>USB-CDC-Hinweis:</strong> Der ESP32-S3 verwendet native USB (kein UART-Chip). In der Arduino IDE muss <strong>USB CDC On Boot: Enabled</strong> gesetzt sein &mdash; sonst ist nach dem ersten Flash keine erneute Programmierung über USB möglich (BOOT-Taster nicht bestückt).",
   "aufbau.h3.directdrive": "Direct Drive &mdash; kein Ghosting",
-  "aufbau.nixieboard.p1": "Vier <strong>MCP23017</strong> I&sup2;C-Port-Expander (U1&ndash;U4, Adressen 0x20&ndash;0x23) stellen 64 digitale Ausgänge bereit. 60 davon steuern je einen <strong>SMBTA42</strong>-NPN-Transistor (300 V), der eine Nixie-Kathode direkt auf GND zieht.",
+  "aufbau.nixieboard.p1": "Vier <strong>MCP23017</strong> I²C-Port-Expander (U1&ndash;U4, Adressen 0x20&ndash;0x23) stellen 64 digitale Ausgänge bereit. 60 davon steuern je einen <strong>SMBTA42</strong>-NPN-Transistor (300 V), der eine Nixie-Kathode direkt auf GND zieht.",
   "aufbau.nixieboard.p2": "Da jede Kathode ihren eigenen Transistor besitzt, können mehrere Röhren gleichzeitig leuchten &mdash; kein Multiplexing, keine gemeinsamen Pfade, kein Ghosting.",
   "aufbau.nixieboard.p3": "Sechs <strong>WS2812B-SMD-LEDs</strong> (Pixel 0&ndash;5, GRB) beleuchten die Röhren von hinten. Vier <strong>WS2812B-THT-LEDs YF923</strong> (Pixel 6&ndash;9, RGB) dienen als Trennpunkt-LEDs.",
   "aufbau.h2.spannung": "Spannungsversorgung",
