@@ -557,3 +557,39 @@ code {
   border-radius: 2px;
   font-size: 0.88em;
 }
+
+/* ===== SPRACHUMSCHALTER ===== */
+#site-nav .container {
+  position: relative;
+}
+.lang-switch {
+  position: absolute;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 0.3rem;
+}
+.lang-switch button {
+  background: none;
+  border: 1px solid var(--border-gold);
+  color: var(--text-muted);
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.lang-switch button:hover {
+  background: var(--bg-panel-hover);
+  color: var(--accent-copper);
+}
+.lang-switch button.active {
+  background: var(--accent-gold);
+  color: #0e0a05;
+  font-weight: 700;
+}
+@media (max-width: 768px) {
+  .lang-switch { right: 1rem; }
+}

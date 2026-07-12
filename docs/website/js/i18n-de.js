@@ -1,0 +1,23 @@
+const I18N_DE = {
+  "nav.index": "Startseite",
+  "nav.features": "Features",
+  "nav.aufbau": "Aufbau",
+  "nav.geschichte": "Geschichte",
+  "nav.dokumentation": "Dokumentation",
+  "nav.galerie": "Galerie",
+  "footer.copyright": "&copy; 2026 broed digital media &middot; Nixie Clock Ultra",
+
+  "index.meta.title": "Nixie Clock Ultra",
+  "index.hero.title": "NIXIE CLOCK ULTRA",
+  "index.hero.tagline": "wenn Zeit leuchtet",
+  "index.hero.cta": "Mehr erfahren &rarr;",
+  "index.highlight1.title": "Direct Drive",
+  "index.highlight1.body": "Jede Kathode hat ihren eigenen Transistor &mdash; kein Multiplexing, kein Ghosting, kein Flimmern.",
+  "index.highlight2.title": "WiFi &amp; Web-Interface",
+  "index.highlight2.body": "Vollständige Steuerung über jeden Browser &mdash; kein App-Download, keine Einrichtung.",
+  "index.highlight3.title": "Nacht-Modus &amp; LDR",
+  "index.highlight3.body": "Zeitgesteuert oder per Lichtsensor &mdash; die Uhr dimmt sich automatisch zur Ruhe.",
+  "index.teaser.p1": "Nixie-Röhren gehören zu den faszinierendsten Anzeigetechnologien, die je entwickelt wurden: warmes, leicht diffuses Licht, das Ziffern plastisch aus dem Glas herausleuchten lässt &mdash; unverwechselbar, zeitlos und heute begehrter denn je. Die Nixie Clock Ultra bringt dieses Feeling ins 21. Jahrhundert, ohne seinen Charakter zu verlieren.",
+  "index.teaser.p2": "Sechs IN-12A-Nixieröhren, RGB-Hintergrundbeleuchtung mit drei Animationsmodi, Slot-Machine-Effekt, vollständiges Web-Interface, IR-Fernbedienung und automatische NTP-Zeitsynchronisation &mdash; in einem handgefertigten Gehäuse.",
+  "index.teaser.link": "Alle Features entdecken &rarr;",
+};

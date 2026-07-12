@@ -1,0 +1,23 @@
+const I18N_EN = {
+  "nav.index": "Home",
+  "nav.features": "Features",
+  "nav.aufbau": "Hardware",
+  "nav.geschichte": "History",
+  "nav.dokumentation": "Documentation",
+  "nav.galerie": "Gallery",
+  "footer.copyright": "&copy; 2026 broed digital media &middot; Nixie Clock Ultra",
+
+  "index.meta.title": "Nixie Clock Ultra",
+  "index.hero.title": "NIXIE CLOCK ULTRA",
+  "index.hero.tagline": "when time glows",
+  "index.hero.cta": "Learn more &rarr;",
+  "index.highlight1.title": "Direct Drive",
+  "index.highlight1.body": "Every cathode has its own transistor &mdash; no multiplexing, no ghosting, no flicker.",
+  "index.highlight2.title": "WiFi &amp; Web Interface",
+  "index.highlight2.body": "Full control from any browser &mdash; no app download, no setup.",
+  "index.highlight3.title": "Night Mode &amp; LDR",
+  "index.highlight3.body": "Time-scheduled or via light sensor &mdash; the clock dims itself automatically for the night.",
+  "index.teaser.p1": "Nixie tubes are among the most fascinating display technologies ever developed: warm, softly diffused light that makes digits glow with real depth out of the glass &mdash; unmistakable, timeless, and more sought-after today than ever. The Nixie Clock Ultra brings this feeling into the 21st century without losing its character.",
+  "index.teaser.p2": "Six IN-12A Nixie tubes, RGB backlighting with three animation modes, a slot-machine effect, a full web interface, IR remote control, and automatic NTP time sync &mdash; all in a handcrafted case.",
+  "index.teaser.link": "Discover all features &rarr;",
+};

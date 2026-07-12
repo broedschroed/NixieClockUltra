@@ -34,12 +34,16 @@ function injectNav() {
   const nav = document.getElementById('site-nav');
   if (nav) {
     const links = NAV_PAGES.map(p =>
-      `<a href="${p.href}"${p.key === page ? ' class="active"' : ''}>${p.label}</a>`
+      `<a href="${p.href}" data-i18n="nav.${p.key}"${p.key === page ? ' class="active"' : ''}>${p.label}</a>`
     ).join('');
     nav.innerHTML = `
       <div class="container">
         <button class="nav-toggle" aria-label="Navigation" onclick="this.nextElementSibling.classList.toggle('open')">&#9776;</button>
         <div class="nav-inner">${links}</div>
+        <div class="lang-switch">
+          <button type="button" data-lang="de" onclick="setLanguage('de')">DE</button>
+          <button type="button" data-lang="en" onclick="setLanguage('en')">EN</button>
+        </div>
       </div>`;
   }
 
@@ -47,7 +51,7 @@ function injectNav() {
   if (footer) {
     footer.innerHTML = `
       <div class="container">
-        <p class="footer-text">&copy; 2026 broed digital media &middot; Nixie Clock Ultra</p>
+        <p class="footer-text" data-i18n="footer.copyright">&copy; 2026 broed digital media &middot; Nixie Clock Ultra</p>
       </div>`;
   }
 }
