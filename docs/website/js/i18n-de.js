@@ -96,7 +96,7 @@ const I18N_DE = {
   "geschichte.acc1.content": "Der Arduino-Präprozessor erkennt Forward Declarations für <code>IRAM_ATTR</code>-Funktionen und Web-Server-Callbacks nicht automatisch. Lösung: Forward Declarations manuell in <code>NixieClockUltra.ino</code> ergänzt.",
 
   "geschichte.phase3.title": "Phase 3 &mdash; Hardware-Inbetriebnahme",
-  "geschichte.phase3.body": "Erste Tests an der echten Hardware brachten mehrere Korrektionen: RGB-Bytereihenfolge der THT-WS2812B (RGB statt GRB), Kathoden-Mapping-Korrektur, separate Helligkeitsregelung für Hintergrund und Trennpunkte.",
+  "geschichte.phase3.body": "Erste Tests an der echten Hardware brachten mehrere Korrekturen: RGB-Bytereihenfolge der THT-WS2812B (RGB statt GRB), Kathoden-Mapping-Korrektur, separate Helligkeitsregelung für Hintergrund und Trennpunkte.",
   "geschichte.acc2.label": "Problem: NeoPixel RGB-Swap",
   "geschichte.acc2.content": "Die 4 Trennpunkt-LEDs (THT WS2812B YF923) zeigten falsche Farben. Ursache: THT-Variante verwendet RGB-Bytereihenfolge statt GRB wie die SMD-Version. Lösung: <code>rgbSwap</code> für Pixel 6&ndash;9 in <code>neo_animation.ino</code>.",
   "geschichte.acc3.label": "Problem: Ghosting (erste Versuche)",
@@ -111,7 +111,7 @@ const I18N_DE = {
   "geschichte.phase5.body": "Vollständige Bedienungsanleitung im Steampunk-Design (HTML &rarr; PDF) sowie technische Systemdokumentation (ODT) mit eingebetteten Schaltplänen, API-Dokumentation und Bibliotheksübersicht.",
 
   "geschichte.phase6.title": "Phase 6 &mdash; Slot-Intervall &amp; Feinschliff",
-  "geschichte.phase6.body": "Slot-Machine-Animation als eigenständige Einstellung (<code>SlotInterval</code>-Enum) ausgelagert. Mehrere Hardware-Bugs behoben: IR-Empfang nach <code>strip.show()</code>, Taster-Entprellung, Pin-Korrektionen, Warmweiß-Farbabgleich.",
+  "geschichte.phase6.body": "Slot-Machine-Animation als eigenständige Einstellung (<code>SlotInterval</code>-Enum) ausgelagert. Mehrere Hardware-Bugs behoben: IR-Empfang nach <code>strip.show()</code>, Taster-Entprellung, Pin-Korrekturen, Warmweiß-Farbabgleich.",
   "geschichte.acc5.label": "Problem: IR-Empfang nach NeoPixel-Update",
   "geschichte.acc5.content": "IR-Codes wurden nach <code>strip.show()</code> nicht mehr empfangen. Ursache: <code>irrecv.pause()/resume()</code> um <code>strip.show()</code> resettete den RMT-Empfänger alle 20 ms. Lösung: pause/resume vollständig entfernt. Auf dem ESP32-S3 sind RMT-TX (NeoPixel) und RMT-RX (IR) unabhängige Kanäle &mdash; kein Konflikt.",
   "geschichte.acc6.label": "Problem: Taster-Entprellung",
