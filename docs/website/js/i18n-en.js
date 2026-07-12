@@ -129,4 +129,13 @@ const I18N_EN = {
 
   "geschichte.phase9.title": "Phase 9 &mdash; Soft Digit Transition",
   "geschichte.phase9.body": "The transition between two digits can now optionally happen not abruptly but as a smooth crossfade &mdash; independently toggleable for the seconds tick and for switching between time and date display. Implemented technically via the existing HV dimmer (<code>digit_fade.ino</code>): briefly dim down, switch digits at minimum brightness, fade back up &mdash; as a non-blocking state machine, driven from <code>loop()</code>. Duration set to 400&nbsp;ms after a hardware test. Additionally, the slot-machine animation's roll speed (<code>slotSpeedPct</code>) was made adjustable via its own web UI slider.",
+
+  "dokumentation.meta.title": "Documentation – Nixie Clock Ultra",
+  "dokumentation.h1": "Documentation &amp; Downloads",
+  "dokumentation.systemdoku.title": "System Documentation",
+  "dokumentation.systemdoku.desc": "Complete technical documentation: hardware design of both boards, schematics, firmware architecture, API endpoints, NVS persistence, and developer workflow.",
+  "dokumentation.anleitung.title": "User Manual",
+  "dokumentation.anleitung.desc": "Complete user manual in steampunk design: setup, button operation, time setting, lighting control, IR remote, WiFi setup, and technical specifications.",
+  "dokumentation.germanonly": "(German only)",
+  "dokumentation.note.libreoffice": "&#9432; ODT files can be opened with <a href=\"https://www.libreoffice.org\" target=\"_blank\" rel=\"noopener\">LibreOffice</a> (free).",
 };

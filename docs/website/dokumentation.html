@@ -11,27 +11,26 @@
   <nav id="site-nav"></nav>
   <main>
     <div class="container">
-      <div class="page-title"><h1>Dokumentation &amp; Downloads</h1></div>
+      <div class="page-title"><h1 data-i18n="dokumentation.h1">Dokumentation &amp; Downloads</h1></div>
       <div class="gear-divider">&#9881;</div>
 
       <div class="download-grid">
 
         <div class="download-card">
-          <!-- Zahnrad-Icon -->
           <svg class="download-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path d="M43 5h14l2 11a34 34 0 0 1 8 4.5l10-3.5 9.9 9.9-3.5 10A34 34 0 0 1 88 45l11 2v14l-11 2a34 34 0 0 1-4.5 8l3.5 10-9.9 9.9-10-3.5A34 34 0 0 1 59 91l-2 9H43l-2-9a34 34 0 0 1-8-4.5l-10 3.5-9.9-9.9 3.5-10A34 34 0 0 1 12 57L1 55V41l11-2a34 34 0 0 1 4.5-8l-3.5-10 9.9-9.9 10 3.5A34 34 0 0 1 41 10Z" fill="none" stroke="currentColor" stroke-width="5"/>
             <circle cx="50" cy="50" r="16" fill="none" stroke="currentColor" stroke-width="5"/>
           </svg>
-          <div class="download-title">Systemdokumentation</div>
-          <p class="download-desc">Vollständige technische Dokumentation: Hardware-Aufbau beider Platinen, Schaltpläne, Firmware-Architektur, API-Endpoints, NVS-Persistenz und Entwickler-Workflow.</p>
+          <div class="download-title" data-i18n="dokumentation.systemdoku.title">Systemdokumentation</div>
+          <p class="download-desc" data-i18n="dokumentation.systemdoku.desc">Vollständige technische Dokumentation: Hardware-Aufbau beider Platinen, Schaltpläne, Firmware-Architektur, API-Endpoints, NVS-Persistenz und Entwickler-Workflow.</p>
           <div class="btn-group">
             <a href="downloads/NixieClockUltra-Systemdokumentation.odt" class="btn" download>ODT</a>
             <a href="downloads/NixieClockUltra-Systemdokumentation.pdf" class="btn btn-primary" download>PDF</a>
           </div>
+          <p class="pcb-caption" data-i18n="dokumentation.germanonly">(nur auf Deutsch verfügbar)</p>
         </div>
 
         <div class="download-card">
-          <!-- Buch-Icon -->
           <svg class="download-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <rect x="15" y="10" width="55" height="75" rx="3" fill="none" stroke="currentColor" stroke-width="5"/>
             <line x1="15" y1="85" x2="75" y2="85" stroke="currentColor" stroke-width="5"/>
@@ -40,16 +39,17 @@
             <line x1="30" y1="43" x2="60" y2="43" stroke="currentColor" stroke-width="3.5"/>
             <line x1="30" y1="56" x2="50" y2="56" stroke="currentColor" stroke-width="3.5"/>
           </svg>
-          <div class="download-title">Bedienungsanleitung</div>
-          <p class="download-desc">Vollständige Bedienungsanleitung im Steampunk-Design: Inbetriebnahme, Tastenbedienung, Zeiteinstellung, Beleuchtungssteuerung, IR-Fernbedienung, WLAN-Einrichtung und technische Daten.</p>
+          <div class="download-title" data-i18n="dokumentation.anleitung.title">Bedienungsanleitung</div>
+          <p class="download-desc" data-i18n="dokumentation.anleitung.desc">Vollständige Bedienungsanleitung im Steampunk-Design: Inbetriebnahme, Tastenbedienung, Zeiteinstellung, Beleuchtungssteuerung, IR-Fernbedienung, WLAN-Einrichtung und technische Daten.</p>
           <div class="btn-group">
             <a href="downloads/NixieClockUltra-Bedienungsanleitung.pdf" class="btn btn-primary" download>PDF</a>
           </div>
+          <p class="pcb-caption" data-i18n="dokumentation.germanonly">(nur auf Deutsch verfügbar)</p>
         </div>
 
       </div>
 
-      <div class="note-box">
+      <div class="note-box" data-i18n="dokumentation.note.libreoffice">
         &#9432; ODT-Dateien können mit <a href="https://www.libreoffice.org" target="_blank" rel="noopener">LibreOffice</a> (kostenlos) geöffnet werden.
       </div>
 
@@ -57,5 +57,8 @@
   </main>
   <footer id="site-footer"></footer>
   <script src="js/nav.js"></script>
+  <script src="js/i18n-de.js"></script>
+  <script src="js/i18n-en.js"></script>
+  <script src="js/i18n.js"></script>
 </body>
 </html>

@@ -129,4 +129,13 @@ const I18N_DE = {
 
   "geschichte.phase9.title": "Phase 9 &mdash; Weicher Ziffernwechsel",
   "geschichte.phase9.body": "Der Wechsel zwischen zwei Ziffern erfolgt jetzt optional nicht mehr schlagartig, sondern als sanfter Crossfade &mdash; getrennt zuschaltbar für den Sekundentakt und für den Wechsel zwischen Uhrzeit- und Datumsanzeige. Technisch über den vorhandenen HV-Dimmer realisiert (<code>digit_fade.ino</code>): kurz abblenden, Ziffern bei Minimalhelligkeit umschalten, wieder aufblenden &mdash; als non-blocking State-Machine, angetrieben aus <code>loop()</code>. Dauer nach einem Hardware-Test auf 400&nbsp;ms festgelegt. Zusätzlich wurde die Rollgeschwindigkeit der Slot-Machine-Animation (<code>slotSpeedPct</code>) über einen eigenen Web-UI-Regler einstellbar gemacht.",
+
+  "dokumentation.meta.title": "Dokumentation – Nixie Clock Ultra",
+  "dokumentation.h1": "Dokumentation &amp; Downloads",
+  "dokumentation.systemdoku.title": "Systemdokumentation",
+  "dokumentation.systemdoku.desc": "Vollständige technische Dokumentation: Hardware-Aufbau beider Platinen, Schaltpläne, Firmware-Architektur, API-Endpoints, NVS-Persistenz und Entwickler-Workflow.",
+  "dokumentation.anleitung.title": "Bedienungsanleitung",
+  "dokumentation.anleitung.desc": "Vollständige Bedienungsanleitung im Steampunk-Design: Inbetriebnahme, Tastenbedienung, Zeiteinstellung, Beleuchtungssteuerung, IR-Fernbedienung, WLAN-Einrichtung und technische Daten.",
+  "dokumentation.germanonly": "(nur auf Deutsch verfügbar)",
+  "dokumentation.note.libreoffice": "&#9432; ODT-Dateien können mit <a href=\"https://www.libreoffice.org\" target=\"_blank\" rel=\"noopener\">LibreOffice</a> (kostenlos) geöffnet werden.",
 };
