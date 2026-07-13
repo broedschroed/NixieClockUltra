@@ -137,6 +137,13 @@ const I18N_EN = {
   "dokumentation.anleitung.title": "User Manual",
   "dokumentation.anleitung.desc": "Complete user manual in steampunk design: setup, button operation, time setting, lighting control, IR remote, WiFi setup, and technical specifications.",
   "dokumentation.germanonly": "(German only)",
+  "dokumentation.gehaeuse.title": "Enclosure Files",
+  "dokumentation.gehaeuse.desc": "3D print model (STL/OBJ) and laser-cut panels (SVG) for the complete enclosure.",
+  "dokumentation.leiterplatten.title": "PCB Files",
+  "dokumentation.leiterplatten.desc": "KiCad projects, schematics, assembly drawings, and Gerber manufacturing data for the IN12 board and logic board.",
+  "dokumentation.quellcode.title": "Source Code",
+  "dokumentation.quellcode.desc": "Firmware, KiCad source files, and the complete project history on GitHub.",
+  "dokumentation.quellcode.btn": "View on GitHub",
   "dokumentation.note.libreoffice": "&#9432; ODT files can be opened with <a href=\"https://www.libreoffice.org\" target=\"_blank\" rel=\"noopener\">LibreOffice</a> (free).",
 
   "galerie.meta.title": "Gallery – Nixie Clock Ultra",

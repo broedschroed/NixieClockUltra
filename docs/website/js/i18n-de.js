@@ -137,6 +137,13 @@ const I18N_DE = {
   "dokumentation.anleitung.title": "Bedienungsanleitung",
   "dokumentation.anleitung.desc": "Vollständige Bedienungsanleitung im Steampunk-Design: Inbetriebnahme, Tastenbedienung, Zeiteinstellung, Beleuchtungssteuerung, IR-Fernbedienung, WLAN-Einrichtung und technische Daten.",
   "dokumentation.germanonly": "(nur auf Deutsch verfügbar)",
+  "dokumentation.gehaeuse.title": "Gehäuse-Dateien",
+  "dokumentation.gehaeuse.desc": "3D-Druck-Modell (STL/OBJ) und Lasercut-Zuschnitte (SVG) für das komplette Gehäuse.",
+  "dokumentation.leiterplatten.title": "Leiterplatten-Dateien",
+  "dokumentation.leiterplatten.desc": "KiCad-Projekte, Schaltpläne, Bestückungspläne und Gerber-Fertigungsdaten für IN12-Board und Logic-Board.",
+  "dokumentation.quellcode.title": "Quellcode",
+  "dokumentation.quellcode.desc": "Firmware, KiCad-Quelldateien und die komplette Projekthistorie im GitHub-Repository.",
+  "dokumentation.quellcode.btn": "Auf GitHub ansehen",
   "dokumentation.note.libreoffice": "&#9432; ODT-Dateien können mit <a href=\"https://www.libreoffice.org\" target=\"_blank\" rel=\"noopener\">LibreOffice</a> (kostenlos) geöffnet werden.",
 
   "galerie.meta.title": "Galerie – Nixie Clock Ultra",
