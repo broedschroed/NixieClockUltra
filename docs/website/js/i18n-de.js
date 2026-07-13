@@ -141,5 +141,4 @@ const I18N_DE = {
 
   "galerie.meta.title": "Galerie – Nixie Clock Ultra",
   "galerie.h1": "Galerie",
-  "galerie.empty": "Fotos werden hier eingetragen sobald img/gallery/ befüllt ist.<br>\n        Jede Fotodatei als <code>&lt;img src=\"img/gallery/xxx.jpg\" data-lightbox=\"gallery\"&gt;</code> in die gallery-grid div einfügen.",
 };

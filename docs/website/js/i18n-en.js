@@ -141,5 +141,4 @@ const I18N_EN = {
 
   "galerie.meta.title": "Gallery – Nixie Clock Ultra",
   "galerie.h1": "Gallery",
-  "galerie.empty": "Photos will be added here once img/gallery/ is populated.<br>\n        Add each photo file as <code>&lt;img src=\"img/gallery/xxx.jpg\" data-lightbox=\"gallery\"&gt;</code> inside the gallery-grid div.",
 };

@@ -8,17 +8,20 @@
     <button class="lightbox-close" aria-label="Schließen">&times;</button>
     <button class="lightbox-prev" aria-label="Vorheriges Bild">&#8592;</button>
     <img class="lightbox-img" src="" alt="">
+    <div class="lightbox-caption"></div>
     <button class="lightbox-next" aria-label="Nächstes Bild">&#8594;</button>`;
   document.body.appendChild(box);
 
-  const img  = box.querySelector('.lightbox-img');
-  const prev = box.querySelector('.lightbox-prev');
-  const next = box.querySelector('.lightbox-next');
+  const img     = box.querySelector('.lightbox-img');
+  const caption = box.querySelector('.lightbox-caption');
+  const prev    = box.querySelector('.lightbox-prev');
+  const next    = box.querySelector('.lightbox-next');
 
   function show(index) {
     current = (index + images.length) % images.length;
     img.src = images[current].src;
     img.alt = images[current].alt;
+    caption.textContent = images[current].dataset.caption || images[current].alt;
     box.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
