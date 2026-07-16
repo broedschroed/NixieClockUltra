@@ -54,7 +54,7 @@ const I18N_DE = {
   "features.nachtmodus.li3": "Röhren-Dimmhelligkeit stufenlos von 2&ndash;60&nbsp;% einstellbar &mdash; echte Hardware-Dimmung statt Blinken",
   "features.nachtmodus.li4": "NeoPixel-Helligkeit wird im Nacht-Modus proportional mitgedimmt",
   "features.group.technik": "Technik",
-  "features.technik.li1": "Zweiplatinen-Design: Logic Board (Rev 2.1) + Nixie Display Board (Rev 2.01)",
+  "features.technik.li1": "Zweiplatinen-Design: Logic Board (Rev 2.2) + Nixie Display Board (Rev 2.01)",
   "features.technik.li2": "DS1302 Echtzeituhr mit CR2032-Batterie-Backup &mdash; hält Zeit auch ohne Strom",
   "features.technik.li3": "Hochvolt-Versorgung: 5 V USB &rarr; DC-DC-Konverter &rarr; 10 V &rarr; HV-Modul &rarr; ~170 V &rarr; TLP627-Hardware-Dimmer &rarr; Nixie-Anoden",
   "features.technik.li4": "60 diskrete SMBTA42-Hochvolt-Transistoren (je eine Kathode, je eine Röhrenziffer)",

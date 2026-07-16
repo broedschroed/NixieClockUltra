@@ -50,7 +50,23 @@
         "silk_text_thickness": 0.1,
         "silk_text_upright": false,
         "zones": {
-          "min_clearance": 0.5
+          "border_display_style": 2,
+          "border_hatch_pitch": 0.5,
+          "corner_radius": 0.0,
+          "corner_smoothing": 0,
+          "fill_mode": 0,
+          "hatch_gap": 1.5,
+          "hatch_orientation": 0.0,
+          "hatch_smoothing_level": 0,
+          "hatch_smoothing_value": 0.1,
+          "hatch_thickness": 1.0,
+          "min_clearance": 0.5,
+          "min_island_area": 10.0,
+          "min_thickness": 0.25,
+          "pad_connection": 1,
+          "remove_islands": 0,
+          "thermal_relief_gap": 0.5,
+          "thermal_relief_spoke_width": 0.5
         }
       },
       "diff_pair_dimensions": [],
@@ -523,7 +539,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "nixieclocklogic_V2-1.kicad_pro",
+    "filename": "nixieclocklogic_V2-2.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -607,6 +623,10 @@
       {
         "netclass": "Default",
         "pattern": ""
+      },
+      {
+        "netclass": "Power",
+        "pattern": "/HV2"
       }
     ]
   },
@@ -615,7 +635,7 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "plot": "/home/andreas/Dokumente/_Develop/KiCAD/10.0/projects/nixieclocklogic_V2-1/produce/",
+      "plot": "/home/andreas/Dokumente/_Develop/KiCAD/10.0/projects/nixieclocklogic_V2-2/produce/",
       "pos_files": "",
       "specctra_dsn": "",
       "step": "",
@@ -745,18 +765,18 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "nixieclocklogic_V2-1.kicad_sch",
-        "name": "nixieclocklogic_V2-1",
+        "filename": "nixieclocklogic_V2-2.kicad_sch",
+        "name": "nixieclocklogic_V2-2",
         "uuid": "c29e8235-9023-4b0f-8faf-e4415df7f889"
       }
     ],
-    "used_designators": "",
+    "used_designators": "R7,#PWR21,U7",
     "variants": []
   },
   "sheets": [
     [
       "c29e8235-9023-4b0f-8faf-e4415df7f889",
-      "nixieclocklogic_V2-1"
+      "nixieclocklogic_V2-2"
     ]
   ],
   "text_variables": {},

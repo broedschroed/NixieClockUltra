@@ -54,7 +54,7 @@ const I18N_EN = {
   "features.nachtmodus.li3": "Tube dimming brightness continuously adjustable from 2&ndash;60&nbsp;% &mdash; real hardware dimming instead of flicker-blinking",
   "features.nachtmodus.li4": "NeoPixel brightness is dimmed proportionally along with night mode",
   "features.group.technik": "Technical",
-  "features.technik.li1": "Two-board design: Logic Board (Rev 2.1) + Nixie Display Board (Rev 2.01)",
+  "features.technik.li1": "Two-board design: Logic Board (Rev 2.2) + Nixie Display Board (Rev 2.01)",
   "features.technik.li2": "DS1302 real-time clock with CR2032 battery backup &mdash; keeps time even without power",
   "features.technik.li3": "High-voltage supply: 5 V USB &rarr; DC-DC converter &rarr; 10 V &rarr; HV module &rarr; ~170 V &rarr; TLP627 hardware dimmer &rarr; Nixie anodes",
   "features.technik.li4": "60 discrete SMBTA42 high-voltage transistors (one per cathode, one per tube digit)",
