@@ -87,7 +87,7 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
 </div>
 
 <div class="card">
-  <h2>🎰 Slot-Animation</h2>
+  <h2>🎰 Slot-Animation &amp; Röhrentest</h2>
   <div class="row">
     <label>Automatisch</label>
     <select id="slotIval" onchange="setSlotInterval()">
@@ -106,6 +106,10 @@ const char WEB_PAGE[] PROGMEM = R"rawliteral(
   <div class="row">
     <button onclick="triggerSlot()">Slot-Machine!</button>
     <span class="badge" id="slotStatus">bereit</span>
+  </div>
+  <div class="row">
+    <button id="tubeTestBtn" onclick="toggleTubeTest()">Röhrentest starten</button>
+    <span class="badge" id="tubeTestStatus">bereit</span>
   </div>
 </div>
 
@@ -193,6 +197,11 @@ async function refreshClock(){
   if(d.colonStatic!==undefined)document.getElementById('colonStatic').checked=d.colonStatic;
   if(d.colonBright!==undefined){document.getElementById('colonBright').value=d.colonBright;document.getElementById('colonBrightVal').textContent=d.colonBright;}
   if(d.slot!==undefined) document.getElementById('slotStatus').textContent=d.slot?'läuft…':'bereit';
+  if(d.tubeTest!==undefined){
+    tubeTestRunning=d.tubeTest;
+    document.getElementById('tubeTestBtn').textContent=tubeTestRunning?'Abbrechen':'Röhrentest starten';
+    document.getElementById('tubeTestStatus').textContent=tubeTestRunning?('Ziffer '+d.tubeTestDigit+'/9'):'bereit';
+  }
   if(d.date){
     let parts=d.date.split('.');
     if(parts.length===3){
@@ -249,6 +258,12 @@ async function setColonBright(v){
 async function triggerSlot(){
   await api('/api/slot',{});
   document.getElementById('slotStatus').textContent='läuft…';
+}
+
+let tubeTestRunning=false;
+async function toggleTubeTest(){
+  if(tubeTestRunning) await api('/api/tubetest/stop',{});
+  else                await api('/api/tubetest/start',{});
 }
 
 async function refreshWifi(){
@@ -426,7 +441,7 @@ void setupWebServer() {
   });
 
   server.on("/api/status", HTTP_GET, [](AsyncWebServerRequest *req) {
-    StaticJsonDocument<384> doc;
+    StaticJsonDocument<448> doc;
     char buf[10];
     snprintf(buf, sizeof(buf), "%02d:%02d:%02d", curHour, curMin, curSec);
     doc["time"]       = buf;
@@ -435,6 +450,8 @@ void setupWebServer() {
     doc["slot"]       = slotActive;
     doc["slotIval"]   = (int)slotInterval;
     doc["slotSpeed"]  = slotSpeedPct;
+    doc["tubeTest"]      = tubeTestActive;
+    doc["tubeTestDigit"] = tubeTestDigit;
     doc["colonOn"]     = colonAlwaysOn;
     doc["colonStatic"] = colonStatic;
     doc["colonBright"] = colonBright;
@@ -506,6 +523,22 @@ void setupWebServer() {
     nullptr,
     [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
       startSlotAnimation(curHour, curMin, curSec);
+      req->send(200, "application/json", "{\"ok\":true}");
+    }
+  );
+
+  server.on("/api/tubetest/start", HTTP_POST, [](AsyncWebServerRequest *req){},
+    nullptr,
+    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
+      startTubeTest();
+      req->send(200, "application/json", "{\"ok\":true}");
+    }
+  );
+
+  server.on("/api/tubetest/stop", HTTP_POST, [](AsyncWebServerRequest *req){},
+    nullptr,
+    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t, size_t) {
+      stopTubeTest();
       req->send(200, "application/json", "{\"ok\":true}");
     }
   );
