@@ -405,8 +405,8 @@ void loop() {
   // --- Nacht-Modus ---
   updateNightMode();
 
-  // --- Nacht-Modus: Röhren-Helligkeit per HV-Dimmer steuern ---
-  if (nightState != prevNightState) {
+  // --- Nacht-Modus: Röhren-Helligkeit per HV-Dimmer steuern (pausiert während Röhrentest) ---
+  if (nightState != prevNightState && !tubeTestActive) {
     prevNightState = nightState;
     cancelDigitFade();   // laufenden Ziffern-Fade nicht mit Duty-Wechsel kollidieren lassen
     switch (nightState) {
