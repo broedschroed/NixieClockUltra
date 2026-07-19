@@ -507,7 +507,7 @@ def build_content():
     c.append(table(
         ["Datei", "Zeilen", "Inhalt / Verantwortlichkeit"],
         [
-            ["NixieClockUltra.ino", "471", "Globals, setup(), loop(), Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals"],
+            ["NixieClockUltra.ino", "481", "Globals, setup(), loop(), Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals, Röhrentest-Globals"],
             ["nixie_driver.ino",    "91",  "nixieInit(), nixieWrite(), MCP23017-I²C-Abstraktion, Shadow-Register, Mutex"],
             ["display.ino",         "88",  "setDisplayTime(), setDisplayDate(), commitDigits() (weicher Ziffernwechsel), Slot-Animation"],
             ["digit_fade.ino",      "77",  "startDigitFade(), updateDigitFade(), cancelDigitFade() — non-blocking Crossfade über HV-Dimmer-Duty"],
@@ -517,13 +517,16 @@ def build_content():
             ["hv_dimmer.ino",       "12",  "hvDimmerInit(), hvDimmerSetDuty() — LEDC-Hardware-PWM für TLP627 auf Anodenspannung"],
             ["neo_animation.ino",   "107", "Rainbow, Statisch, Puls, Slot, Nacht-Modus-Dimming, Datumsanzeige-Override"],
             ["ir_remote.ino",       "107", "executeAction(), dispatchIRAction(), handleIR(), 8 IR-Aktionen"],
-            ["web_server.ino",      "748", "Eingebettetes HTML/JS, alle API-Handler, WiFi-Setup, NTP, mDNS"],
+            ["tube_test.ino",       "50",  "startTubeTest(), updateTubeTest(), stopTubeTest() — non-blocking Röhrentest-State-Machine"],
+            ["web_server.ino",      "781", "Eingebettetes HTML/JS, alle API-Handler, WiFi-Setup, NTP, mDNS"],
         ],
         [4.5, 1.5, 10.0]
     ))
     c.append(p("Reine Interpolationsmathematik für den Crossfade liegt zusätzlich in "
                "digit_fade_math.h (header-only, host-testbar ohne Arduino-Framework, "
-               "siehe test/digit_fade_math_test.cpp)."))
+               "siehe test/digit_fade_math_test.cpp). Analog dazu liegt die reine "
+               "Ziffern-/Testende-Logik des Röhrentests in tube_test_math.h (siehe "
+               "test/tube_test_math_test.cpp)."))
 
     c.append(h2("Bibliotheksabhängigkeiten"))
     c.append(table(
@@ -593,6 +596,9 @@ def build_content():
             ["softFadeSecondEnabled", "bool",     "Weicher Ziffernwechsel im Sekundentakt aktiv"],
             ["softFadeDateEnabled",   "bool",     "Weicher Ziffernwechsel bei Zeit/Datum-Übergang aktiv"],
             ["slotSpeedPct",       "uint8_t",     "Slot-Machine-Rollgeschwindigkeit 20–100 % (100 = Standard)"],
+            ["tubeTestActive",     "bool",        "Röhrentest läuft gerade"],
+            ["tubeTestDigit",      "uint8_t",     "Aktuell angezeigte Testziffer (0–9)"],
+            ["tubeTestStepStart",  "uint32_t",    "millis() beim Anzeigen der aktuellen Testziffer"],
         ],
         [4.0, 2.5, 9.5]
     ))
@@ -694,6 +700,44 @@ def build_content():
                "Nur die unteren Trennpunkte (Pixel 7 und 9) leuchten in warmweiß — "
                "ein visueller Hinweis, dass Datum statt Uhrzeit angezeigt wird."))
 
+    c.append(h2("Röhrentest (tube_test.ino)"))
+    c.append(p("Diagnose-Feature: Auf Anfrage zeigen alle 6 Röhren synchron dieselbe "
+               "Ziffer, in Schritten von 0 bis 9, je TUBE_TEST_STEP_MS (2000 ms) — "
+               "insgesamt ~20 s. Zweck: jede Ziffer auf jeder Röhre einmal sichtbar "
+               "durchprüfen (defekte Kathode, kalter Lötpunkt an Transistor/MCP23017), "
+               "was die Slot-Machine-Animation nicht leistet (dort steht nie jede Röhre "
+               "synchron auf derselben Ziffer still)."))
+    c.append(p("startTubeTest() bricht konkurrierende Display-Nutzer ab "
+               "(cancelDigitFade(), slotActive=false, dateShowActive=false, "
+               "editState=EDIT_NONE), erzwingt hvDimmerSetDuty(255) unabhängig vom "
+               "Nacht-Modus und schreibt Ziffer 0 sofort hart auf alle Röhren. Erneuter "
+               "Aufruf während eines laufenden Tests setzt ihn einfach auf Ziffer 0 "
+               "zurück (kein Fehlerfall). updateTubeTest() (aus loop()) schaltet alle "
+               "TUBE_TEST_STEP_MS eine Ziffer weiter, bis tubeTestIsFinished() (aus "
+               "tube_test_math.h) nach Ziffer 9 true liefert → stopTubeTest(). "
+               "stopTubeTest() stellt die HV-Duty passend zum aktuellen nightState "
+               "wieder her (identischer Switch wie im Nacht-Modus-Block in loop()), "
+               "synchronisiert prevNightState (verhindert eine doppelte Duty-Anwendung "
+               "im nächsten loop()-Durchlauf) und zeigt sofort wieder die aktuelle "
+               "Uhrzeit an. Aufruf ohne laufenden Test ist ein No-op."))
+    c.append(p("Guards in loop(): Der bestehende Nacht-Modus-Duty-Block "
+               "(nightState != prevNightState) prüft zusätzlich !tubeTestActive, damit "
+               "ein Nacht-Modus-Wechsel die erzwungene volle Helligkeit während des "
+               "Tests nicht überschreibt. Ebenso pausiert handleEditMode() sowie der "
+               "Sekundentakt-/Slot-Trigger-Block vollständig, solange tubeTestActive "
+               "gesetzt ist."))
+    c.append(note("Bekannte Einschränkung: Die IR-Fernbedienung (handleIR()) läuft "
+                  "unguardet vor diesen Prüfungen — SLOT/DATE/SET per Fernbedienung "
+                  "während eines laufenden Tests können die Anzeige durcheinanderbringen "
+                  "bzw. den Editiermodus nach Testende hängen lassen. Bewusst "
+                  "akzeptierter Edge-Case (seltene gleichzeitige IR-Eingabe während der "
+                  "~20 s Testdauer), nicht behoben."))
+    c.append(p("Web-API: POST /api/tubetest/start und POST /api/tubetest/stop rufen "
+               "direkt startTubeTest()/stopTubeTest() aus dem Async-Webserver-Task auf "
+               "— analog zu /api/settime, nicht zum Flag-only-Muster von /api/slot. "
+               "nixieWrite() ist über den bestehenden FreeRTOS-Mutex gegen den "
+               "gleichzeitigen Zugriff aus loop() abgesichert."))
+
     c.append(h2("nixie_driver.ino – Direkte MCP23017-Ansteuerung"))
     c.append(p("Der Nixie-Treiber implementiert die direkte, multiplexingfreie "
                "Ansteuerung der 6 Röhren. Kernfunktionen:"))
@@ -728,7 +772,7 @@ def build_content():
         ["Pfad", "Methode", "Request-Body / Antwort"],
         [
             ["/",                  "GET",  "Vollständiges Web-Interface (HTML/CSS/JS eingebettet als PROGMEM)"],
-            ["/api/status",        "GET",  "{time, date, neoBright, animMode, slotIval, slotSpeed, colonOn, colonStatic, colonBright, slot, nightState, ldrVal, wifiSta, ntpSynced}"],
+            ["/api/status",        "GET",  "{time, date, neoBright, animMode, slotIval, slotSpeed, colonOn, colonStatic, colonBright, slot, tubeTest, tubeTestDigit, nightState, ldrVal, wifiSta, ntpSynced}"],
             ["/api/settime",       "POST", "{\"h\":H,\"m\":M,\"s\":S} + optional {\"d\":D,\"mo\":Mo,\"y\":Y} → RTC schreiben"],
             ["/api/neobright",     "POST", "{\"val\":10..255}  → NeoPixel-Feinwert + NVS"],
             ["/api/anim",          "POST", "{\"mode\":0..2}  → Animationsmodus + NVS"],
@@ -738,6 +782,8 @@ def build_content():
             ["/api/colonstatic",   "POST", "{\"enabled\":true|false}  → Statisch warmweiß + NVS"],
             ["/api/slot",          "POST", "(kein Body) → Slot-Machine-Animation sofort starten"],
             ["/api/slotspeed",     "POST", "{\"val\":20..100}  → Slot-Machine-Rollgeschwindigkeit + NVS"],
+            ["/api/tubetest/start","POST", "(kein Body) → Röhrentest starten (bzw. auf Ziffer 0 zurücksetzen, falls bereits aktiv)"],
+            ["/api/tubetest/stop", "POST", "(kein Body) → Röhrentest sofort beenden (No-op, falls nicht aktiv)"],
             ["/api/softfade",      "GET",  "{sec, date} — weicher Ziffernwechsel Sekundentakt/Datum-Übergang"],
             ["/api/softfade",      "POST", "{\"sec\":true|false,\"date\":true|false} → weicher Ziffernwechsel + NVS"],
             ["/api/nightmode",     "GET",  "{ntEn, ntFrom, ntTo, ntMode, hvDimPct, ldrEn, ldrThr, ldrVal, state}"],

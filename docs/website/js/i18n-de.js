@@ -34,6 +34,7 @@ const I18N_DE = {
   "features.anzeige.li2": "Stunden &middot; Minuten &middot; Sekunden sowie Datumsanzeige (TT MM JJ)",
   "features.anzeige.li3": "Sanfter Fade-In beim Einschalten",
   "features.anzeige.li4": "Optional weicher Ziffernwechsel (Crossfade) &mdash; einzeln zuschaltbar für Sekundentakt und für den Wechsel zwischen Uhrzeit und Datum",
+  "features.anzeige.li5": "Röhrentest per Knopfdruck: alle 6 Röhren zeigen synchron jede Ziffer 0&ndash;9 zur Sichtprüfung",
   "features.group.beleuchtung": "Beleuchtung",
   "features.beleuchtung.li1": "6 &times; WS2812B RGB-LEDs als Röhrenhintergrundbeleuchtung (individuell pro Röhre)",
   "features.beleuchtung.li2": "4 &times; WS2812B RGB-LEDs für die Trennpunkt-Beleuchtung",

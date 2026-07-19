@@ -34,6 +34,7 @@ const I18N_EN = {
   "features.anzeige.li2": "Hours &middot; minutes &middot; seconds plus date display (DD MM YY)",
   "features.anzeige.li3": "Gentle fade-in on power-up",
   "features.anzeige.li4": "Optional soft digit transition (crossfade) &mdash; independently toggleable for the seconds tick and for switching between time and date",
+  "features.anzeige.li5": "Tube test at the push of a button: all 6 tubes cycle through every digit 0&ndash;9 in sync for a quick visual check",
   "features.group.beleuchtung": "Lighting",
   "features.beleuchtung.li1": "6 &times; WS2812B RGB LEDs as tube backlighting (individually addressable per tube)",
   "features.beleuchtung.li2": "4 &times; WS2812B RGB LEDs for separator-dot lighting",
