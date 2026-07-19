@@ -3,7 +3,6 @@
 //  0..9 für je 2s, um defekte Kathoden/Lötstellen sichtbar zu machen
 // ═══════════════════════════════════════════════════════════
 #include "tube_test_math.h"
-#include <string.h>
 
 void startTubeTest() {
   cancelDigitFade();

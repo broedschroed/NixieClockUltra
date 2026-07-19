@@ -4,7 +4,6 @@
 #include "../tube_test_math.h"
 #include <cassert>
 #include <cstdio>
-#include <cstring>
 
 int main() {
   // tubeTestFillDigits: alle 6 Slots erhalten denselben Wert
