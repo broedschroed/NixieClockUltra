@@ -199,6 +199,12 @@ uint16_t slotStopMs[6]        = {600, 780, 960, 1140, 1320, 1500};
 bool     dateShowActive = false;
 uint32_t dateShowStart  = 0;
 
+// Röhrentest
+bool     tubeTestActive    = false;
+uint8_t  tubeTestDigit     = 0;      // 0–9, aktuell angezeigte Testziffer
+uint32_t tubeTestStepStart = 0;
+#define  TUBE_TEST_STEP_MS 2000
+
 // Fade-In beim Start
 bool startFadeIn = true;
 uint8_t startFadeStep = 0;
@@ -272,6 +278,9 @@ void nixieInit();
 void setupWifi();
 void setupWebServer();
 void updateNightMode();
+void startTubeTest();
+void updateTubeTest();
+void stopTubeTest();
 
 // ═══════════════════════════════════════════════════════════
 //  SETUP
@@ -390,8 +399,8 @@ void loop() {
   // --- Helligkeitssteuerung ---
   handleBrightness();
 
-  // --- Einstellmodus ---
-  handleEditMode();
+  // --- Einstellmodus (pausiert während Röhrentest) ---
+  if (!tubeTestActive) handleEditMode();
 
   // --- Nacht-Modus ---
   updateNightMode();
@@ -407,6 +416,7 @@ void loop() {
     }
   }
   updateDigitFade();
+  updateTubeTest();
 
   // --- RTC alle 500ms lesen (außerhalb Einstellmodus) ---
   if (editState == EDIT_NONE && millis() - lastRtcRead >= 500) {
@@ -424,7 +434,7 @@ void loop() {
         case SLOT_1HR:   triggerSlot = (curSec == 0 && curMin == 0); break;
         default: break;
       }
-      if (!slotActive && !dateShowActive) {
+      if (!slotActive && !dateShowActive && !tubeTestActive) {
         if (triggerSlot) startSlotAnimation(curHour, curMin, curSec);
         else             setDisplayTimeSoft(curHour, curMin, curSec, softFadeSecondEnabled ? 400 : 0);
       }
