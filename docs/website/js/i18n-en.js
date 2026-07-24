@@ -149,4 +149,6 @@ const I18N_EN = {
 
   "galerie.meta.title": "Gallery – Nixie Clock Ultra",
   "galerie.h1": "Gallery",
+  "galerie.h2.fertig": "The finished clock",
+  "galerie.h2.projekt": "The project",
 };
