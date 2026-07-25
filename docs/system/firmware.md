@@ -54,7 +54,7 @@ Die `setup()`-Funktion läuft einmalig nach dem Start in dieser Reihenfolge:
 10. IR-Empfänger starten (`irrecv.enableIRIn()`)
 11. Fade-In-Flag setzen (`startFadeIn = true`), Röhren werden in `loop()` eingeblendet
 
-## Wichtige Defines
+## Wichtige Defines {#wichtige-defines}
 
 ```cpp
 // GPIO-Belegung
@@ -93,7 +93,7 @@ Die `setup()`-Funktion läuft einmalig nach dem Start in dieser Reihenfolge:
 #define LDR_PIN        6          // ADC1-Kanal (GPIO6), LDR→VCC, 100kΩ→GND
 #define LDR_SAMPLE_MS  500        // Abtastintervall
 
-// HV-Dimmer (TLP627, LEDC-Hardware-PWM auf Anodenspannung) {#wichtige-defines}
+// HV-Dimmer (TLP627, LEDC-Hardware-PWM auf Anodenspannung)
 #define HV_SWITCH_PIN   7         // GPIO → TLP627 → Anodenspannung (ohne HV_PER_TUBE_DIMMER)
 #define HV_PWM_FREQ_HZ  200       // Hz, LEDC 8-Bit-Auflösung (Duty 0–255)
 
