@@ -421,9 +421,9 @@ void loop() {
     prevNightState = nightState;
     cancelDigitFade();   // laufenden Ziffern-Fade nicht mit Duty-Wechsel kollidieren lassen
     switch (nightState) {
-      case NIGHT_DARK:   hvDimmerSetDuty(0);                        break;
-      case NIGHT_DIM:    hvDimmerSetDuty(hvDimPct * 255 / 100);     break;
-      case NIGHT_NORMAL: hvDimmerSetDuty(255);                      break;
+      case NIGHT_DARK:   hvDimmerSetDutyAll(0);                        break;
+      case NIGHT_DIM:    hvDimmerSetDutyAll(hvDimPct * 255 / 100);     break;
+      case NIGHT_NORMAL: hvDimmerSetDutyAll(255);                      break;
     }
   }
   updateDigitFade();

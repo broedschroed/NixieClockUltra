@@ -743,7 +743,7 @@ void setupWebServer() {
         prefs.putUChar("hvDimPct", hvDimPct);
         prefs.putBool("ldrEn",    ldrEnabled);
         prefs.putUShort("ldrThr", ldrThreshold);
-        if (nightState == NIGHT_DIM) hvDimmerSetDuty(hvDimPct * 255 / 100);
+        if (nightState == NIGHT_DIM) hvDimmerSetDutyAll(hvDimPct * 255 / 100);
         req->send(200, "application/json", "{\"ok\":true}");
       } else {
         req->send(400, "application/json", "{\"ok\":false}");

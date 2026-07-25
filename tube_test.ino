@@ -14,7 +14,7 @@ void startTubeTest() {
   tubeTestDigit     = 0;
   tubeTestStepStart = millis();
 
-  hvDimmerSetDuty(255);   // volle Helligkeit erzwingen, unabhängig von Nacht-Modus
+  hvDimmerSetDutyAll(255);   // volle Helligkeit erzwingen, unabhängig von Nacht-Modus
 
   tubeTestFillDigits(displayDigits, tubeTestDigit);
   nixieWrite(displayDigits);   // sofort hart, kein Fade
@@ -40,9 +40,9 @@ void stopTubeTest() {
 
   // HV-Duty passend zum aktuellen Nacht-Modus-Zustand wiederherstellen
   switch (nightState) {
-    case NIGHT_DARK:   hvDimmerSetDuty(0);                    break;
-    case NIGHT_DIM:    hvDimmerSetDuty(hvDimPct * 255 / 100); break;
-    case NIGHT_NORMAL: hvDimmerSetDuty(255);                  break;
+    case NIGHT_DARK:   hvDimmerSetDutyAll(0);                    break;
+    case NIGHT_DIM:    hvDimmerSetDutyAll(hvDimPct * 255 / 100); break;
+    case NIGHT_NORMAL: hvDimmerSetDutyAll(255);                  break;
   }
   prevNightState = nightState;   // verhindert doppelte Duty-Anwendung im nächsten loop()
 
