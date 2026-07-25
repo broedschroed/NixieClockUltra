@@ -68,7 +68,18 @@
 #define I2C_SCL      9
 
 // HV-Dimmer (TLP627 → Anodenspannung)
-#define HV_SWITCH_PIN  7
+#define HV_SWITCH_PIN  7   // Gemeinsamer Schalter (ohne HV_PER_TUBE_DIMMER)
+
+// Bei bestücktem Pro-Röhre-HV-Schalter (6× TLP627 auf dem Nixie Display Board)
+// einkommentieren. Ermöglicht, dass beim weichen Ziffernwechsel nur die Röhre
+// abblendet, deren Ziffer sich tatsächlich ändert (statt aller 6 gemeinsam).
+// #define HV_PER_TUBE_DIMMER
+#define HV_TUBE_PIN_0  38   // Stundenzehner  (HZ)
+#define HV_TUBE_PIN_1  47   // Stundeneiner   (HE)
+#define HV_TUBE_PIN_2  15   // Minutenzehner  (MZ)
+#define HV_TUBE_PIN_3  16   // Minuteneiner   (ME)
+#define HV_TUBE_PIN_4  17   // Sekundenzehner (SZ)
+#define HV_TUBE_PIN_5  18   // Sekundeneiner  (SE)
 
 // ═══════════════════════════════════════════════════════════
 //  KONSTANTEN & KONFIGURATION
