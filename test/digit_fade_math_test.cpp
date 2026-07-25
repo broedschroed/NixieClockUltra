@@ -38,6 +38,43 @@ int main() {
   // 200ms-Fade (20 Schritte) an einer Zwischenposition
   assert(fadeDutyForStep(false, 5, 20, 13, 255) == 255 - (uint8_t)((255 - 13) * 5 / 20));
 
+  // computeChangedMask: keine Änderung → mask 0
+  {
+    uint8_t a[6] = {1,2,3,4,5,6};
+    uint8_t b[6] = {1,2,3,4,5,6};
+    assert(computeChangedMask(a, b) == 0);
+  }
+
+  // computeChangedMask: nur Tube-Index 0 (HZ) geändert → Bit 0
+  {
+    uint8_t a[6] = {1,2,3,4,5,6};
+    uint8_t b[6] = {9,2,3,4,5,6};
+    assert(computeChangedMask(a, b) == 0b000001);
+  }
+
+  // computeChangedMask: nur Tube-Index 5 (SE) geändert → Bit 5
+  {
+    uint8_t a[6] = {1,2,3,4,5,6};
+    uint8_t b[6] = {1,2,3,4,5,9};
+    assert(computeChangedMask(a, b) == 0b100000);
+  }
+
+  // computeChangedMask: Tube-Index 2 und 3 geändert (MZ+ME) → Bits 2+3
+  {
+    uint8_t a[6] = {1,2,3,4,5,6};
+    uint8_t b[6] = {1,2,9,9,5,6};
+    assert(computeChangedMask(a, b) == 0b001100);
+  }
+
+  // computeChangedMask: alle 6 geändert → 0b111111
+  {
+    uint8_t a[6] = {0,0,0,0,0,0};
+    uint8_t b[6] = {1,1,1,1,1,1};
+    assert(computeChangedMask(a, b) == 0b111111);
+  }
+
+  printf("computeChangedMask: alle Assertions OK\n");
+
   printf("digit_fade_math_test: alle Assertions OK\n");
   return 0;
 }
