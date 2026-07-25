@@ -17,7 +17,7 @@ Steckverbinder, CR2032-Batterie), Versorgungsschienen (+3,3V / HV ~170V / HVgnd)
 mit A2/A1/A0-Belegung und Röhrenzuordnung), 60× SMBTA42, 6× IN-12A,
 WS2812B-Pixel-Konfiguration (Pixel 0–5 GRB Hintergrund, Pixel 6–9 RGB Trennpunkte).
 Inter-Board-Signaltabellen für J3↔J1 und J4↔J2. Vollständige ESP32-S3 Pin-Belegung
-(11 GPIOs).
+(11 Pflicht-GPIOs + 6 optionale GPIOs für den Pro-Röhre-HV-Dimmer).
 
 ## firmware.md
 
@@ -25,7 +25,8 @@ Firmware-Architektur: 11-Modul-Tabelle mit Zeilenanzahl (inkl. `digit_fade.ino` 
 `hv_dimmer.ino`), korrekter 11-Schritt-Setup-Ablauf, alle GPIO-Defines und Konstanten als
 Codeblock, 32 globale State-Variablen, alle 3 Enumerationen (`AnimMode`, `EditState`,
 `IrAction` mit `IR_ACTION_`-Präfix), Erklärung der MCP23017-Direktansteuerung (Mutex,
-Shadow-Register, Lookup-Tabelle), der HV-Anodendimmung (TLP627/LEDC) und des weichen
+Shadow-Register, Lookup-Tabelle), der HV-Anodendimmung (TLP627/LEDC, optional 6 unabhängige
+Pro-Röhre-Kanäle über `HV_PER_TUBE_DIMMER`) und des weichen
 Ziffernwechsels (`digit_fade.ino`-Crossfade-State-Machine, Slot-Machine-Geschwindigkeit),
 vollständige Web-API-Tabelle (19 Endpunkte mit verifizierten JSON-Feldnamen),
 NVS-Persistenz-Tabelle (27 Schlüssel mit korrekten Namen wie `bright`, `colonOn`,

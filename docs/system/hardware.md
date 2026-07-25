@@ -52,6 +52,14 @@ aller Röhren liegen gemeinsam an der über J4 eingespeisten Hochspannung (~170V
 auf dem Logic Board per TLP627-Hardware-PWM gedimmt werden kann (siehe Nacht-Modus in
 [firmware.md](firmware.md)).
 
+**Optional:** Statt des einen gemeinsamen Schalters auf dem Logic Board kann jede Anode
+über einen eigenen TLP627-Schalter auf dem Display Board unabhängig gedimmt werden
+(6× TLP627 statt 1×, siehe Komponententabelle unten). Das ermöglicht einen weichen
+Ziffernwechsel pro Röhre, bei dem unveränderte Ziffern nicht mitblinken. Aktiviert wird
+das per `HV_PER_TUBE_DIMMER`-Compile-Switch in der Firmware
+([firmware.md](firmware.md#wichtige-defines)) — ohne bestückte Zusatzschalter bleibt der
+gemeinsame Schalter aktiv.
+
 ### Hauptkomponenten
 
 | Ref      | Bauteil              | Anzahl | Funktion                                         |
@@ -67,6 +75,7 @@ auf dem Logic Board per TLP627-Hardware-PWM gedimmt werden kann (siehe Nacht-Mod
 | C1–C4    | 100 nF (0805)        | 4      | Abblockkondensatoren je MCP23017                 |
 | J1       | Logic (8-polig)      | 1      | Inter-Board: Logik-Signale ← Logic Board         |
 | J2       | HV (4-polig)         | 1      | Inter-Board: ~170V ← Logic Board                 |
+| –        | TLP627 (DIP-4)       | 6 (optional) | Pro-Röhre-Anodenschalter — ersetzt bei Bestückung den gemeinsamen Logic-Board-Schalter für unabhängiges Dimmen jeder Röhre |
 
 ### MCP23017 I²C-Adressen und Röhrenzuordnung
 
@@ -136,5 +145,11 @@ Die 10 LEDs sind als verkettete Kette an GPIO21 angeschlossen:
 | 11   | BTN_DOWN  | Taster DOWN (INPUT_PULLUP, aktiv LOW)  |
 | 12   | BTN_UP    | Taster UP (INPUT_PULLUP, aktiv LOW)    |
 | 13   | BTN_SET   | Taster SET (INPUT_PULLUP, aktiv LOW)   |
+| 15   | HV_TUBE_PIN_2 | *(optional)* Pro-Röhre-TLP627 Minutenzehner (nur bei `HV_PER_TUBE_DIMMER`) |
+| 16   | HV_TUBE_PIN_3 | *(optional)* Pro-Röhre-TLP627 Minuteneiner (nur bei `HV_PER_TUBE_DIMMER`) |
+| 17   | HV_TUBE_PIN_4 | *(optional)* Pro-Röhre-TLP627 Sekundenzehner (nur bei `HV_PER_TUBE_DIMMER`) |
+| 18   | HV_TUBE_PIN_5 | *(optional)* Pro-Röhre-TLP627 Sekundeneiner (nur bei `HV_PER_TUBE_DIMMER`) |
 | 21   | NEO_DATA  | WS2812B DIN (10 LEDs in Kette)         |
+| 38   | HV_TUBE_PIN_0 | *(optional)* Pro-Röhre-TLP627 Stundenzehner (nur bei `HV_PER_TUBE_DIMMER`) |
+| 47   | HV_TUBE_PIN_1 | *(optional)* Pro-Röhre-TLP627 Stundeneiner (nur bei `HV_PER_TUBE_DIMMER`) |
 | 48   | IR_RECV   | VS1838B demodulierter Ausgang          |

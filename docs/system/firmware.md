@@ -14,12 +14,12 @@ deshalb in `NixieClockUltra.ino` deklariert werden.
 |----------------------|--------|-------------------------------------------------------------------------|
 | `NixieClockUltra.ino`| 481    | Globals, `setup()`, `loop()`, Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals, Röhrentest-Globals |
 | `nixie_driver.ino`   | 91     | `nixieInit()`, `nixieWrite()`, MCP23017-Abstraktion, FreeRTOS-Mutex     |
-| `display.ino`        | 88     | `setDisplayTime()`, `setDisplayDate()`, `commitDigits()` (weicher Ziffernwechsel), Slot-Animation |
-| `digit_fade.ino`     | 77     | `startDigitFade()`, `updateDigitFade()`, `cancelDigitFade()` — non-blocking Crossfade über HV-Dimmer-Duty |
+| `display.ino`        | 91     | `setDisplayTime()`, `setDisplayDate()`, `commitDigits()` (weicher Ziffernwechsel, Bitmaske via `computeChangedMask()`), Slot-Animation |
+| `digit_fade.ino`     | 95     | `startDigitFade()`, `updateDigitFade()`, `cancelDigitFade()` — non-blocking Crossfade über HV-Dimmer-Duty, pro Röhre per Bitmaske |
 | `buttons.ino`        | 127    | Entprell-FSM für 4 Taster, Kurz-/Langdruck, Edit-Mode Zeit+Datum       |
 | `rtc.ino`            | 18     | `readRTC()`, `writeRTC()` via DS1302/ThreeWire, liest auch Tag/Monat/Jahr |
 | `night_mode.ino`     | 34     | LDR-Abtastung (GPIO6, ADC1), `updateNightMode()`, Zeitbereich-Logik    |
-| `hv_dimmer.ino`      | 12     | `hvDimmerInit()`, `hvDimmerSetDuty()` — LEDC-Hardware-PWM für TLP627 auf Anodenspannung |
+| `hv_dimmer.ino`      | 47     | `hvDimmerInit()`, `hvDimmerSetDutyAll()`, `hvDimmerSetDutyTube()` — LEDC-Hardware-PWM für TLP627 auf Anodenspannung; bei `HV_PER_TUBE_DIMMER` 6 unabhängige Kanäle statt einem gemeinsamen |
 | `neo_animation.ino`  | 107    | Rainbow, Statisch, Puls, Slot, Nacht-Modus-Dimming, Datumsanzeige-Override |
 | `ir_remote.ino`      | 107    | `executeAction()`, `dispatchIRAction()`, `handleIR()`, 8 IR-Aktionen   |
 | `tube_test.ino`      | 50     | `startTubeTest()`, `updateTubeTest()`, `stopTubeTest()` — non-blocking Röhrentest-State-Machine |
@@ -37,8 +37,9 @@ Die `setup()`-Funktion läuft einmalig nach dem Start in dieser Reihenfolge:
 1. Serial-Port öffnen (115200 Baud)
 2. Taster-Pins konfigurieren (INPUT_PULLUP)
 3. NeoPixel-Strip initialisieren, Helligkeit aus `BRIGHTNESS_LEVELS[brightLevel]` setzen
-4. `hvDimmerInit()` — LEDC-PWM auf `HV_SWITCH_PIN` (GPIO7) anlegen, Duty zunächst 255
-   (volle Anodenspannung)
+4. `hvDimmerInit()` — LEDC-PWM anlegen, Duty zunächst 255 (volle Anodenspannung); ohne
+   `HV_PER_TUBE_DIMMER` auf `HV_SWITCH_PIN` (GPIO7), mit aktiviertem Switch auf 6
+   unabhängigen Kanälen (`HV_TUBE_PIN_0`–`HV_TUBE_PIN_5`)
 5. NVS laden — Helligkeit, Animation, Slot-Intervall, WiFi-Zugangsdaten, IR-Codes,
    `colonAlwaysOn`, `colonStatic`, sowie Nacht-Modus-Konfiguration
    (`nightTimeEnabled`, `nightStart`, `nightEnd`, `nightTimeMode`, `ldrEnabled`, `ldrThreshold`,
@@ -92,9 +93,18 @@ Die `setup()`-Funktion läuft einmalig nach dem Start in dieser Reihenfolge:
 #define LDR_PIN        6          // ADC1-Kanal (GPIO6), LDR→VCC, 100kΩ→GND
 #define LDR_SAMPLE_MS  500        // Abtastintervall
 
-// HV-Dimmer (TLP627, LEDC-Hardware-PWM auf Anodenspannung)
-#define HV_SWITCH_PIN   7         // GPIO → TLP627 → Anodenspannung
+// HV-Dimmer (TLP627, LEDC-Hardware-PWM auf Anodenspannung) {#wichtige-defines}
+#define HV_SWITCH_PIN   7         // GPIO → TLP627 → Anodenspannung (ohne HV_PER_TUBE_DIMMER)
 #define HV_PWM_FREQ_HZ  200       // Hz, LEDC 8-Bit-Auflösung (Duty 0–255)
+
+// Bei bestücktem Pro-Röhre-HV-Schalter (6× TLP627 auf dem Nixie Display Board):
+// #define HV_PER_TUBE_DIMMER
+#define HV_TUBE_PIN_0  38         // Stundenzehner (HZ)
+#define HV_TUBE_PIN_1  47         // Stundeneiner  (HE)
+#define HV_TUBE_PIN_2  15         // Minutenzehner (MZ)
+#define HV_TUBE_PIN_3  16         // Minuteneiner  (ME)
+#define HV_TUBE_PIN_4  17         // Sekundenzehner(SZ)
+#define HV_TUBE_PIN_5  18         // Sekundeneiner (SE)
 
 const uint8_t BRIGHTNESS_LEVELS[4] = {10, 40, 80, 200};  // NeoPixel-Helligkeiten
 ```
@@ -181,38 +191,53 @@ enum IrAction {
 4. **Sonst:** `nightState` = NIGHT_NORMAL.
 
 **HV-Anodendimmung** in `loop()`: Bei einem Wechsel von `nightState` (Guard
-`nightState != prevNightState`) ruft `loop()` `hvDimmerSetDuty()` auf (`hv_dimmer.ino`):
+`nightState != prevNightState`) ruft `loop()` `hvDimmerSetDutyAll()` auf (`hv_dimmer.ino`)
+— setzt alle 6 Röhren gemeinsam auf dieselbe Ziel-Helligkeit, unabhängig davon, ob
+`HV_PER_TUBE_DIMMER` aktiv ist:
 
-| `nightState`   | Duty (`hvDimmerSetDuty()`)      |
+| `nightState`   | Duty (`hvDimmerSetDutyAll()`)   |
 |----------------|----------------------------------|
 | `NIGHT_NORMAL` | 255 (volle Anodenspannung)       |
 | `NIGHT_DIM`    | `hvDimPct * 255 / 100` (2–60 %)  |
 | `NIGHT_DARK`   | 0 (Anodenspannung aus)           |
 
 Die Dimmung erfolgt per LEDC-Hardware-PWM (~200 Hz) direkt auf der Anodenspannung über
-einen TLP627-Optokoppler (`HV_SWITCH_PIN`, GPIO7) — nicht mehr per Software-PWM auf den
-Kathoden. Ein separater Blitzschutz für Sekundenwechsel ist nicht mehr nötig, da die
-Kathoden-Ansteuerung unabhängig von der Anodendimmung läuft.
+einen TLP627-Optokoppler — ohne `HV_PER_TUBE_DIMMER` einen gemeinsamen (`HV_SWITCH_PIN`,
+GPIO7), mit aktiviertem Switch 6 unabhängige (`HV_TUBE_PIN_0`–`HV_TUBE_PIN_5`) — nicht mehr
+per Software-PWM auf den Kathoden. Ein separater Blitzschutz für Sekundenwechsel ist nicht
+mehr nötig, da die Kathoden-Ansteuerung unabhängig von der Anodendimmung läuft.
 
 ## Weicher Ziffernwechsel (`digit_fade.ino`)
 
 `commitDigits()` in `display.ino` ist die zentrale Stelle, über die alle Ziffernänderungen
 laufen (`setDisplayTime()`, `setDisplayDate()` sowie die Soft-Varianten
-`setDisplayTimeSoft()`/`setDisplayDateSoft()`). Sie vergleicht per `memcmp()` gegen
-`displayDigits`, um unveränderte Aufrufe zu ignorieren, und entscheidet dann:
+`setDisplayTimeSoft()`/`setDisplayDateSoft()`). Sie berechnet per `computeChangedMask()`
+(`digit_fade_math.h`) eine Bitmaske der Röhren, deren Ziffer sich ändert (Bit *i* = Tube-Index
+*i*, 0=HZ…5=SE) — ist die Maske 0, ändert sich nichts und der Aufruf wird ignoriert. Sonst:
 
-- `fadeMs == 0` oder `nightState != NIGHT_NORMAL` → sofortiger Hart-Wechsel über `nixieWrite()`
-  (im Nacht-Modus kein Fade, da die Anodenspannung dort bereits gedimmt/aus ist)
-- `fadeMs > 0` → `startDigitFade()` in `digit_fade.ino`
+- `fadeMs == 0` oder `nightState == NIGHT_DARK` → sofortiger Hart-Wechsel über `nixieWrite()`
+  (in NIGHT_DARK ist die Anodenspannung ohnehin aus, ein Fade wäre unsichtbar)
+- `fadeMs > 0` und `nightState != NIGHT_DARK` (also auch in `NIGHT_DIM`) → `startDigitFade()`
+  in `digit_fade.ino`, mit der berechneten Maske als Parameter
 
 `startDigitFade()`/`updateDigitFade()` bilden eine non-blocking State-Machine (angetrieben aus
-`loop()`), die den HV-Dimmer-Duty (`hvDimmerSetDuty()`) in `DIGIT_FADE_STEP_MS`-Schritten
-(5 ms) erst auf `DIGIT_FADE_MIN_DUTY` (13, ≈5 %) abblendet, bei Minimalhelligkeit die
-Zielziffern schreibt (`nixieWrite()`), und wieder auf 255 aufblendet. Die Dauer wird über
-`fadeMs` gesteuert (je zur Hälfte Ab-/Aufblenden); aktuell fest verdrahtet auf 400 ms, siehe
-`NixieClockUltra.ino` (`softFadeSecondEnabled ? 400 : 0` bzw. `softFadeDateEnabled ? 400 : 0`).
-Die reine Interpolationsmathematik (`fadeDutyForStep()`) liegt in `digit_fade_math.h` und ist
-per Host-Unit-Test (`test/digit_fade_math_test.cpp`) ohne Arduino-Framework testbar.
+`loop()`), die den HV-Dimmer-Duty **nur für die Röhren in der Fade-Maske**
+(`hvDimmerSetDutyTube()`) in `DIGIT_FADE_STEP_MS`-Schritten (5 ms) erst auf
+`DIGIT_FADE_MIN_DUTY` (13, ≈5 %) abblendet, bei Minimalhelligkeit die Zielziffern schreibt
+(`nixieWrite()`), und wieder auf die Ziel-Helligkeit (`fadeMaxDuty`) aufblendet. `fadeMaxDuty`
+wird beim Fade-Start einmalig ermittelt: 255 bei `NIGHT_NORMAL`, `hvDimPct * 255 / 100` bei
+`NIGHT_DIM` — der Fade wirkt im Dimm-Modus also konsistent gedimmt statt kurz auf 100 %
+aufzublitzen. Röhren außerhalb der Maske werden während des gesamten Fades nicht angefasst —
+mit aktiviertem `HV_PER_TUBE_DIMMER` (`hv_dimmer.ino`) bleiben sie sichtbar unverändert hell,
+ohne die Hardware-Option dimmt `hvDimmerSetDutyTube()` ohnehin den einen gemeinsamen Schalter
+(siehe [hv_dimmer.ino](#hv-anodendimmung-hv_dimmerino)), sodass sich am heutigen
+Erscheinungsbild (alle 6 dimmen gemeinsam) nichts ändert.
+
+Die Dauer wird über `fadeMs` gesteuert (je zur Hälfte Ab-/Aufblenden); aktuell fest verdrahtet
+auf 400 ms, siehe `NixieClockUltra.ino` (`softFadeSecondEnabled ? 400 : 0` bzw.
+`softFadeDateEnabled ? 400 : 0`). Die reine Interpolationsmathematik (`fadeDutyForStep()`) und
+die Masken-Berechnung (`computeChangedMask()`) liegen in `digit_fade_math.h` und sind per
+Host-Unit-Test (`test/digit_fade_math_test.cpp`) ohne Arduino-Framework testbar.
 
 `cancelDigitFade()` schließt einen laufenden Fade sofort ab (Zielziffern schreiben, Duty
 unangetastet) und wird vor `startSlotAnimation()` sowie beim Eintritt in den Edit-Modus
@@ -243,7 +268,7 @@ Lötpunkt an Transistor/MCP23017), was die Slot-Machine-Animation nicht leistet
 
 - `startTubeTest()`: bricht konkurrierende Display-Nutzer ab (`cancelDigitFade()`,
   `slotActive = false`, `dateShowActive = false`, `editState = EDIT_NONE`),
-  erzwingt `hvDimmerSetDuty(255)` unabhängig vom Nacht-Modus, schreibt Ziffer 0
+  erzwingt `hvDimmerSetDutyAll(255)` unabhängig vom Nacht-Modus, schreibt Ziffer 0
   sofort hart auf alle Röhren. Erneuter Aufruf während eines laufenden Tests
   setzt ihn einfach auf Ziffer 0 zurück (kein Fehlerfall).
 - `updateTubeTest()` (aus `loop()`): alle `TUBE_TEST_STEP_MS` eine Ziffer weiter,
@@ -306,23 +331,34 @@ Die 60 Kathoden (6 Röhren × 10 Ziffern) verteilen sich auf die 4 MCPs wie folg
 > `nixie_driver.ino`. Ziffer 0 einer Röhre belegt nicht unbedingt Bit 0 des MCP —
 > die Reihenfolge folgt der PCB-Verdrahtung.
 
-## HV-Anodendimmung (`hv_dimmer.ino`)
+## HV-Anodendimmung (`hv_dimmer.ino`) {#hv-anodendimmung-hv_dimmerino}
 
-Schaltet die Anodenspannung (~170 V) über einen TLP627-Optokoppler per LEDC-Hardware-PWM:
+Schaltet die Anodenspannung (~170 V) über einen oder sechs TLP627-Optokoppler per
+LEDC-Hardware-PWM. Der `HV_PER_TUBE_DIMMER`-Switch entscheidet, welche der beiden Varianten
+kompiliert wird (siehe [Wichtige Defines](#wichtige-defines)):
 
 ```cpp
+#ifdef HV_PER_TUBE_DIMMER
+// 6 unabhängige Kanäle, einer pro Röhre
+void hvDimmerInit() { /* ledcAttach() je HV_TUBE_PIN_0..5, Duty 255 */ }
+void hvDimmerSetDutyAll(uint8_t duty0to255)              { /* alle 6 Kanäle */ }
+void hvDimmerSetDutyTube(uint8_t tube, uint8_t duty0to255) { /* nur dieser Kanal */ }
+
+#else
+// Ein gemeinsamer Kanal (heutige Hardware)
 void hvDimmerInit() {
   ledcAttach(HV_SWITCH_PIN, HV_PWM_FREQ_HZ, 8);
   ledcWrite(HV_SWITCH_PIN, 255);   // volle Helligkeit (Anode dauerhaft an)
 }
-
-void hvDimmerSetDuty(uint8_t duty0to255) {
-  ledcWrite(HV_SWITCH_PIN, duty0to255);
-}
+void hvDimmerSetDutyAll(uint8_t duty0to255) { ledcWrite(HV_SWITCH_PIN, duty0to255); }
+// Röhrenindex wird ignoriert — es gibt nur den einen gemeinsamen Schalter.
+void hvDimmerSetDutyTube(uint8_t /*tube*/, uint8_t duty0to255) { ledcWrite(HV_SWITCH_PIN, duty0to255); }
+#endif
 ```
 
-`hvDimmerSetDuty()` wird ausschließlich bei einem `nightState`-Wechsel in `loop()`
-aufgerufen, nicht pro Loop-Durchlauf — kein zusätzlicher CPU-Overhead im Normalbetrieb.
+`hvDimmerSetDutyAll()` wird bei einem `nightState`-Wechsel in `loop()` aufgerufen, nicht pro
+Loop-Durchlauf. `hvDimmerSetDutyTube()` wird ausschließlich aus der Fade-State-Machine in
+`digit_fade.ino` heraus aufgerufen (siehe [Weicher Ziffernwechsel](#weicher-ziffernwechsel-digit_fadeino)) — kein zusätzlicher CPU-Overhead im Normalbetrieb.
 
 ## Web-API
 
