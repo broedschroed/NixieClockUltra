@@ -2,18 +2,21 @@
 //  DISPLAY-UPDATE (displayDigits befüllen)
 // ═══════════════════════════════════════════════════════════
 #include <string.h>
+#include "digit_fade_math.h"
 
-// Schreibt neue Zielziffern. Bei fadeMs>0 und nightState==NIGHT_NORMAL
-// läuft ein weicher HV-Dimmer-Crossfade (digit_fade.ino), sonst sofort
-// hart über nixieWrite(). Kein Effekt, wenn sich nichts ändert.
+// Schreibt neue Zielziffern. Bei fadeMs>0 und nightState!=NIGHT_DARK läuft ein
+// weicher HV-Dimmer-Crossfade (digit_fade.ino) nur für die Röhren, deren
+// Ziffer sich ändert; in NIGHT_DARK ist die Anodenspannung ohnehin aus, dort
+// wird sofort hart über nixieWrite() geschrieben. Kein Effekt, wenn sich
+// nichts ändert.
 static void commitDigits(uint8_t newDigits[6], uint16_t fadeMs) {
-  // memcmp hier (statt nur nixieWrite()'s eigenem Register-Diffing zu vertrauen),
-  // weil unveränderte Ziffern sonst unnötig einen Fade anstoßen würden.
-  bool changed = memcmp(newDigits, displayDigits, 6) != 0;
+  // Maske VOR dem Überschreiben von displayDigits berechnen (vergleicht
+  // alt gegen neu) — bestimmt zugleich, ob sich überhaupt etwas ändert.
+  uint8_t changedMask = computeChangedMask(displayDigits, newDigits);
+  if (changedMask == 0) return;
   memcpy(displayDigits, newDigits, 6);
-  if (!changed) return;
-  if (fadeMs > 0 && nightState == NIGHT_NORMAL) {
-    startDigitFade(newDigits, fadeMs);
+  if (fadeMs > 0 && nightState != NIGHT_DARK) {
+    startDigitFade(newDigits, changedMask, fadeMs);
   } else {
     nixieWrite(displayDigits);
   }
