@@ -600,6 +600,7 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
 
   <h2>Weicher Ziffernwechsel</h2>
   <p>Statt hart umzuschalten, können die Röhren beim Ziffernwechsel sanft überblenden — kurz abdunkeln und mit der neuen Ziffer wieder aufhellen. Das lässt sich getrennt für zwei Situationen im Web-Interface unter <strong>Weicher Ziffernwechsel</strong> ein- und ausschalten: für den ganz normalen <strong>Sekundentakt</strong> und für den <strong>Wechsel zwischen Uhrzeit- und Datumsanzeige</strong>.</p>
+  <p>Bei Uhren mit der optionalen Pro-Röhre-Dimmoption (siehe Kapitel „Systemdaten") blendet dabei nur die Röhre ab, deren Ziffer sich tatsächlich ändert — unveränderte Ziffern bleiben durchgehend hell. Ohne diese Nachrüstung dimmen weiterhin alle Röhren gemeinsam.</p>
 
   <h2>Trennpunkt-LEDs</h2>
   <p>Die vier LEDs zwischen den Zifferngruppen blinken standardmäßig sekundengenau. Ein <strong>langer Druck auf LIGHT</strong> schaltet sie in den Dauerleucht-Modus:</p>
@@ -853,7 +854,7 @@ h2 { font-size: 11pt; color: var(--gold-dk); letter-spacing: 2px;
       <tr><td><strong>Nixie-Ansteuerung</strong></td><td>4× MCP23017 I²C Port-Expander (0x20–0x23), direkte Ansteuerung ohne Multiplexing</td></tr>
       <tr><td><strong>Nixie-Röhren</strong></td><td>6 Stück</td></tr>
       <tr><td><strong>Nixie-Hochspannung</strong></td><td>170–180 V DC</td></tr>
-      <tr><td><strong>Anoden-Dimmung</strong></td><td>TLP627-Optokoppler, Hardware-PWM ≈200 Hz (LEDC), GPIO7</td></tr>
+      <tr><td><strong>Anoden-Dimmung</strong></td><td>TLP627-Optokoppler, Hardware-PWM ≈200 Hz (LEDC), GPIO7 (Standard); optional 6× TLP627 für unabhängiges Pro-Röhre-Dimmen, GPIO 15/16/17/18/38/47</td></tr>
       <tr><td><strong>Echtzeituhr</strong></td><td>DS1302 (ThreeWire-Interface, batteriegepuffert)</td></tr>
       <tr><td><strong>NeoPixel</strong></td><td>10× WS2812B (6 Hintergrund + 4 Trennpunkte), GPIO21</td></tr>
       <tr><td><strong>IR-Empfänger</strong></td><td>VS1838 (38 kHz), GPIO48</td></tr>
