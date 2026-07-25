@@ -23,6 +23,7 @@ static FadeDir  fadeDir        = FADE_DOWN;
 static uint8_t  fadeTargetDigits[6];
 static uint8_t  fadeMask       = 0;     // Bitmaske der Röhren, die diesen Fade durchlaufen
 static uint8_t  fadeMaxDuty    = 255;   // Ziel-Helligkeit oben (255 normal, hvDimPct-skaliert im Dimm-Modus)
+static uint8_t  fadeMinDuty    = DIGIT_FADE_MIN_DUTY;  // Ziel-Helligkeit unten, proportional zu fadeMaxDuty
 static uint32_t fadeLastStepMs = 0;
 static uint8_t  fadeStepsTotal = 1;
 static uint8_t  fadeStepsDone  = 0;
@@ -44,13 +45,14 @@ static void fadeFinishImmediately() {
   fadeRunning = false;
 }
 
-// Schließt einen laufenden Fade sofort ab, OHNE die Helligkeit anzufassen
-// (der Aufrufer setzt sie danach selbst, z.B. beim Nacht-Modus-Wechsel).
-// No-op wenn kein Fade läuft.
+// Schließt einen laufenden Fade sofort ab: schreibt die Zielziffern und setzt
+// die betroffenen Röhren auf ihre Ziel-Helligkeit zurück (identisch zu
+// fadeFinishImmediately() — die frühere Variante ließ die Helligkeit
+// absichtlich unangetastet, das führte aber dazu, dass Röhren bei manchen
+// Aufrufstellen (z.B. Edit-Modus-Eintritt, Slot-Animation-Start) dauerhaft
+// auf Fade-Zwischenhelligkeit hängen blieben). No-op wenn kein Fade läuft.
 void cancelDigitFade() {
-  if (!fadeRunning) return;
-  nixieWrite(fadeTargetDigits);
-  fadeRunning = false;
+  fadeFinishImmediately();
 }
 
 // Startet einen neuen Fade zu newDigits über fadeMs (aufgeteilt in
@@ -64,6 +66,7 @@ void startDigitFade(uint8_t newDigits[6], uint8_t changedMask, uint16_t fadeMs) 
   memcpy(fadeTargetDigits, newDigits, 6);
   fadeMask       = changedMask;
   fadeMaxDuty    = (nightState == NIGHT_DIM) ? (uint8_t)(hvDimPct * 255 / 100) : 255;
+  fadeMinDuty    = (uint8_t)((uint16_t)fadeMaxDuty * DIGIT_FADE_MIN_DUTY / 255);
   fadeStepsTotal = (uint8_t)((fadeMs / 2) / DIGIT_FADE_STEP_MS);
   if (fadeStepsTotal < 1) fadeStepsTotal = 1;
   fadeStepsDone  = 0;
@@ -80,7 +83,7 @@ void updateDigitFade() {
   fadeStepsDone++;
 
   uint8_t duty = fadeDutyForStep(fadeDir == FADE_UP, fadeStepsDone, fadeStepsTotal,
-                                  DIGIT_FADE_MIN_DUTY, fadeMaxDuty);
+                                  fadeMinDuty, fadeMaxDuty);
   applyDutyToMask(fadeMask, duty);
 
   if (fadeStepsDone >= fadeStepsTotal) {

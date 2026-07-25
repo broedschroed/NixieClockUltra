@@ -75,6 +75,16 @@ int main() {
 
   printf("computeChangedMask: alle Assertions OK\n");
 
+  // Guard: maxDuty < minDuty darf nicht unterlaufen (Duty-Fenster kollabiert auf maxDuty)
+  assert(fadeDutyForStep(false, 0, 10, 13, 5) == 5);
+  assert(fadeDutyForStep(false, 10, 10, 13, 5) == 5);
+  assert(fadeDutyForStep(true, 0, 10, 13, 5) == 5);
+  assert(fadeDutyForStep(true, 10, 10, 13, 5) == 5);
+
+  // maxDuty == minDuty: flacher Fade (kein sichtbarer Unterschied, aber kein Crash)
+  assert(fadeDutyForStep(false, 5, 10, 20, 20) == 20);
+  assert(fadeDutyForStep(true, 5, 10, 20, 20) == 20);
+
   printf("digit_fade_math_test: alle Assertions OK\n");
   return 0;
 }

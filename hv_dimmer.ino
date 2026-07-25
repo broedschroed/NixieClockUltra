@@ -12,6 +12,11 @@ static const uint8_t hvTubePin[6] = {
 };
 
 void hvDimmerInit() {
+  // Gemeinsamen Logic-Board-Schalter dauerhaft offen halten, falls er bei der
+  // Umrüstung nicht physisch entfernt/überbrückt wurde — sonst bliebe er als
+  // schwebender Eingang im Reset-Zustand und könnte die Anodenspannung sperren.
+  pinMode(HV_SWITCH_PIN, OUTPUT);
+  digitalWrite(HV_SWITCH_PIN, HIGH);
   for (uint8_t i = 0; i < 6; i++) {
     ledcAttach(hvTubePin[i], HV_PWM_FREQ_HZ, 8);
     ledcWrite(hvTubePin[i], 255);   // volle Helligkeit (Anode dauerhaft an)

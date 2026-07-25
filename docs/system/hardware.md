@@ -58,7 +58,10 @@ auf dem Logic Board per TLP627-Hardware-PWM gedimmt werden kann (siehe Nacht-Mod
 Ziffernwechsel pro Röhre, bei dem unveränderte Ziffern nicht mitblinken. Aktiviert wird
 das per `HV_PER_TUBE_DIMMER`-Compile-Switch in der Firmware
 ([firmware.md](firmware.md#wichtige-defines)) — ohne bestückte Zusatzschalter bleibt der
-gemeinsame Schalter aktiv.
+gemeinsame Schalter aktiv. Der gemeinsame Logic-Board-Schalter sollte bei dieser Umrüstung
+entfernt oder dauerhaft überbrückt werden; die Firmware hält sein Steuersignal (GPIO7) bei
+aktiviertem HV_PER_TUBE_DIMMER zur Sicherheit dauerhaft auf HIGH (offen), falls er nicht
+ausgebaut wird.
 
 ### Hauptkomponenten
 

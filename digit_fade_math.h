@@ -12,6 +12,7 @@ inline uint8_t fadeDutyForStep(bool risingUp, uint8_t stepsDone, uint8_t stepsTo
                                 uint8_t minDuty, uint8_t maxDuty) {
   if (stepsTotal == 0) stepsTotal = 1;
   if (stepsDone > stepsTotal) stepsDone = stepsTotal;
+  if (minDuty > maxDuty) minDuty = maxDuty;
   uint16_t span = (uint16_t)(maxDuty - minDuty) * stepsDone / stepsTotal;
   return risingUp ? (uint8_t)(minDuty + span) : (uint8_t)(maxDuty - span);
 }

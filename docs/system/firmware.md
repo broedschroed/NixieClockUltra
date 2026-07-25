@@ -12,7 +12,7 @@ deshalb in `NixieClockUltra.ino` deklariert werden.
 
 | Datei                | Zeilen | Inhalt                                                                  |
 |----------------------|--------|-------------------------------------------------------------------------|
-| `NixieClockUltra.ino`| 481    | Globals, `setup()`, `loop()`, Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals, Röhrentest-Globals |
+| `NixieClockUltra.ino`| 492    | Globals, `setup()`, `loop()`, Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals, Röhrentest-Globals |
 | `nixie_driver.ino`   | 91     | `nixieInit()`, `nixieWrite()`, MCP23017-Abstraktion, FreeRTOS-Mutex     |
 | `display.ino`        | 91     | `setDisplayTime()`, `setDisplayDate()`, `commitDigits()` (weicher Ziffernwechsel, Bitmaske via `computeChangedMask()`), Slot-Animation |
 | `digit_fade.ino`     | 95     | `startDigitFade()`, `updateDigitFade()`, `cancelDigitFade()` — non-blocking Crossfade über HV-Dimmer-Duty, pro Röhre per Bitmaske |
