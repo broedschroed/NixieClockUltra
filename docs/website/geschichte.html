@@ -14,7 +14,7 @@
       <div class="page-title"><h1 data-i18n="geschichte.h1">Entwicklungsgeschichte</h1></div>
       <div class="gear-divider">&#9881;</div>
       <div class="panel">
-        <p data-i18n="geschichte.intro">Die Nixie Clock Ultra entstand in acht Entwicklungsphasen zwischen April und Juli 2026. Jede Phase brachte neue Erkenntnisse &mdash; und neue Probleme, die es zu lösen galt.</p>
+        <p data-i18n="geschichte.intro">Die Nixie Clock Ultra entstand in zehn Entwicklungsphasen zwischen April und Juli 2026. Jede Phase brachte neue Erkenntnisse &mdash; und neue Probleme, die es zu lösen galt.</p>
       </div>
 
       <div class="timeline">
@@ -128,6 +128,19 @@
           <div class="timeline-title" data-i18n="geschichte.phase9.title">Phase 9 &mdash; Weicher Ziffernwechsel</div>
           <div class="timeline-body">
             <p data-i18n="geschichte.phase9.body">Der Wechsel zwischen zwei Ziffern erfolgt jetzt optional nicht mehr schlagartig, sondern als sanfter Crossfade &mdash; getrennt zuschaltbar für den Sekundentakt und für den Wechsel zwischen Uhrzeit- und Datumsanzeige. Technisch über den vorhandenen HV-Dimmer realisiert (<code>digit_fade.ino</code>): kurz abblenden, Ziffern bei Minimalhelligkeit umschalten, wieder aufblenden &mdash; als non-blocking State-Machine, angetrieben aus <code>loop()</code>. Dauer nach einem Hardware-Test auf 400&nbsp;ms festgelegt. Zusätzlich wurde die Rollgeschwindigkeit der Slot-Machine-Animation (<code>slotSpeedPct</code>) über einen eigenen Web-UI-Regler einstellbar gemacht.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-date">2026-07-25</div>
+          <div class="timeline-title" data-i18n="geschichte.phase10.title">Phase 10 &mdash; Pro-Röhre-HV-Dimmer</div>
+          <div class="timeline-body">
+            <p data-i18n="geschichte.phase10.body">Die Umrüstung des Nixie Display Boards erlaubt jetzt optional 6 unabhängige TLP627-Anodenschalter statt eines gemeinsamen &mdash; einen pro Röhre. Beim weichen Ziffernwechsel blendet dadurch nur die Röhre ab, deren Ziffer sich tatsächlich ändert; unveränderte Röhren bleiben durchgehend hell. Per Compile-Switch <code>HV_PER_TUBE_DIMMER</code> aktivierbar (<code>hv_dimmer.ino</code>), Standardverhalten mit einem gemeinsamen Schalter bleibt ohne Umbau exakt erhalten. Zusätzlich läuft der weiche Ziffernwechsel jetzt auch im Nacht-Dimm-Modus (vorher nur bei normaler Helligkeit).</p>
+            <div class="akkordeon">
+              <input type="checkbox" id="acc-9">
+              <label class="akkordeon-label" for="acc-9"><span data-i18n="geschichte.acc9.label">Problem: Integer-Underflow bei niedriger Dimm-Helligkeit</span> <span class="akkordeon-arrow">&#9654;</span></label>
+              <div class="akkordeon-content" data-i18n="geschichte.acc9.content">Bei sehr niedriger Nacht-Dimm-Helligkeit (&le;5&nbsp;%) unterlief eine <code>uint8_t</code>-Subtraktion in der Fade-Berechnung und lieferte statt einer gleichmäßigen Rampe zufällig springende Helligkeitswerte. Ursache: vorzeichenlose Ganzzahl-Subtraktion mit negativem Zwischenergebnis. Lösung: Mindest-Dimm-Wert proportional zur Ziel-Helligkeit berechnet, plus defensive Begrenzung in der Fade-Funktion.</div>
+            </div>
           </div>
         </div>
 

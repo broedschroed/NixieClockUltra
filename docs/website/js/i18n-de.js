@@ -86,7 +86,7 @@ const I18N_DE = {
 
   "geschichte.meta.title": "Geschichte – Nixie Clock Ultra",
   "geschichte.h1": "Entwicklungsgeschichte",
-  "geschichte.intro": "Die Nixie Clock Ultra entstand in acht Entwicklungsphasen zwischen April und Juli 2026. Jede Phase brachte neue Erkenntnisse &mdash; und neue Probleme, die es zu lösen galt.",
+  "geschichte.intro": "Die Nixie Clock Ultra entstand in zehn Entwicklungsphasen zwischen April und Juli 2026. Jede Phase brachte neue Erkenntnisse &mdash; und neue Probleme, die es zu lösen galt.",
 
   "geschichte.phase1.title": "Phase 1 &mdash; Firmware-Grundgerüst",
   "geschichte.phase1.body": "Vollständige Basis-Firmware in einer einzigen <code>.ino</code>-Datei: Nixie-Ansteuerung via Multiplex-ISR, NeoPixel-Animationen, Web-Interface (WiFi AP, AsyncWebServer), IR-Fernbedienung mit 7 Funktionen, DS1302 RTC-Integration.",
@@ -130,6 +130,11 @@ const I18N_DE = {
 
   "geschichte.phase9.title": "Phase 9 &mdash; Weicher Ziffernwechsel",
   "geschichte.phase9.body": "Der Wechsel zwischen zwei Ziffern erfolgt jetzt optional nicht mehr schlagartig, sondern als sanfter Crossfade &mdash; getrennt zuschaltbar für den Sekundentakt und für den Wechsel zwischen Uhrzeit- und Datumsanzeige. Technisch über den vorhandenen HV-Dimmer realisiert (<code>digit_fade.ino</code>): kurz abblenden, Ziffern bei Minimalhelligkeit umschalten, wieder aufblenden &mdash; als non-blocking State-Machine, angetrieben aus <code>loop()</code>. Dauer nach einem Hardware-Test auf 400&nbsp;ms festgelegt. Zusätzlich wurde die Rollgeschwindigkeit der Slot-Machine-Animation (<code>slotSpeedPct</code>) über einen eigenen Web-UI-Regler einstellbar gemacht.",
+
+  "geschichte.phase10.title": "Phase 10 &mdash; Pro-Röhre-HV-Dimmer",
+  "geschichte.phase10.body": "Die Umrüstung des Nixie Display Boards erlaubt jetzt optional 6 unabhängige TLP627-Anodenschalter statt eines gemeinsamen &mdash; einen pro Röhre. Beim weichen Ziffernwechsel blendet dadurch nur die Röhre ab, deren Ziffer sich tatsächlich ändert; unveränderte Röhren bleiben durchgehend hell. Per Compile-Switch <code>HV_PER_TUBE_DIMMER</code> aktivierbar (<code>hv_dimmer.ino</code>), Standardverhalten mit einem gemeinsamen Schalter bleibt ohne Umbau exakt erhalten. Zusätzlich läuft der weiche Ziffernwechsel jetzt auch im Nacht-Dimm-Modus (vorher nur bei normaler Helligkeit).",
+  "geschichte.acc9.label": "Problem: Integer-Underflow bei niedriger Dimm-Helligkeit",
+  "geschichte.acc9.content": "Bei sehr niedriger Nacht-Dimm-Helligkeit (&le;5&nbsp;%) unterlief eine <code>uint8_t</code>-Subtraktion in der Fade-Berechnung und lieferte statt einer gleichmäßigen Rampe zufällig springende Helligkeitswerte. Ursache: vorzeichenlose Ganzzahl-Subtraktion mit negativem Zwischenergebnis. Lösung: Mindest-Dimm-Wert proportional zur Ziel-Helligkeit berechnet, plus defensive Begrenzung in der Fade-Funktion.",
 
   "dokumentation.meta.title": "Dokumentation – Nixie Clock Ultra",
   "dokumentation.h1": "Dokumentation &amp; Downloads",

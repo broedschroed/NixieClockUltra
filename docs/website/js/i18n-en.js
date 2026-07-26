@@ -86,7 +86,7 @@ const I18N_EN = {
 
   "geschichte.meta.title": "History – Nixie Clock Ultra",
   "geschichte.h1": "Development History",
-  "geschichte.intro": "The Nixie Clock Ultra was developed in eight phases between April and July 2026. Each phase brought new insights &mdash; and new problems that needed solving.",
+  "geschichte.intro": "The Nixie Clock Ultra was developed in ten phases between April and July 2026. Each phase brought new insights &mdash; and new problems that needed solving.",
 
   "geschichte.phase1.title": "Phase 1 &mdash; Firmware Skeleton",
   "geschichte.phase1.body": "Complete baseline firmware in a single <code>.ino</code> file: Nixie driving via multiplex ISR, NeoPixel animations, web interface (WiFi AP, AsyncWebServer), IR remote control with 7 functions, DS1302 RTC integration.",
@@ -130,6 +130,11 @@ const I18N_EN = {
 
   "geschichte.phase9.title": "Phase 9 &mdash; Soft Digit Transition",
   "geschichte.phase9.body": "The transition between two digits can now optionally happen not abruptly but as a smooth crossfade &mdash; independently toggleable for the seconds tick and for switching between time and date display. Implemented technically via the existing HV dimmer (<code>digit_fade.ino</code>): briefly dim down, switch digits at minimum brightness, fade back up &mdash; as a non-blocking state machine, driven from <code>loop()</code>. Duration set to 400&nbsp;ms after a hardware test. Additionally, the slot-machine animation's roll speed (<code>slotSpeedPct</code>) was made adjustable via its own web UI slider.",
+
+  "geschichte.phase10.title": "Phase 10 &mdash; Per-Tube HV Dimmer",
+  "geschichte.phase10.body": "The Nixie Display Board rework now optionally allows 6 independent TLP627 anode switches instead of one shared switch &mdash; one per tube. During a soft digit transition, only the tube whose digit actually changes now dims; unchanged tubes stay lit continuously. Enabled via the <code>HV_PER_TUBE_DIMMER</code> compile switch (<code>hv_dimmer.ino</code>); default behavior with a single shared switch remains exactly unchanged without the rework. Additionally, the soft digit transition now also works in night-dim mode (previously only at normal brightness).",
+  "geschichte.acc9.label": "Problem: Integer Underflow at Low Dim Brightness",
+  "geschichte.acc9.content": "At very low night-dim brightness (&le;5&nbsp;%), a <code>uint8_t</code> subtraction in the fade calculation underflowed, producing randomly jumping brightness values instead of a smooth ramp. Cause: unsigned integer subtraction with a negative intermediate result. Fix: minimum dim value computed proportionally to the target brightness, plus a defensive clamp in the fade function.",
 
   "dokumentation.meta.title": "Documentation – Nixie Clock Ultra",
   "dokumentation.h1": "Documentation &amp; Downloads",
