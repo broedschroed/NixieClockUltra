@@ -239,9 +239,12 @@ auf 400 ms, siehe `NixieClockUltra.ino` (`softFadeSecondEnabled ? 400 : 0` bzw.
 die Masken-Berechnung (`computeChangedMask()`) liegen in `digit_fade_math.h` und sind per
 Host-Unit-Test (`test/digit_fade_math_test.cpp`) ohne Arduino-Framework testbar.
 
-`cancelDigitFade()` schließt einen laufenden Fade sofort ab (Zielziffern schreiben, Duty
-unangetastet) und wird vor `startSlotAnimation()` sowie beim Eintritt in den Edit-Modus
-aufgerufen — Absicherung gegen eine Race zwischen laufendem Fade und neuer Display-Aktivität.
+`cancelDigitFade()` schließt einen laufenden Fade sofort ab: Zielziffern schreiben und die
+betroffenen Röhren (Fade-Maske) auf `fadeMaxDuty` zurücksetzen (`applyDutyToMask()`) — und wird
+vor `startSlotAnimation()` sowie beim Eintritt in den Edit-Modus aufgerufen. Absicherung gegen
+eine Race zwischen laufendem Fade und neuer Display-Aktivität; frühere Variante ließ die
+Helligkeit unangetastet, was Röhren nach einem abgebrochenen Fade dauerhaft auf
+Zwischenhelligkeit hängen lassen konnte (behoben).
 
 ## Slot-Machine-Geschwindigkeit
 

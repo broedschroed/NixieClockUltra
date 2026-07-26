@@ -2,7 +2,7 @@
 
 ## PCB 1 – Logic Board
 
-**KiCAD-Projekt:** `nixieclocklogic_V2` · Rev 0.9 · 2026-05-07
+**KiCAD-Projekt:** `nixieclocklogic_V2-2` · Rev 2.1 · 2026-07-25
 
 Das Logic Board beherbergt den Mikrocontroller, die Echtzeituhr, die Hochspannungserzeugung
 und alle Nutzerschnittstellen (Taster, IR, USB). Es versorgt das Nixie Display Board
@@ -17,7 +17,7 @@ und alle Nutzerschnittstellen (Taster, IR, USB). Es versorgt das Nixie Display B
 | U3   | VS1838B             | IR-Empfänger/-Demodulator 38 kHz                |
 | U4   | HV-MOD              | Boost-Converter, erzeugt ~170 V DC für Nixie-Anoden |
 | U5   | AMS1117-3.3 (SOT-223)| LDO-Linearregler 5V → 3,3V                    |
-| –    | TLP627 (DIP-4)      | Optokoppler schaltet Anodenspannung per Hardware-PWM (Nacht-Modus-Dimmung) — aktuell handverdrahtet, noch nicht im KiCad-Schaltplan mit eigener Referenz geführt |
+| U7   | TLP627 (DIP-4)      | Optokoppler schaltet Anodenspannung per Hardware-PWM (Nacht-Modus-Dimmung) |
 | U22  | USBLC6-2SC6 (SOT-23-6)| USB-ESD-/TVS-Schutz                          |
 | BT1  | CR2032              | RTC-Backup-Batterie                             |
 | Y1   | 32,768 kHz Quarz    | RTC-Taktquelle                                  |
@@ -44,7 +44,7 @@ und alle Nutzerschnittstellen (Taster, IR, USB). Es versorgt das Nixie Display B
 
 ## PCB 2 – Nixie Display Board
 
-**KiCAD-Projekt:** `nixieclockin12_V2` · Rev 2.01 · 2026-04-06
+**KiCAD-Projekt:** `nixieclockin12_V2-1` · Rev 2.01 · 2026-07-25
 
 Das Display Board enthält die eigentliche Anzeigeelektronik. Die vier MCP23017 treiben
 je 16 NPN-Transistoren, die die Nixie-Kathoden individuell auf GND schalten. Die Anoden
@@ -78,7 +78,7 @@ ausgebaut wird.
 | C1–C4    | 100 nF (0805)        | 4      | Abblockkondensatoren je MCP23017                 |
 | J1       | Logic (8-polig)      | 1      | Inter-Board: Logik-Signale ← Logic Board         |
 | J2       | HV (4-polig)         | 1      | Inter-Board: ~170V ← Logic Board                 |
-| –        | TLP627 (DIP-4)       | 6 (optional) | Pro-Röhre-Anodenschalter — ersetzt bei Bestückung den gemeinsamen Logic-Board-Schalter für unabhängiges Dimmen jeder Röhre |
+| U5–U10   | TLP627 (DIP-4)       | 6 (optional) | Pro-Röhre-Anodenschalter — ersetzt bei Bestückung den gemeinsamen Logic-Board-Schalter für unabhängiges Dimmen jeder Röhre |
 
 ### MCP23017 I²C-Adressen und Röhrenzuordnung
 

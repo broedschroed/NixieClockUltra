@@ -237,7 +237,7 @@ def build_content():
     c.append(p("Version 2.1 · ESP32-S3 · 6 × IN-12A Nixie", "TitleMeta"))
     c.append(p("MCP23017 Direct Drive · DS1302 RTC · WS2812B NeoPixel", "TitleMeta"))
     c.append(br())
-    c.append(p("Stand: Juni 2026", "TitleMeta"))
+    c.append(p("Stand: Juli 2026", "TitleMeta"))
     c.append(p("Projekt: broed digital media", "TitleMeta"))
     c.append('<text:p text:style-name="PageBreak"/>\n')
 
@@ -259,8 +259,8 @@ def build_content():
     c.append(table(
         ["Platine", "KiCAD-Projekt", "Rev.", "Hauptfunktion"],
         [
-            ["Logic Board", "nixieclocklogic_V2-1", "2.1", "ESP32-S3, DS1302 RTC, DC-DC 5V→10V, HV-MOD, LDR, Taster, IR, USB"],
-            ["Nixie Display Board", "nixieclockin12_V2", "2.01", "4× MCP23017, 60× SMBTA42, 6× IN-12A, WS2812B"],
+            ["Logic Board", "nixieclocklogic_V2-2", "2.1", "ESP32-S3, DS1302 RTC, DC-DC 5V→10V, HV-MOD, LDR, Taster, IR, USB"],
+            ["Nixie Display Board", "nixieclockin12_V2-1", "2.01", "4× MCP23017, 60× SMBTA42, 6× IN-12A, WS2812B, optional 6× TLP627"],
         ],
         [3.2, 4.5, 1.2, 7.1]
     ))
@@ -312,7 +312,7 @@ def build_content():
             ["U4",  "HV-MOD",              "Custom",     "Boost-Converter 10 V → ~170 V DC für Nixie-Anoden"],
             ["U5",  "AMS1117-3.3",         "SOT-223",    "LDO-Linearregler 5 V → 3,3 V"],
             ["U6",  "DC-DC-MOD",           "Custom",     "Boost-Konverter 5 V → 10 V (Vorstufe für HV-Modul)"],
-            ["–",   "TLP627",              "DIP-4",      "Optokoppler schaltet Anodenspannung per Hardware-PWM (Nacht-Modus-Dimmung); aktuell handverdrahtet, noch nicht mit eigener Referenz im Schaltplan"],
+            ["U7",  "TLP627",              "DIP-4",      "Optokoppler schaltet Anodenspannung per Hardware-PWM (Nacht-Modus-Dimmung)"],
             ["U22", "USBLC6-2SC6",         "SOT-23-6",   "USB-ESD-/TVS-Schutz"],
             ["BT1", "CR2032",              "SMD-Halter", "RTC-Backup-Batterie (~3 V)"],
             ["Y1",  "32,768 kHz Quarz",    "Radial",     "RTC-Taktquelle"],
@@ -348,12 +348,22 @@ def build_content():
                "Die Kathoden der jeweils anzuzeigenden Ziffer werden durch "
                "NPN-Transistoren auf dem Display Board auf GND gezogen."))
     c.append(h3("Anoden-Dimmung (TLP627, Hardware-PWM)"))
-    c.append(p("Der TLP627-Optokoppler schaltet die vom HV-MOD kommende Anodenspannung "
+    c.append(p("Der TLP627-Optokoppler (U7) schaltet die vom HV-MOD kommende Anodenspannung "
                "per Hardware-PWM (LEDC, ~200 Hz) auf GPIO7 (HV_SWITCH_PIN). Im "
                "Nacht-Modus reduziert die Firmware den Duty-Cycle auf einen "
                "einstellbaren Wert zwischen 2 % und 60 % (Standard 25 %, siehe "
                "hv_dimmer.ino in firmware.md) statt wie zuvor die Kathoden per "
                "Software-PWM zu takten."))
+    c.append(p("Optional lässt sich dieser eine Schalter durch 6 separate TLP627 (U5–U10) "
+               "auf dem Nixie Display Board ersetzen, einen pro Röhre (siehe Kapitel "
+               "«PCB 2 – Nixie Display Board»). Das ermöglicht einen weichen Ziffernwechsel "
+               "pro Röhre, bei dem unveränderte Ziffern nicht mitblinken. Aktiviert wird "
+               "das per HV_PER_TUBE_DIMMER-Compile-Switch in der Firmware (siehe "
+               "firmware.md) — ohne bestückte Zusatzschalter bleibt der gemeinsame "
+               "Schalter U7 aktiv. Der gemeinsame Schalter sollte bei dieser Umrüstung "
+               "entfernt oder dauerhaft überbrückt werden; die Firmware hält sein "
+               "Steuersignal (GPIO7) bei aktiviertem HV_PER_TUBE_DIMMER zur Sicherheit "
+               "dauerhaft auf HIGH (offen), falls er nicht ausgebaut wird."))
     c.append(note("Hochspannungswarnung: Der HV-Ausgang führt ~170 V DC — "
                   "lebensgefährlich bei Berührung. Vor Arbeiten an der Schaltung "
                   "die Versorgung trennen und Kondensatoren entladen."))
@@ -373,7 +383,13 @@ def build_content():
             ["11", "BTN_DOWN",  "Input",  "Taster DOWN (INPUT_PULLUP, aktiv LOW)"],
             ["12", "BTN_UP",    "Input",  "Taster UP (INPUT_PULLUP, aktiv LOW)"],
             ["13", "BTN_SET",   "Input",  "Taster SET (INPUT_PULLUP, aktiv LOW)"],
+            ["15", "HV_TUBE_PIN_2", "Output", "(optional) Pro-Röhre-TLP627 Minutenzehner, nur bei HV_PER_TUBE_DIMMER"],
+            ["16", "HV_TUBE_PIN_3", "Output", "(optional) Pro-Röhre-TLP627 Minuteneiner, nur bei HV_PER_TUBE_DIMMER"],
+            ["17", "HV_TUBE_PIN_4", "Output", "(optional) Pro-Röhre-TLP627 Sekundenzehner, nur bei HV_PER_TUBE_DIMMER"],
+            ["18", "HV_TUBE_PIN_5", "Output", "(optional) Pro-Röhre-TLP627 Sekundeneiner, nur bei HV_PER_TUBE_DIMMER"],
             ["21", "NEO_DATA",  "Output", "WS2812B DIN (10 LEDs, verkettete Kette)"],
+            ["38", "HV_TUBE_PIN_0", "Output", "(optional) Pro-Röhre-TLP627 Stundenzehner, nur bei HV_PER_TUBE_DIMMER"],
+            ["47", "HV_TUBE_PIN_1", "Output", "(optional) Pro-Röhre-TLP627 Stundeneiner, nur bei HV_PER_TUBE_DIMMER"],
             ["48", "IR_RECV",   "Input",  "VS1838B demodulierter 38-kHz-Ausgang"],
         ],
         [1.2, 2.5, 2.0, 10.3]
@@ -405,6 +421,9 @@ def build_content():
                "Sechs WS2812B-SMD-LEDs (Pixel 0–5, GRB) liefern die Röhrenhintergrundbeleuchtung; "
                "vier WS2812B-THT-LEDs YF923 (Pixel 6–9, RGB) dienen als Trennpunkt-LEDs "
                "zwischen den Zifferngruppen."))
+    c.append(p("Optional trägt das Board 6 zusätzliche TLP627-Optokoppler (U5–U10), "
+               "je einen pro Röhre, als Ersatz für den einen gemeinsamen Anodenschalter "
+               "auf dem Logic Board (siehe «Anoden-Dimmung» im vorigen Kapitel)."))
 
     c.append(h2("Schaltplan"))
     c.append(img("nixie_sch", "Abb. 3 – Nixie Display Board Rev 2.01 Schaltplan"))
@@ -428,6 +447,7 @@ def build_content():
             ["C1–C4",   "100 nF (0805)",              "4",  "Abblockkondensatoren je MCP23017 (VCC gegen GND)"],
             ["J1",      "PinHeader 1×8 (2,54 mm)",   "1",  "Inter-Board Logik-Signale ← Logic Board J3"],
             ["J2",      "PinHeader 1×4 (2,54 mm)",   "1",  "Inter-Board HV-Versorgung ← Logic Board J4"],
+            ["U5–U10",  "TLP627 (DIP-4)",            "6 (optional)", "Pro-Röhre-Anodenschalter — ersetzt bei Bestückung den gemeinsamen Logic-Board-Schalter U7 für unabhängiges Dimmen jeder Röhre"],
         ],
         [1.8, 4.5, 1.5, 8.2]
     ))
@@ -507,14 +527,14 @@ def build_content():
     c.append(table(
         ["Datei", "Zeilen", "Inhalt / Verantwortlichkeit"],
         [
-            ["NixieClockUltra.ino", "481", "Globals, setup(), loop(), Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals, Röhrentest-Globals"],
+            ["NixieClockUltra.ino", "492", "Globals, setup(), loop(), Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals, Röhrentest-Globals"],
             ["nixie_driver.ino",    "91",  "nixieInit(), nixieWrite(), MCP23017-I²C-Abstraktion, Shadow-Register, Mutex"],
-            ["display.ino",         "88",  "setDisplayTime(), setDisplayDate(), commitDigits() (weicher Ziffernwechsel), Slot-Animation"],
-            ["digit_fade.ino",      "77",  "startDigitFade(), updateDigitFade(), cancelDigitFade() — non-blocking Crossfade über HV-Dimmer-Duty"],
+            ["display.ino",         "91",  "setDisplayTime(), setDisplayDate(), commitDigits() (weicher Ziffernwechsel, Bitmaske via computeChangedMask()), Slot-Animation"],
+            ["digit_fade.ino",      "95",  "startDigitFade(), updateDigitFade(), cancelDigitFade() — non-blocking Crossfade über HV-Dimmer-Duty, pro Röhre per Bitmaske"],
             ["buttons.ino",         "127", "Entprell-FSM für 4 Taster, Kurz-/Langdruck, Edit-Mode Zeit+Datum"],
             ["rtc.ino",             "18",  "readRTC(), writeRTC() via DS1302/ThreeWire, liest auch Tag/Monat/Jahr"],
             ["night_mode.ino",      "34",  "LDR-Abtastung (GPIO6, ADC1), updateNightMode(), Zeitbereich-Logik"],
-            ["hv_dimmer.ino",       "12",  "hvDimmerInit(), hvDimmerSetDuty() — LEDC-Hardware-PWM für TLP627 auf Anodenspannung"],
+            ["hv_dimmer.ino",       "47",  "hvDimmerInit(), hvDimmerSetDutyAll(), hvDimmerSetDutyTube() — LEDC-Hardware-PWM für TLP627 auf Anodenspannung; bei HV_PER_TUBE_DIMMER 6 unabhängige Kanäle statt einem gemeinsamen"],
             ["neo_animation.ino",   "107", "Rainbow, Statisch, Puls, Slot, Nacht-Modus-Dimming, Datumsanzeige-Override"],
             ["ir_remote.ino",       "107", "executeAction(), dispatchIRAction(), handleIR(), 8 IR-Aktionen"],
             ["tube_test.ino",       "50",  "startTubeTest(), updateTubeTest(), stopTubeTest() — non-blocking Röhrentest-State-Machine"],
@@ -624,50 +644,79 @@ def build_content():
     ))
 
     c.append(h2("hv_dimmer.ino – Hardware-PWM-Dimmung der Anodenspannung"))
-    c.append(p("Die Röhren-Dimmung im Nacht-Modus erfolgt über einen TLP627-Optokoppler, "
-               "der die Anodenspannung selbst per LEDC-Hardware-PWM (~200 Hz) auf "
-               "HV_SWITCH_PIN (GPIO7) schaltet — nicht mehr über eine Software-PWM auf "
-               "den Kathoden:"))
+    c.append(p("Die Röhren-Dimmung im Nacht-Modus erfolgt über einen oder sechs "
+               "TLP627-Optokoppler, die die Anodenspannung selbst per "
+               "LEDC-Hardware-PWM (~200 Hz) schalten — nicht über eine Software-PWM auf "
+               "den Kathoden. Der HV_PER_TUBE_DIMMER-Compile-Switch entscheidet, welche "
+               "der beiden Varianten kompiliert wird:"))
     c.append(code_block(
+        "#ifdef HV_PER_TUBE_DIMMER",
+        "// 6 unabhängige Kanäle, einer pro Röhre",
+        "void hvDimmerInit() { /* ledcAttach() je HV_TUBE_PIN_0..5, Duty 255 */ }",
+        "void hvDimmerSetDutyAll(uint8_t duty0to255)                { /* alle 6 Kanäle */ }",
+        "void hvDimmerSetDutyTube(uint8_t tube, uint8_t duty0to255) { /* nur dieser Kanal */ }",
+        "",
+        "#else",
+        "// Ein gemeinsamer Kanal (heutige Standard-Hardware, U7)",
         "void hvDimmerInit() {",
         "    ledcAttach(HV_SWITCH_PIN, HV_PWM_FREQ_HZ, 8);",
         "    ledcWrite(HV_SWITCH_PIN, 255);   // volle Helligkeit (Anode dauerhaft an)",
         "}",
-        "",
-        "void hvDimmerSetDuty(uint8_t duty0to255) {",
-        "    ledcWrite(HV_SWITCH_PIN, duty0to255);",
-        "}",
+        "void hvDimmerSetDutyAll(uint8_t duty0to255) { ledcWrite(HV_SWITCH_PIN, duty0to255); }",
+        "// Röhrenindex wird ignoriert — es gibt nur den einen gemeinsamen Schalter.",
+        "void hvDimmerSetDutyTube(uint8_t /*tube*/, uint8_t duty0to255) { ledcWrite(HV_SWITCH_PIN, duty0to255); }",
+        "#endif",
     ))
-    c.append(p("loop() ruft hvDimmerSetDuty() nur bei einem Wechsel von nightState auf "
-               "(Guard nightState != prevNightState), nicht bei jedem Durchlauf: "
-               "NIGHT_NORMAL → Duty 255, NIGHT_DIM → Duty hvDimPct*255/100 (2–60 %), "
-               "NIGHT_DARK → Duty 0. Ein separater Blitzschutz für Sekundenwechsel ist "
+    c.append(p("hvDimmerSetDutyAll() wird bei einem Wechsel von nightState in loop() "
+               "aufgerufen (Guard nightState != prevNightState), nicht bei jedem "
+               "Durchlauf — setzt alle 6 Röhren gemeinsam auf dieselbe Ziel-Helligkeit, "
+               "unabhängig davon ob HV_PER_TUBE_DIMMER aktiv ist: NIGHT_NORMAL → Duty "
+               "255, NIGHT_DIM → Duty hvDimPct*255/100 (2–60 %), NIGHT_DARK → Duty 0. "
+               "hvDimmerSetDutyTube() wird ausschließlich aus der Fade-State-Machine in "
+               "digit_fade.ino heraus aufgerufen — kein zusätzlicher CPU-Overhead im "
+               "Normalbetrieb. Ein separater Blitzschutz für Sekundenwechsel ist "
                "nicht nötig, da die Kathoden-Ansteuerung unabhängig von der "
                "Anodendimmung läuft."))
 
     c.append(h2("digit_fade.ino – Weicher Ziffernwechsel"))
     c.append(p("commitDigits() in display.ino ist die zentrale Stelle, über die alle "
                "Ziffernänderungen laufen (setDisplayTime(), setDisplayDate() sowie die "
-               "Soft-Varianten setDisplayTimeSoft()/setDisplayDateSoft()). Sie vergleicht "
-               "per memcmp() gegen displayDigits, um unveränderte Aufrufe zu ignorieren, "
-               "und entscheidet dann: fadeMs == 0 oder nightState != NIGHT_NORMAL → "
-               "sofortiger Hart-Wechsel über nixieWrite() (im Nacht-Modus kein Fade, da "
-               "die Anodenspannung dort bereits gedimmt/aus ist); fadeMs > 0 → "
-               "startDigitFade()."))
+               "Soft-Varianten setDisplayTimeSoft()/setDisplayDateSoft()). Sie berechnet "
+               "per computeChangedMask() (digit_fade_math.h) eine Bitmaske der Röhren, "
+               "deren Ziffer sich ändert (Bit i = Tube-Index i, 0=HZ…5=SE) — ist die "
+               "Maske 0, ändert sich nichts und der Aufruf wird ignoriert. Sonst: "
+               "fadeMs == 0 oder nightState == NIGHT_DARK → sofortiger Hart-Wechsel über "
+               "nixieWrite() (in NIGHT_DARK ist die Anodenspannung ohnehin aus, ein Fade "
+               "wäre unsichtbar); fadeMs > 0 und nightState != NIGHT_DARK (also auch in "
+               "NIGHT_DIM) → startDigitFade() mit der berechneten Maske als Parameter."))
     c.append(p("startDigitFade()/updateDigitFade() bilden eine non-blocking "
-               "State-Machine (angetrieben aus loop()), die den HV-Dimmer-Duty "
-               "(hvDimmerSetDuty()) in 5-ms-Schritten (DIGIT_FADE_STEP_MS) erst auf "
-               "DIGIT_FADE_MIN_DUTY (13, ≈5 %) abblendet, bei Minimalhelligkeit die "
-               "Zielziffern schreibt (nixieWrite()), und wieder auf 255 aufblendet. "
-               "Die Dauer wird über fadeMs gesteuert (je zur Hälfte Ab-/Aufblenden); "
+               "State-Machine (angetrieben aus loop()), die den HV-Dimmer-Duty nur für "
+               "die Röhren in der Fade-Maske (hvDimmerSetDutyTube()) in 5-ms-Schritten "
+               "(DIGIT_FADE_STEP_MS) erst auf einen Minimalwert abblendet, bei "
+               "Minimalhelligkeit die Zielziffern schreibt (nixieWrite()), und wieder auf "
+               "die Ziel-Helligkeit (fadeMaxDuty) aufblendet. fadeMaxDuty wird beim "
+               "Fade-Start einmalig ermittelt: 255 bei NIGHT_NORMAL, hvDimPct*255/100 bei "
+               "NIGHT_DIM — der Fade wirkt im Dimm-Modus also konsistent gedimmt statt "
+               "kurz auf 100 % aufzublitzen. Der Minimalwert (fadeMinDuty) wird "
+               "proportional zu fadeMaxDuty berechnet, nicht als fixer Wert — das "
+               "vermeidet einen Integer-Underflow bei sehr niedriger Dimm-Helligkeit "
+               "(siehe Kapitel «Entwicklungsgeschichte» auf der Website). Röhren "
+               "außerhalb der Maske werden während des gesamten Fades nicht angefasst — "
+               "mit aktiviertem HV_PER_TUBE_DIMMER bleiben sie sichtbar unverändert hell; "
+               "ohne die Hardware-Option dimmt hvDimmerSetDutyTube() ohnehin den einen "
+               "gemeinsamen Schalter, sodass sich am heutigen Erscheinungsbild (alle 6 "
+               "dimmen gemeinsam) nichts ändert."))
+    c.append(p("Die Dauer wird über fadeMs gesteuert (je zur Hälfte Ab-/Aufblenden); "
                "aktuell fest verdrahtet auf 400 ms (softFadeSecondEnabled bzw. "
                "softFadeDateEnabled in NixieClockUltra.ino). Die reine "
-               "Interpolationsmathematik (fadeDutyForStep()) liegt in digit_fade_math.h "
-               "und ist per Host-Unit-Test ohne Arduino-Framework testbar."))
-    c.append(p("cancelDigitFade() schließt einen laufenden Fade sofort ab (Zielziffern "
-               "schreiben, Duty unangetastet) und wird vor startSlotAnimation() sowie "
-               "beim Eintritt in den Edit-Modus aufgerufen — Absicherung gegen eine Race "
-               "zwischen laufendem Fade und neuer Display-Aktivität."))
+               "Interpolationsmathematik (fadeDutyForStep()) und die Masken-Berechnung "
+               "(computeChangedMask()) liegen in digit_fade_math.h und sind per "
+               "Host-Unit-Test ohne Arduino-Framework testbar."))
+    c.append(p("cancelDigitFade() schließt einen laufenden Fade sofort ab: Zielziffern "
+               "schreiben und die betroffenen Röhren (Fade-Maske) auf fadeMaxDuty "
+               "zurücksetzen — und wird vor startSlotAnimation() sowie beim Eintritt in "
+               "den Edit-Modus aufgerufen, als Absicherung gegen eine Race zwischen "
+               "laufendem Fade und neuer Display-Aktivität."))
 
     c.append(h2("Slot-Machine-Geschwindigkeit"))
     c.append(p("slotSpeedPct (20–100 %, Standard 100) skaliert sowohl "
@@ -709,7 +758,7 @@ def build_content():
                "synchron auf derselben Ziffer still)."))
     c.append(p("startTubeTest() bricht konkurrierende Display-Nutzer ab "
                "(cancelDigitFade(), slotActive=false, dateShowActive=false, "
-               "editState=EDIT_NONE), erzwingt hvDimmerSetDuty(255) unabhängig vom "
+               "editState=EDIT_NONE), erzwingt hvDimmerSetDutyAll(255) unabhängig vom "
                "Nacht-Modus und schreibt Ziffer 0 sofort hart auf alle Röhren. Erneuter "
                "Aufruf während eines laufenden Tests setzt ihn einfach auf Ziffer 0 "
                "zurück (kein Fehlerfall). updateTubeTest() (aus loop()) schaltet alle "
@@ -997,7 +1046,7 @@ META_XML = """\
 <office:meta>
   <dc:title>Nixie Clock Ultra – Systemdokumentation</dc:title>
   <dc:creator>broed digital media</dc:creator>
-  <dc:date>2026-06-29</dc:date>
+  <dc:date>2026-07-27</dc:date>
   <meta:generator>gen_sysdoc.py</meta:generator>
 </office:meta>
 </office:document-meta>"""
