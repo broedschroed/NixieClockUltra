@@ -24,7 +24,7 @@ function injectNav() {
           ${GEAR_SVG}
           <div class="header-text">
             <div class="site-title">NIXIE CLOCK ULTRA</div>
-            <div class="site-subtitle">broed digital media &middot; 2026</div>
+            <div class="site-subtitle">A. Schröder &middot; 2026</div>
           </div>
           ${GEAR_SVG}
         </div>
@@ -51,7 +51,7 @@ function injectNav() {
   if (footer) {
     footer.innerHTML = `
       <div class="container">
-        <p class="footer-text" data-i18n="footer.copyright">&copy; 2026 broed digital media &middot; Nixie Clock Ultra</p>
+        <p class="footer-text" data-i18n="footer.copyright">&copy; 2026 A. Schröder &middot; Nixie Clock Ultra</p>
       </div>`;
   }
 }

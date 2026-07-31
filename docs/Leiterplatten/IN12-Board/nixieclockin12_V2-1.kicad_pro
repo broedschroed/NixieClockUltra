@@ -50,7 +50,23 @@
         "silk_text_thickness": 0.1,
         "silk_text_upright": false,
         "zones": {
-          "min_clearance": 0.5
+          "border_display_style": 2,
+          "border_hatch_pitch": 0.5,
+          "corner_radius": 0.0,
+          "corner_smoothing": 0,
+          "fill_mode": 0,
+          "hatch_gap": 1.5,
+          "hatch_orientation": 0.0,
+          "hatch_smoothing_level": 0,
+          "hatch_smoothing_value": 0.1,
+          "hatch_thickness": 1.0,
+          "min_clearance": 0.5,
+          "min_island_area": 10.0,
+          "min_thickness": 0.25,
+          "pad_connection": 1,
+          "remove_islands": 0,
+          "thermal_relief_gap": 0.5,
+          "thermal_relief_spoke_width": 0.5
         }
       },
       "diff_pair_dimensions": [
@@ -62,8 +78,8 @@
       ],
       "drc_exclusions": [
         [
-          "courtyards_overlap|106140197|103932209|097487ac-37cf-47e2-8e6b-2645c928a2bb|3f30539f-d863-426c-b311-63cbc609c639",
-          "IO-Chip unter Nixie"
+          "courtyards_overlap|106138289|103932209|097487ac-37cf-47e2-8e6b-2645c928a2bb|3f30539f-d863-426c-b311-63cbc609c639",
+          ""
         ],
         [
           "courtyards_overlap|113761700|91437824|097487ac-37cf-47e2-8e6b-2645c928a2bb|349d580d-b68c-4d53-9330-2f8111c00b81",
@@ -106,12 +122,12 @@
           "Neopixel unter Röhre"
         ],
         [
-          "courtyards_overlap|80981764|104025637|6d51f153-3879-44cf-840b-7c639e6b7cd6|d39ca75d-ed0a-47b0-aa51-120793fa6a7b",
-          "IO-Chip unter Nixie"
+          "courtyards_overlap|80982942|104025637|6d51f153-3879-44cf-840b-7c639e6b7cd6|d39ca75d-ed0a-47b0-aa51-120793fa6a7b",
+          ""
         ],
         [
-          "courtyards_overlap|84808504|89067549|6d51f153-3879-44cf-840b-7c639e6b7cd6|87125f05-ca65-4539-8ebd-a4febac87645",
-          "IO-Chip unter Nixie"
+          "courtyards_overlap|84808506|89067585|6d51f153-3879-44cf-840b-7c639e6b7cd6|87125f05-ca65-4539-8ebd-a4febac87645",
+          ""
         ],
         [
           "courtyards_overlap|95462406|93021600|097487ac-37cf-47e2-8e6b-2645c928a2bb|87125f05-ca65-4539-8ebd-a4febac87645",
@@ -543,7 +559,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "nixieclockin12_V2.kicad_pro",
+    "filename": "nixieclockin12_V2-1.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -623,7 +639,7 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "plot": "/home/andreas/Dokumente/_Develop/KiCAD/10.0/projects/nixieclockin12_V2/produce/",
+      "plot": "/home/andreas/Dokumente/_Develop/KiCAD/10.0/projects/nixieclockin12_V2-1/produce/",
       "pos_files": "",
       "specctra_dsn": "",
       "step": "",
@@ -753,18 +769,18 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "nixieclockin12_V2.kicad_sch",
-        "name": "nixieclockin12_V2",
+        "filename": "nixieclockin12_V2-1.kicad_sch",
+        "name": "nixieclockin12_V2-1",
         "uuid": "c29e8235-9023-4b0f-8faf-e4415df7f889"
       }
     ],
-    "used_designators": "",
+    "used_designators": "J3,#PWR50-56,R71-76,U5-10",
     "variants": []
   },
   "sheets": [
     [
       "c29e8235-9023-4b0f-8faf-e4415df7f889",
-      "nixieclockin12_V2"
+      "nixieclockin12_V2-1"
     ]
   ],
   "text_variables": {},

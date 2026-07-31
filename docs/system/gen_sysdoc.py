@@ -238,7 +238,7 @@ def build_content():
     c.append(p("MCP23017 Direct Drive · DS1302 RTC · WS2812B NeoPixel", "TitleMeta"))
     c.append(br())
     c.append(p("Stand: Juli 2026", "TitleMeta"))
-    c.append(p("Projekt: broed digital media", "TitleMeta"))
+    c.append(p("Projekt: A. Schröder", "TitleMeta"))
     c.append('<text:p text:style-name="PageBreak"/>\n')
 
     # ── Kapitel 1: Systemübersicht ─────────────────────────────────────────
@@ -1045,7 +1045,7 @@ META_XML = """\
   office:version="1.3">
 <office:meta>
   <dc:title>Nixie Clock Ultra – Systemdokumentation</dc:title>
-  <dc:creator>broed digital media</dc:creator>
+  <dc:creator>A. Schröder</dc:creator>
   <dc:date>2026-07-27</dc:date>
   <meta:generator>gen_sysdoc.py</meta:generator>
 </office:meta>

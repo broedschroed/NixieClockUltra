@@ -5,7 +5,7 @@ const I18N_EN = {
   "nav.geschichte": "History",
   "nav.dokumentation": "Documentation",
   "nav.galerie": "Gallery",
-  "footer.copyright": "&copy; 2026 broed digital media &middot; Nixie Clock Ultra",
+  "footer.copyright": "&copy; 2026 A. Schröder &middot; Nixie Clock Ultra",
 
   "index.meta.title": "Nixie Clock Ultra",
   "index.hero.title": "NIXIE CLOCK ULTRA",

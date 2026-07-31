@@ -121,7 +121,7 @@ STYLES_XML = """\
 <office:master-styles>
   <style:master-page style:name="Standard" style:page-layout-name="PageLayout">
     <style:footer>
-      <text:p text:style-name="Footer">Nixie Clock Ultra · broed digital media · 2026</text:p>
+      <text:p text:style-name="Footer">Nixie Clock Ultra · A. Schröder · 2026</text:p>
     </style:footer>
   </style:master-page>
 </office:master-styles>
@@ -242,7 +242,7 @@ META_XML = """\
   office:version="1.3">
 <office:meta>
   <dc:title>Nixie Clock Ultra – Werbetext</dc:title>
-  <dc:creator>broed digital media</dc:creator>
+  <dc:creator>A. Schröder</dc:creator>
   <dc:date>2026-06-29</dc:date>
   <meta:generator>gen_werbetext.py</meta:generator>
 </office:meta>

@@ -3,13 +3,13 @@
     "GenerationSoftware": {
       "Vendor": "KiCad",
       "Application": "Pcbnew",
-      "Version": "10.0.0"
+      "Version": "10.0.4"
     },
-    "CreationDate": "2026-06-06T16:17:09+02:00"
+    "CreationDate": "2026-07-25T22:34:39+02:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
-      "Name": "nixieclockin12_V2",
+      "Name": "nixieclockin12_V2-1",
       "GUID": "6e697869-6563-46c6-9f63-6b696e31325f",
       "Revision": "0.9"
     },
@@ -32,47 +32,47 @@
   ],
   "FilesAttributes": [
     {
-      "Path": "nixieclockin12_V2-F_Cu.gbr",
+      "Path": "nixieclockin12_V2-1-F_Cu.gbr",
       "FileFunction": "Copper,L1,Top",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "nixieclockin12_V2-B_Cu.gbr",
+      "Path": "nixieclockin12_V2-1-B_Cu.gbr",
       "FileFunction": "Copper,L2,Bot",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "nixieclockin12_V2-F_Paste.gbr",
+      "Path": "nixieclockin12_V2-1-F_Paste.gbr",
       "FileFunction": "SolderPaste,Top",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "nixieclockin12_V2-B_Paste.gbr",
+      "Path": "nixieclockin12_V2-1-B_Paste.gbr",
       "FileFunction": "SolderPaste,Bot",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "nixieclockin12_V2-F_Silkscreen.gbr",
+      "Path": "nixieclockin12_V2-1-F_Silkscreen.gbr",
       "FileFunction": "Legend,Top",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "nixieclockin12_V2-B_Silkscreen.gbr",
+      "Path": "nixieclockin12_V2-1-B_Silkscreen.gbr",
       "FileFunction": "Legend,Bot",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "nixieclockin12_V2-F_Mask.gbr",
+      "Path": "nixieclockin12_V2-1-F_Mask.gbr",
       "FileFunction": "SolderMask,Top",
       "FilePolarity": "Negative"
     },
     {
-      "Path": "nixieclockin12_V2-B_Mask.gbr",
+      "Path": "nixieclockin12_V2-1-B_Mask.gbr",
       "FileFunction": "SolderMask,Bot",
       "FilePolarity": "Negative"
     },
     {
-      "Path": "nixieclockin12_V2-Edge_Cuts.gbr",
+      "Path": "nixieclockin12_V2-1-Edge_Cuts.gbr",
       "FileFunction": "Profile",
       "FilePolarity": "Positive"
     }
