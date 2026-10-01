@@ -13,7 +13,7 @@
 #include <string.h>
 #include "digit_fade_math.h"
 
-#define DIGIT_FADE_MIN_DUTY   13   // ~5% von 255
+#define DIGIT_FADE_MIN_DUTY   0   // ~5% von 255
 #define DIGIT_FADE_STEP_MS    5    // Schrittintervall
 
 enum FadeDir { FADE_DOWN, FADE_UP };

@@ -12,18 +12,19 @@ deshalb in `NixieClockUltra.ino` deklariert werden.
 
 | Datei                | Zeilen | Inhalt                                                                  |
 |----------------------|--------|-------------------------------------------------------------------------|
-| `NixieClockUltra.ino`| 492    | Globals, `setup()`, `loop()`, Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals, Röhrentest-Globals |
+| `NixieClockUltra.ino`| 518    | Globals, `setup()`, `loop()`, Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals, Röhrentest-Globals |
 | `nixie_driver.ino`   | 91     | `nixieInit()`, `nixieWrite()`, MCP23017-Abstraktion, FreeRTOS-Mutex     |
 | `display.ino`        | 91     | `setDisplayTime()`, `setDisplayDate()`, `commitDigits()` (weicher Ziffernwechsel, Bitmaske via `computeChangedMask()`), Slot-Animation |
 | `digit_fade.ino`     | 95     | `startDigitFade()`, `updateDigitFade()`, `cancelDigitFade()` — non-blocking Crossfade über HV-Dimmer-Duty, pro Röhre per Bitmaske |
 | `buttons.ino`        | 127    | Entprell-FSM für 4 Taster, Kurz-/Langdruck, Edit-Mode Zeit+Datum       |
 | `rtc.ino`            | 18     | `readRTC()`, `writeRTC()` via DS1302/ThreeWire, liest auch Tag/Monat/Jahr |
 | `night_mode.ino`     | 34     | LDR-Abtastung (GPIO6, ADC1), `updateNightMode()`, Zeitbereich-Logik    |
-| `hv_dimmer.ino`      | 47     | `hvDimmerInit()`, `hvDimmerSetDutyAll()`, `hvDimmerSetDutyTube()` — LEDC-Hardware-PWM für TLP627 auf Anodenspannung; bei `HV_PER_TUBE_DIMMER` 6 unabhängige Kanäle statt einem gemeinsamen |
+| `hv_dimmer.ino`      | 81     | `hvDimmerInit()`, `hvDimmerSoftStart()`, `hvDimmerSetDutyAll()`, `hvDimmerSetDutyTube()` — LEDC-Hardware-PWM für TLP627 auf Anodenspannung; bei `HV_PER_TUBE_DIMMER` 6 unabhängige Kanäle statt einem gemeinsamen |
 | `neo_animation.ino`  | 107    | Rainbow, Statisch, Puls, Slot, Nacht-Modus-Dimming, Datumsanzeige-Override |
 | `ir_remote.ino`      | 107    | `executeAction()`, `dispatchIRAction()`, `handleIR()`, 8 IR-Aktionen   |
 | `tube_test.ino`      | 50     | `startTubeTest()`, `updateTubeTest()`, `stopTubeTest()` — non-blocking Röhrentest-State-Machine |
-| `web_server.ino`     | 781    | Eingebettetes HTML/JS, alle API-Handler, WiFi-Setup, NTP, mDNS         |
+| `web_server.ino`     | 787    | Eingebettetes HTML/JS, alle API-Handler, WiFi-Setup (`setupWifiRadio()` + `setupWifi()`), NTP, mDNS |
+| `boot_diag.ino`      | 128    | Dauerhaftes Startprotokoll im NVS (Namespace `bootlog`): Reset-Grund, zuletzt erreichter Start-Schritt und Laufzeit der letzten 20 Starts, Ausgabe beim Booten; Start-Schritte in `boot_diag.h` |
 
 Reine Interpolationsmathematik für den Crossfade liegt zusätzlich in `digit_fade_math.h`
 (header-only, host-testbar ohne Arduino-Framework, siehe `test/digit_fade_math_test.cpp`).
@@ -34,10 +35,12 @@ Analog dazu liegt die reine Ziffern-/Testende-Logik des Röhrentests in `tube_te
 
 Die `setup()`-Funktion läuft einmalig nach dem Start in dieser Reihenfolge:
 
-1. Serial-Port öffnen (115200 Baud)
+1. Serial-Port öffnen (115200 Baud), `bootDiagInit()` — Startprotokoll ausgeben, neuen
+   Eintrag mit Reset-Grund anlegen (danach markiert `bootDiagStage()` jeden Schritt)
 2. Taster-Pins konfigurieren (INPUT_PULLUP)
 3. NeoPixel-Strip initialisieren, Helligkeit aus `BRIGHTNESS_LEVELS[brightLevel]` setzen
-4. `hvDimmerInit()` — LEDC-PWM anlegen, Duty zunächst 255 (volle Anodenspannung); ohne
+4. `hvDimmerInit()` — LEDC-PWM anlegen, Duty zunächst **0** (Anoden zu, damit beim Einschalten
+   keine Röhrenlast auf den Einschaltstoß trifft); ohne
    `HV_PER_TUBE_DIMMER` auf `HV_SWITCH_PIN` (GPIO7), mit aktiviertem Switch auf 6
    unabhängigen Kanälen (`HV_TUBE_PIN_0`–`HV_TUBE_PIN_5`)
 5. NVS laden — Helligkeit, Animation, Slot-Intervall, WiFi-Zugangsdaten, IR-Codes,
@@ -46,13 +49,19 @@ Die `setup()`-Funktion läuft einmalig nach dem Start in dieser Reihenfolge:
    `hvDimPct`), außerdem `softFadeSecondEnabled`, `softFadeDateEnabled` und `slotSpeedPct`
 6. `nixieInit()` — I²C initialisieren, alle 4 MCP23017 auf Output-Modus setzen, alle Bits 0
 7. RTC lesen (`readRTC()`), Uhrzeit in `curHour/curMin/curSec` und Datum in
-   `curDay/curMonth/curYear` laden
-8. `setupWifi()` — DHCP-Hostname `nixieclockcs` setzen, AP starten (SSID: `NixieClockCS`,
-   PW: `nixie1234`), ggf. STA verbinden (Timeout 20 s); bei STA-Verbindung NTP konfigurieren
-   (`configTzTime()`) und mDNS unter `nixieclockcs.local` registrieren
-9. `setupWebServer()` — alle API-Routen registrieren, `server.begin()`
-10. IR-Empfänger starten (`irrecv.enableIRIn()`)
-11. Fade-In-Flag setzen (`startFadeIn = true`), Röhren werden in `loop()` eingeblendet
+   `curDay/curMonth/curYear` laden, Ziffern auf die Kathoden schreiben (Anoden noch zu)
+8. `setupWifiRadio()` — DHCP-Hostname (`WIFI_HOSTNAME`) setzen, Funkmodul im Modus
+   `WIFI_AP_STA` starten und AP aufspannen (SSID `WIFI_SSID`, PW `WIFI_PASS`). Die
+   HF-Kalibrierung verursacht eine Stromspitze und läuft deshalb vor dem Aufblenden der Röhren.
+9. `hvDimmerSoftStart()` — Röhren nacheinander von Duty 0 auf 255 aufblenden
+   (`HV_SOFTSTART_TUBE_MS` = 200 ms je Röhre, gesamt 1,2 s; ohne `HV_PER_TUBE_DIMMER` alle
+   gemeinsam über dieselbe Dauer)
+10. `setupWifi()` — ggf. mit gespeichertem Heimnetz verbinden (blockiert bis 20 s); bei
+    STA-Verbindung NTP konfigurieren (`configTzTime()`) und mDNS unter `<WIFI_HOSTNAME>.local`
+    registrieren
+11. `setupWebServer()` — alle API-Routen registrieren, `server.begin()`
+12. IR-Empfänger starten (`irrecv.enableIRIn()`)
+13. Fade-In-Flag setzen (`startFadeIn = true`), NeoPixel werden in `loop()` eingeblendet
 
 ## Wichtige Defines {#wichtige-defines}
 
@@ -343,7 +352,8 @@ kompiliert wird (siehe [Wichtige Defines](#wichtige-defines)):
 ```cpp
 #ifdef HV_PER_TUBE_DIMMER
 // 6 unabhängige Kanäle, einer pro Röhre
-void hvDimmerInit() { /* ledcAttach() je HV_TUBE_PIN_0..5, Duty 255 */ }
+void hvDimmerInit()      { /* ledcAttach() je HV_TUBE_PIN_0..5, Duty 0 */ }
+void hvDimmerSoftStart() { /* Röhre für Röhre 0 → 255 in HV_SOFTSTART_TUBE_MS */ }
 void hvDimmerSetDutyAll(uint8_t duty0to255)              { /* alle 6 Kanäle */ }
 void hvDimmerSetDutyTube(uint8_t tube, uint8_t duty0to255) { /* nur dieser Kanal */ }
 
@@ -351,8 +361,9 @@ void hvDimmerSetDutyTube(uint8_t tube, uint8_t duty0to255) { /* nur dieser Kanal
 // Ein gemeinsamer Kanal (heutige Hardware)
 void hvDimmerInit() {
   ledcAttach(HV_SWITCH_PIN, HV_PWM_FREQ_HZ, 8);
-  ledcWrite(HV_SWITCH_PIN, 255);   // volle Helligkeit (Anode dauerhaft an)
+  ledcWrite(HV_SWITCH_PIN, 0);     // Anoden zu – Aufblenden per hvDimmerSoftStart()
 }
+void hvDimmerSoftStart() { /* alle gemeinsam 0 → 255 in 6 × HV_SOFTSTART_TUBE_MS */ }
 void hvDimmerSetDutyAll(uint8_t duty0to255) { ledcWrite(HV_SWITCH_PIN, duty0to255); }
 // Röhrenindex wird ignoriert — es gibt nur den einen gemeinsamen Schalter.
 void hvDimmerSetDutyTube(uint8_t /*tube*/, uint8_t duty0to255) { ledcWrite(HV_SWITCH_PIN, duty0to255); }

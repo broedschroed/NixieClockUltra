@@ -74,7 +74,7 @@ ausgebaut wird.
 | D2–D6    | WS2812B-SMD          | 5      | Zusätzliche LEDs / Trennpunkte (SMD)             |
 | D7–D9    | WS2812B-THT (YF923)  | 3      | Trennpunkt-LEDs (Durchsteck, RGB)                |
 | R1–R64   | 3,3 kΩ (0805)        | 64     | Basis-Vorwiderstände für Q1–Q60                  |
-| R65–R70  | 10 kΩ (THT, axial)   | 6      | I²C-Pull-ups und MCP-Adress-Pull-ups             |
+| R65–R70  | 22 kΩ (THT, axial)   | 6      | Anodenwiderstände (Strombegrenzung je Röhre, ~1,5 mA bei ~175 V) — nicht kleiner wählen, sonst steigt die 5-V-Stromaufnahme über 1 A (Brownouts) |
 | C1–C4    | 100 nF (0805)        | 4      | Abblockkondensatoren je MCP23017                 |
 | J1       | Logic (8-polig)      | 1      | Inter-Board: Logik-Signale ← Logic Board         |
 | J2       | HV (4-polig)         | 1      | Inter-Board: ~170V ← Logic Board                 |

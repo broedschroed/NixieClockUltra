@@ -2,7 +2,13 @@
 //  HARDWARE-DIMMUNG DER ANODENSPANNUNG (TLP627, LEDC-PWM)
 //  Ohne HV_PER_TUBE_DIMMER: ein gemeinsamer Schalter für alle 6 Anoden.
 //  Mit HV_PER_TUBE_DIMMER: 6 unabhängige Schalter, einer pro Röhre.
+//
+//  hvDimmerInit() startet mit geschlossenen Anoden (Duty 0), damit beim
+//  Einschalten keine Röhrenlast auf den Netzteil-Einschaltstoß trifft.
+//  hvDimmerSoftStart() blendet die Röhren danach nacheinander auf.
 // ═══════════════════════════════════════════════════════════
+
+#include "digit_fade_math.h"
 
 #ifdef HV_PER_TUBE_DIMMER
 
@@ -19,7 +25,19 @@ void hvDimmerInit() {
   digitalWrite(HV_SWITCH_PIN, HIGH);
   for (uint8_t i = 0; i < 6; i++) {
     ledcAttach(hvTubePin[i], HV_PWM_FREQ_HZ, 8);
-    ledcWrite(hvTubePin[i], 255);   // volle Helligkeit (Anode dauerhaft an)
+    ledcWrite(hvTubePin[i], 0);     // Anode zu – Aufblenden per hvDimmerSoftStart()
+  }
+}
+
+// Blockierend, nur aus setup(): Röhren nacheinander von 0 auf 255 rampen,
+// damit die Last am Netzteil stufenweise statt schlagartig ansteigt.
+void hvDimmerSoftStart() {
+  const uint8_t steps = HV_SOFTSTART_TUBE_MS / HV_SOFTSTART_STEP_MS;
+  for (uint8_t i = 0; i < 6; i++) {
+    for (uint8_t s = 1; s <= steps; s++) {
+      ledcWrite(hvTubePin[i], fadeDutyForStep(true, s, steps, 0, 255));
+      delay(HV_SOFTSTART_STEP_MS);
+    }
   }
 }
 
@@ -35,7 +53,18 @@ void hvDimmerSetDutyTube(uint8_t tube, uint8_t duty0to255) {
 
 void hvDimmerInit() {
   ledcAttach(HV_SWITCH_PIN, HV_PWM_FREQ_HZ, 8);
-  ledcWrite(HV_SWITCH_PIN, 255);   // volle Helligkeit (Anode dauerhaft an)
+  ledcWrite(HV_SWITCH_PIN, 0);     // Anoden zu – Aufblenden per hvDimmerSoftStart()
+}
+
+// Blockierend, nur aus setup(): mit nur einem gemeinsamen Schalter können
+// die Röhren nicht einzeln starten – alle zusammen über die gleiche
+// Gesamtdauer aufblenden wie die Pro-Röhre-Variante.
+void hvDimmerSoftStart() {
+  const uint8_t steps = 6 * HV_SOFTSTART_TUBE_MS / HV_SOFTSTART_STEP_MS;
+  for (uint8_t s = 1; s <= steps; s++) {
+    ledcWrite(HV_SWITCH_PIN, fadeDutyForStep(true, s, steps, 0, 255));
+    delay(HV_SOFTSTART_STEP_MS);
+  }
 }
 
 void hvDimmerSetDutyAll(uint8_t duty0to255) {

@@ -400,10 +400,9 @@ refreshSoftFade();
 // ═══════════════════════════════════════════════════════════
 //  WIFI-SETUP (AP immer aktiv; STA wenn Zugangsdaten gespeichert)
 // ═══════════════════════════════════════════════════════════
-void setupWifi() {
-  String savedSsid = prefs.getString("wifiSsid", "");
-  String savedPass = prefs.getString("wifiPass", "");
-
+// Teil 1: Funkmodul + AP starten. Enthält die HF-Kalibrierung mit ihrer
+// Stromspitze und läuft deshalb in setup() vor dem Aufblenden der Röhren.
+void setupWifiRadio() {
   // DHCP-Hostname setzen bevor WiFi-Stack konfiguriert wird
   WiFi.setHostname(WIFI_HOSTNAME);
 
@@ -411,6 +410,13 @@ void setupWifi() {
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(WIFI_SSID, WIFI_PASS);
   Serial.printf("[WiFi] AP gestartet: %s  IP: %s\n", WIFI_SSID, WiFi.softAPIP().toString().c_str());
+}
+
+// Teil 2: mit gespeichertem Heimnetz verbinden (blockiert bis zu 20 s),
+// deshalb erst nach dem Aufblenden der Röhren.
+void setupWifi() {
+  String savedSsid = prefs.getString("wifiSsid", "");
+  String savedPass = prefs.getString("wifiPass", "");
 
   if (savedSsid.length() > 0) {
     WiFi.begin(savedSsid.c_str(), savedPass.c_str());

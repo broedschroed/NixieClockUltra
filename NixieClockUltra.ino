@@ -40,6 +40,7 @@
 #include <IRremoteESP8266.h>
 #include <IRrecv.h>
 #include <ESPmDNS.h>
+#include "boot_diag.h"
 
 // ═══════════════════════════════════════════════════════════
 //  PIN-DEFINITIONEN
@@ -73,13 +74,18 @@
 // Bei bestücktem Pro-Röhre-HV-Schalter (6× TLP627 auf dem Nixie Display Board)
 // einkommentieren. Ermöglicht, dass beim weichen Ziffernwechsel nur die Röhre
 // abblendet, deren Ziffer sich tatsächlich ändert (statt aller 6 gemeinsam).
-// #define HV_PER_TUBE_DIMMER
+#define HV_PER_TUBE_DIMMER
 #define HV_TUBE_PIN_0  38   // Stundenzehner  (HZ)
 #define HV_TUBE_PIN_1  47   // Stundeneiner   (HE)
 #define HV_TUBE_PIN_2  15   // Minutenzehner  (MZ)
 #define HV_TUBE_PIN_3  16   // Minuteneiner   (ME)
 #define HV_TUBE_PIN_4  17   // Sekundenzehner (SZ)
 #define HV_TUBE_PIN_5  18   // Sekundeneiner  (SE)
+
+// Sanftanlauf beim Einschalten: Röhren nacheinander aufblenden, um die
+// Einschaltlast am Netzteil zeitlich zu entzerren (6 × 200 ms = 1,2 s).
+#define HV_SOFTSTART_TUBE_MS  200   // Aufblenddauer je Röhre
+#define HV_SOFTSTART_STEP_MS   10   // Schrittweite der Rampe
 
 // ═══════════════════════════════════════════════════════════
 //  KONSTANTEN & KONFIGURATION
@@ -286,12 +292,15 @@ Button btnLight = {BTN_LIGHT, HIGH, false, false, false, 0, 0, 30, 500};
 // Forward-Deklarationen für Funktionen, die der Arduino-Präprozessor
 // nicht automatisch erkennt (Raw-String-Literal in web_server.ino)
 void nixieInit();
+void setupWifiRadio();
 void setupWifi();
 void setupWebServer();
 void updateNightMode();
 void startTubeTest();
 void updateTubeTest();
 void stopTubeTest();
+void hvDimmerSetDutyTube(uint8_t tube, uint8_t duty0to255);
+void hvDimmerSoftStart();
 
 // ═══════════════════════════════════════════════════════════
 //  SETUP
@@ -300,6 +309,7 @@ void setup() {
   Serial.begin(115200);
   delay(200);
   Serial.println("\n[NixieClock] Booting...");
+  bootDiagInit();
 
   // --- Taster ---
   pinMode(BTN_SET,   INPUT_PULLUP);
@@ -314,7 +324,7 @@ void setup() {
   strip.show();
 
   // --- HV-Dimmer (TLP627) ---
-  hvDimmerInit();
+  hvDimmerInit();   // Anoden zunächst zu (Einschaltstrom entzerren)
 
   // --- Preferences laden ---
   prefs.begin("nixie", false);
@@ -342,9 +352,11 @@ void setup() {
   hvDimPct         = (uint8_t)constrain((int)prefs.getUChar("hvDimPct", 25), 2, 60);
   softFadeSecondEnabled = prefs.getBool("sfSecEn",  false);
   softFadeDateEnabled   = prefs.getBool("sfDateEn", false);
+  bootDiagStage(BOOT_STAGE_PREFS);
 
   // --- Nixie Direct Drive via MCP23017 ---
   nixieInit();    // Wire.begin() muss vor readRTC()/setDisplayTime() stehen
+  bootDiagStage(BOOT_STAGE_MCP);
 
   // --- RTC ---
   Rtc.Begin();
@@ -356,11 +368,22 @@ void setup() {
   Rtc.SetIsWriteProtected(false);
   Rtc.SetIsRunning(true);
   readRTC();
-  setDisplayTime(curHour, curMin, curSec);
+  setDisplayTime(curHour, curMin, curSec);   // Kathoden gesetzt, Anoden noch zu
 
-  // --- WiFi + Web-Server ---
+  // --- Einschaltlasten zeitlich entzerren ---
+  // 1. Funkmodul starten (HF-Kalibrierung = Stromspitze), solange die Röhren
+  //    noch keinen Strom ziehen.
+  setupWifiRadio();
+  bootDiagStage(BOOT_STAGE_RADIO);
+  // 2. Röhren nacheinander aufblenden.
+  hvDimmerSoftStart();
+  bootDiagStage(BOOT_STAGE_TUBES_ON);
+
+  // --- WiFi (Heimnetz) + Web-Server ---
   setupWifi();
+  bootDiagStage(BOOT_STAGE_WIFI);
   setupWebServer();
+  bootDiagStage(BOOT_STAGE_WEB);
 
   // --- IR-Empfänger ---
   irrecv.enableIRIn();
@@ -371,6 +394,8 @@ void setup() {
   startFadeStep = 0;
 
   Serial.println("[NixieClock] Bereit.");
+  bootDiagStage(BOOT_STAGE_READY);
+  bootDiagPrint();   // nochmals, falls der USB-CDC-Monitor die erste Ausgabe verpasst hat
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -382,6 +407,7 @@ uint32_t lastRtcRead = 0;
 uint32_t lastFadeMs  = 0;
 
 void loop() {
+  bootDiagLoop();
 
   // --- Start-Fade-In ---
   if (startFadeIn) {
@@ -447,7 +473,7 @@ void loop() {
       }
       if (!slotActive && !dateShowActive && !tubeTestActive) {
         if (triggerSlot) startSlotAnimation(curHour, curMin, curSec);
-        else             setDisplayTimeSoft(curHour, curMin, curSec, softFadeSecondEnabled ? 400 : 0);
+        else             setDisplayTimeSoft(curHour, curMin, curSec, softFadeSecondEnabled ? 800 : 0);
       }
     }
   }
@@ -458,13 +484,13 @@ void loop() {
   if (wasSlotActive && !slotActive) {
     dateShowActive = true;
     dateShowStart  = millis();
-    setDisplayDateSoft(softFadeDateEnabled ? 400 : 0);
+    setDisplayDateSoft(softFadeDateEnabled ? 800 : 0);
   }
 
   // Datum-Anzeige beenden
   if (dateShowActive && millis() - dateShowStart >= DATE_SHOW_MS) {
     dateShowActive = false;
-    setDisplayTimeSoft(curHour, curMin, curSec, softFadeDateEnabled ? 400 : 0);
+    setDisplayTimeSoft(curHour, curMin, curSec, softFadeDateEnabled ? 800 : 0);
   }
 
   // --- NeoPixel ---
