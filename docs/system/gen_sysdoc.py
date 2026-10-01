@@ -854,7 +854,8 @@ def build_content():
     c.append(h2("NVS-Persistenz"))
     c.append(p("Alle Einstellungen werden über die Arduino-`Preferences`-Bibliothek "
                "im ESP32-NVS-Flash gespeichert (Namespace \"nixie\"). "
-               "Beim Start werden sie automatisch geladen."))
+               "Beim Start werden sie automatisch geladen. Das Startprotokoll liegt "
+               "getrennt davon im Namespace \"bootlog\" (Schlüssel \"log\", Blob)."))
     c.append(table(
         ["NVS-Schlüssel", "Typ", "Default", "Inhalt"],
         [
@@ -959,12 +960,58 @@ def build_content():
 
     c.append(h2("Serial Monitor / Debugging"))
     c.append(p("Baudrate: 115200. Nach dem Start gibt die Firmware auf dem seriellen "
-               "Monitor den Initialisierungsablauf aus, u.a.:"))
+               "Monitor den Initialisierungsablauf aus (Beispiel mit gespeichertem Heimnetz):"))
     c.append(code_block(
+        "[NixieClock] Booting...",
+        "[Boot] ── Startprotokoll (12 Eintraege) ──",
+        "[Boot]  ...                       (Historie, siehe unten)",
+        "[Boot] Aktueller Start #12, Reset-Grund: POWERON",
         "[Nixie] MCP23017 initialisiert.",
-        "[WiFi] AP gestartet: 192.168.4.1",
-        "[WiFi] STA verbunden: 192.168.1.42",
-        "[NTP] Synchronisiert: 14:32:07",
+        "[WiFi] AP gestartet: NixieClockCS  IP: 192.168.4.1",
+        "[WiFi] Verbinde mit 'MeinWLAN'...",
+        "[WiFi] STA verbunden. IP: 192.168.1.42",
+        "[mDNS] Erreichbar als http://nixieclockcs.local",
+        "[NTP] Synchronisierung gestartet...",
+        "[IR] Empfänger gestartet auf Pin 48",
+        "[NixieClock] Bereit.",
+        "[Boot] ── Startprotokoll (13 Eintraege) ──  (erneut, inkl. aktuellem Start)",
+        "[NTP] RTC synchronisiert.",
+    ))
+    c.append(p("Zwischen «AP gestartet» und «Verbinde mit …» blenden die Röhren nacheinander "
+               "auf (ca. 1,2 s). Ohne gespeichertes Heimnetz entfallen die STA-, mDNS- und "
+               "NTP-Zeilen; schlägt die Verbindung fehl, erscheint "
+               "«[WiFi] STA-Verbindung fehlgeschlagen – nur AP aktiv.»"))
+
+    c.append(h3("Startprotokoll (boot_diag.ino)"))
+    c.append(p("Die Firmware führt im NVS (Namespace \"bootlog\") ein dauerhaftes Protokoll "
+               "der letzten 20 Starts: Reset-Grund, zuletzt erreichter Start-Schritt und "
+               "Zeitpunkt seit Start. Es übersteht auch einen vollständigen Spannungsverlust. "
+               "Damit lassen sich Fehlstarts auswerten, die ohne angeschlossenen PC auftreten: "
+               "Uhr am betroffenen Netzteil betreiben, danach am PC starten und die Ausgabe "
+               "lesen. Weil der USB-Monitor die erste Ausgabe nach einem Reset oft verpasst, "
+               "wird das Protokoll nach «Bereit.» ein zweites Mal ausgegeben."))
+    c.append(code_block(
+        "[Boot]  #6     Reset: BROWNOUT    zuletzt: Funk/AP gestartet      bei 307 ms",
+        "[Boot]  #7     Reset: INT_WDT     zuletzt: setup fertig           bei 1523 ms",
+        "[Boot]  #8     Reset: POWERON     zuletzt: laeuft 10 min          bei 600000 ms",
+    ))
+    c.append(p("Lesart: «Reset» gibt an, wodurch DIESER Start ausgelöst wurde, also wie der "
+               "vorherige Start geendet hat. «zuletzt» zeigt, wie weit dieser Start gekommen "
+               "ist, bevor der nächste Reset kam. Der letzte Eintrag ist der laufende Start. "
+               "Start-Schritte in Reihenfolge: setup begonnen → Einstellungen geladen → "
+               "MCP23017 init → Funk/AP gestartet → Roehren aufgeblendet → Heimnetz fertig → "
+               "Web-Server gestartet → setup fertig → laeuft 10 s → laeuft 60 s → laeuft 10 min."))
+    c.append(table(
+        ["Reset-Grund", "Bedeutung", "Typische Ursache"],
+        [
+            ["POWERON",              "Normales Einschalten",                        "Stromversorgung war ganz weg (Ein-/Ausstecken)"],
+            ["BROWNOUT",             "Unterspannung erkannt",                       "Netzteil/Kabel liefert die Last nicht, Spannung bricht ein"],
+            ["PWR_GLITCH",           "Kurzer Spannungseinbruch",                    "wie BROWNOUT"],
+            ["INT_WDT / TASK_WDT",   "Watchdog hat zugeschlagen",                   "Firmware hängt; zusammen mit BROWNOUT meist ebenfalls Unterspannung (Flash-Lesefehler)"],
+            ["PANIC",                "Absturz (Exception)",                         "Firmware-Fehler – Stacktrace im Serial Monitor beachten"],
+            ["SW / USB",             "Neustart per Software bzw. über USB",         "Flashen, Neustart aus der IDE"],
+        ],
+        [3.5, 5.0, 7.5]
     ))
 
     c.append(h2("Häufige Probleme"))
@@ -972,6 +1019,7 @@ def build_content():
         ["Symptom", "Ursache", "Lösung"],
         [
             ["Röhren leuchten nicht",     "HV-MOD liefert keine Spannung",    "5-V-Versorgung und HV-MOD prüfen; Spannungsmessung an J4"],
+            ["Uhr startet nur an manchen Netzteilen, blinkt, bleibt stehen oder Röhren blitzen auf", "Stromaufnahme zu hoch → Unterspannung (BROWNOUT)", "Startprotokoll prüfen; Stromaufnahme messen (Richtwert ~760 mA mit 6 Röhren); Anodenwiderstände R65–R70 müssen 22 kΩ haben"],
             ["Ghosting / Doppelziffern",  "I²C-Fehler, MCP nicht antwortend", "I²C-Bus prüfen (Pull-ups R1/R3 auf dem Logic Board), Serial Monitor auf Fehlermeldungen"],
             ["Web-UI nicht erreichbar",   "WiFi AP nicht gestartet",           "Serial Monitor prüfen; auf 192.168.4.1 verbinden"],
             ["Uhrzeit falsch nach Reset", "RTC leer / Batterie schwach",       "Zeit über Web-UI stellen; CR2032 BT1 prüfen"],

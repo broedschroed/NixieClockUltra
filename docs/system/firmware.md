@@ -374,6 +374,43 @@ void hvDimmerSetDutyTube(uint8_t /*tube*/, uint8_t duty0to255) { ledcWrite(HV_SW
 Loop-Durchlauf. `hvDimmerSetDutyTube()` wird ausschließlich aus der Fade-State-Machine in
 `digit_fade.ino` heraus aufgerufen (siehe [Weicher Ziffernwechsel](#weicher-ziffernwechsel-digit_fadeino)) — kein zusätzlicher CPU-Overhead im Normalbetrieb.
 
+## Startprotokoll (`boot_diag.ino`) {#startprotokoll-boot_diagino}
+
+Dauerhaftes Protokoll der letzten 20 Starts im NVS (Namespace `bootlog`, Ringpuffer als
+Blob). Es übersteht auch einen vollständigen Spannungsverlust und dient dazu, Fehlstarts
+auszuwerten, die ohne angeschlossenen PC auftreten: Uhr am betroffenen Netzteil betreiben,
+danach am PC starten und die Ausgabe im Serial Monitor (115200 Baud) lesen.
+
+| Funktion          | Aufruf                     | Wirkung |
+|-------------------|----------------------------|---------|
+| `bootDiagInit()`  | `setup()`, nach `Serial.begin()` | Historie ausgeben, neuen Eintrag mit `esp_reset_reason()` anlegen |
+| `bootDiagStage()` | nach jedem Setup-Schritt   | Start-Schritt (`BootStage`, `boot_diag.h`) und `millis()` im aktuellen Eintrag speichern |
+| `bootDiagLoop()`  | jede `loop()`-Runde        | markiert „laeuft 10 s / 60 s / 10 min“ |
+| `bootDiagPrint()` | Ende von `setup()`         | Protokoll erneut ausgeben (USB-CDC verpasst die erste Ausgabe oft) |
+
+Beispielausgabe:
+
+```
+[Boot] ── Startprotokoll (3 Eintraege) ──
+[Boot]  #6     Reset: BROWNOUT    zuletzt: Funk/AP gestartet      bei 307 ms
+[Boot]  #7     Reset: INT_WDT     zuletzt: setup fertig           bei 1523 ms
+[Boot]  #8     Reset: POWERON     zuletzt: laeuft 10 min          bei 600000 ms
+[Boot] ────────────────────────────────
+```
+
+**Lesart:** „Reset“ ist der Grund, mit dem *dieser* Start ausgelöst wurde, also wie der
+vorherige Start geendet hat. „zuletzt“ zeigt, wie weit dieser Start gekommen ist. Der letzte
+Eintrag ist der laufende Start. `BROWNOUT`/`PWR_GLITCH` bedeuten Unterspannung; `INT_WDT`
+zusammen mit Brownouts ist meist dieselbe Ursache (Flash-Lesefehler bei knapper Spannung),
+`PANIC` dagegen ein Firmware-Absturz.
+
+Start-Schritte: setup begonnen → Einstellungen geladen → MCP23017 init → Funk/AP gestartet →
+Roehren aufgeblendet → Heimnetz fertig → Web-Server gestartet → setup fertig → laeuft 10 s →
+laeuft 60 s → laeuft 10 min.
+
+Schreiblast: ca. 10 kleine NVS-Schreibvorgänge pro Start; auch bei einer Neustart-Schleife
+unkritisch für den Flash.
+
 ## Web-API
 
 Der HTTP-Server läuft auf Port 80. Erreichbar über `192.168.4.1` (AP) bzw.
@@ -411,7 +448,8 @@ Alle GET-Endpunkte liefern JSON zurück.
 
 Alle Einstellungen werden bei Änderung sofort in den ESP32-NVS-Flash geschrieben
 (über `Preferences`-Bibliothek, Namespace `nixie`). Beim Start werden sie automatisch
-geladen.
+geladen. Das Startprotokoll liegt getrennt davon im Namespace `bootlog` (Schlüssel `log`,
+Blob), siehe [Startprotokoll](#startprotokoll-boot_diagino).
 
 | NVS-Schlüssel  | Typ     | Standardwert | Inhalt                                   |
 |----------------|---------|--------------|------------------------------------------|
