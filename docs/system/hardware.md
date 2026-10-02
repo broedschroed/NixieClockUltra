@@ -141,7 +141,7 @@ Die 10 LEDs sind als verkettete Kette an GPIO21 angeschlossen:
 | 4    | RTC_IO    | DS1302 Data (ThreeWire)                |
 | 5    | RTC_CLK   | DS1302 Clock (ThreeWire)               |
 | 6    | LDR_ADC   | LDR-Helligkeitssensor (ADC1, LDR→VCC, 100 kΩ→GND) |
-| 7    | HV_SWITCH | TLP627-Optokoppler: Hardware-PWM (~200 Hz, LEDC) schaltet Anodenspannung für Nacht-Modus-Dimmung |
+| 7    | HV_SWITCH | TLP627-Optokoppler: Hardware-PWM (100 Hz, LEDC) schaltet Anodenspannung für Nacht-Modus-Dimmung |
 | 8    | I2C_SDA   | I²C Daten → 4× MCP23017               |
 | 9    | I2C_SCL   | I²C Takt → 4× MCP23017                |
 | 10   | BTN_LIGHT | Taster LIGHT (INPUT_PULLUP, aktiv LOW) |

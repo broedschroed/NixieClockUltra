@@ -123,7 +123,7 @@ const uint8_t BRIGHTNESS_LEVELS[4] = {10, 40, 80, 200};
 #define NIGHT_DIM_NEO_PCT     15   // NeoPixel-Helligkeit im Dimm-Modus in % der Normalhelligkeit
 
 // HV-Dimmer (TLP627, LEDC-Hardware-PWM auf HV_SWITCH_PIN)
-#define HV_PWM_FREQ_HZ        200  // Hz — nach Hardwareaufbau per Oszilloskop verifizieren
+#define HV_PWM_FREQ_HZ        100  // Hz — bei 200 Hz dimmen die Pro-Röhre-TLP627 wegen ihrer Abschaltverzögerung kaum
 
 // Datum-Anzeige Dauer nach Slot-Animation
 #define DATE_SHOW_MS  5000

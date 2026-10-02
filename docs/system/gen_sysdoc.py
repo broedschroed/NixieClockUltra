@@ -349,7 +349,7 @@ def build_content():
                "NPN-Transistoren auf dem Display Board auf GND gezogen."))
     c.append(h3("Anoden-Dimmung (TLP627, Hardware-PWM)"))
     c.append(p("Der TLP627-Optokoppler (U7) schaltet die vom HV-MOD kommende Anodenspannung "
-               "per Hardware-PWM (LEDC, ~200 Hz) auf GPIO7 (HV_SWITCH_PIN). Im "
+               "per Hardware-PWM (LEDC, 100 Hz) auf GPIO7 (HV_SWITCH_PIN). Im "
                "Nacht-Modus reduziert die Firmware den Duty-Cycle auf einen "
                "einstellbaren Wert zwischen 2 % und 60 % (Standard 25 %, siehe "
                "hv_dimmer.ino in firmware.md) statt wie zuvor die Kathoden per "
@@ -376,7 +376,7 @@ def build_content():
             ["4",  "RTC_IO",    "Bi-Dir.", "DS1302 Datenleitung (ThreeWire)"],
             ["5",  "RTC_CLK",   "Output", "DS1302 Takt (ThreeWire)"],
             ["6",  "LDR_ADC",   "Input",  "LDR-Helligkeitssensor (ADC1, LDR→VCC, 100 kΩ→GND)"],
-            ["7",  "HV_SWITCH", "Output", "TLP627-Optokoppler: Hardware-PWM (~200 Hz, LEDC) schaltet Anodenspannung"],
+            ["7",  "HV_SWITCH", "Output", "TLP627-Optokoppler: Hardware-PWM (100 Hz, LEDC) schaltet Anodenspannung"],
             ["8",  "I2C_SDA",   "Bi-Dir.", "I²C Daten → 4× MCP23017"],
             ["9",  "I2C_SCL",   "Output", "I²C Takt → 4× MCP23017"],
             ["10", "BTN_LIGHT", "Input",  "Taster LIGHT (INPUT_PULLUP, aktiv LOW)"],
@@ -534,7 +534,7 @@ def build_content():
             ["buttons.ino",         "127", "Entprell-FSM für 4 Taster, Kurz-/Langdruck, Edit-Mode Zeit+Datum"],
             ["rtc.ino",             "18",  "readRTC(), writeRTC() via DS1302/ThreeWire, liest auch Tag/Monat/Jahr"],
             ["night_mode.ino",      "34",  "LDR-Abtastung (GPIO6, ADC1), updateNightMode(), Zeitbereich-Logik"],
-            ["hv_dimmer.ino",       "81",  "hvDimmerInit(), hvDimmerSoftStart(), hvDimmerSetDutyAll(), hvDimmerSetDutyTube() — LEDC-Hardware-PWM für TLP627 auf Anodenspannung; bei HV_PER_TUBE_DIMMER 6 unabhängige Kanäle statt einem gemeinsamen"],
+            ["hv_dimmer.ino",       "94",  "hvDimmerInit(), hvDimmerSoftStart(), hvDimmerSetDutyAll(), hvDimmerSetDutyTube() — LEDC-Hardware-PWM für TLP627 auf Anodenspannung; bei HV_PER_TUBE_DIMMER 6 unabhängige Kanäle statt einem gemeinsamen"],
             ["neo_animation.ino",   "107", "Rainbow, Statisch, Puls, Slot, Nacht-Modus-Dimming, Datumsanzeige-Override"],
             ["ir_remote.ino",       "107", "executeAction(), dispatchIRAction(), handleIR(), 8 IR-Aktionen"],
             ["tube_test.ino",       "50",  "startTubeTest(), updateTubeTest(), stopTubeTest() — non-blocking Röhrentest-State-Machine"],
@@ -649,9 +649,16 @@ def build_content():
     c.append(h2("hv_dimmer.ino – Hardware-PWM-Dimmung der Anodenspannung"))
     c.append(p("Die Röhren-Dimmung im Nacht-Modus erfolgt über einen oder sechs "
                "TLP627-Optokoppler, die die Anodenspannung selbst per "
-               "LEDC-Hardware-PWM (~200 Hz) schalten — nicht über eine Software-PWM auf "
+               "LEDC-Hardware-PWM (100 Hz, 10 Bit) schalten — nicht über eine Software-PWM auf "
                "den Kathoden. Der HV_PER_TUBE_DIMMER-Compile-Switch entscheidet, welche "
                "der beiden Varianten kompiliert wird:"))
+    c.append(note("Warum 100 Hz: Der TLP627 (Darlington) schaltet deutlich langsamer ab als ein, "
+                  "beim Pro-Röhre-Dimmer besonders stark (nur ~1,5 mA Röhrenstrom bei ~20 mA "
+                  "LED-Strom → tief übersteuert). Bei 200 Hz wurden die Röhren zwischen 60 % und "
+                  "2 % kaum dunkler; bei 100 Hz wirkt die Verzögerung nur halb so stark. Für "
+                  "100 Hz läuft die PWM mit 10 Bit (der Core taktet LEDC mit 40 MHz, mit 8 Bit "
+                  "erst ab ~153 Hz möglich); hvDuty() skaliert die Werte 0–255 auf 0–1023. "
+                  "Noch dunkler: R71–R76 auf ~1 kΩ erhöhen."))
     c.append(code_block(
         "#ifdef HV_PER_TUBE_DIMMER",
         "// 6 unabhängige Kanäle, einer pro Röhre",
@@ -663,7 +670,7 @@ def build_content():
         "#else",
         "// Ein gemeinsamer Kanal (heutige Standard-Hardware, U7)",
         "void hvDimmerInit() {",
-        "    ledcAttach(HV_SWITCH_PIN, HV_PWM_FREQ_HZ, 8);",
+        "    ledcAttach(HV_SWITCH_PIN, HV_PWM_FREQ_HZ, HV_PWM_RES_BITS);",
         "    ledcWrite(HV_SWITCH_PIN, 0);     // Anoden zu – Aufblenden per hvDimmerSoftStart()",
         "}",
         "void hvDimmerSoftStart() { /* alle gemeinsam 0 → 255 in 6 × HV_SOFTSTART_TUBE_MS */ }",

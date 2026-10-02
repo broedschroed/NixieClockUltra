@@ -19,7 +19,7 @@ deshalb in `NixieClockUltra.ino` deklariert werden.
 | `buttons.ino`        | 127    | Entprell-FSM für 4 Taster, Kurz-/Langdruck, Edit-Mode Zeit+Datum       |
 | `rtc.ino`            | 18     | `readRTC()`, `writeRTC()` via DS1302/ThreeWire, liest auch Tag/Monat/Jahr |
 | `night_mode.ino`     | 34     | LDR-Abtastung (GPIO6, ADC1), `updateNightMode()`, Zeitbereich-Logik    |
-| `hv_dimmer.ino`      | 81     | `hvDimmerInit()`, `hvDimmerSoftStart()`, `hvDimmerSetDutyAll()`, `hvDimmerSetDutyTube()` — LEDC-Hardware-PWM für TLP627 auf Anodenspannung; bei `HV_PER_TUBE_DIMMER` 6 unabhängige Kanäle statt einem gemeinsamen |
+| `hv_dimmer.ino`      | 94     | `hvDimmerInit()`, `hvDimmerSoftStart()`, `hvDimmerSetDutyAll()`, `hvDimmerSetDutyTube()` — LEDC-Hardware-PWM für TLP627 auf Anodenspannung; bei `HV_PER_TUBE_DIMMER` 6 unabhängige Kanäle statt einem gemeinsamen |
 | `neo_animation.ino`  | 107    | Rainbow, Statisch, Puls, Slot, Nacht-Modus-Dimming, Datumsanzeige-Override |
 | `ir_remote.ino`      | 107    | `executeAction()`, `dispatchIRAction()`, `handleIR()`, 8 IR-Aktionen   |
 | `tube_test.ino`      | 50     | `startTubeTest()`, `updateTubeTest()`, `stopTubeTest()` — non-blocking Röhrentest-State-Machine |
@@ -104,7 +104,7 @@ Die `setup()`-Funktion läuft einmalig nach dem Start in dieser Reihenfolge:
 
 // HV-Dimmer (TLP627, LEDC-Hardware-PWM auf Anodenspannung)
 #define HV_SWITCH_PIN   7         // GPIO → TLP627 → Anodenspannung (ohne HV_PER_TUBE_DIMMER)
-#define HV_PWM_FREQ_HZ  200       // Hz, LEDC 8-Bit-Auflösung (Duty 0–255)
+#define HV_PWM_FREQ_HZ  100       // Hz, LEDC 10 Bit (hvDuty() skaliert 0–255 → 0–1023)
 
 // Bei bestücktem Pro-Röhre-HV-Schalter (6× TLP627 auf dem Nixie Display Board):
 // #define HV_PER_TUBE_DIMMER
@@ -210,11 +210,22 @@ enum IrAction {
 | `NIGHT_DIM`    | `hvDimPct * 255 / 100` (2–60 %)  |
 | `NIGHT_DARK`   | 0 (Anodenspannung aus)           |
 
-Die Dimmung erfolgt per LEDC-Hardware-PWM (~200 Hz) direkt auf der Anodenspannung über
+Die Dimmung erfolgt per LEDC-Hardware-PWM (100 Hz, 10 Bit) direkt auf der Anodenspannung über
 einen TLP627-Optokoppler — ohne `HV_PER_TUBE_DIMMER` einen gemeinsamen (`HV_SWITCH_PIN`,
 GPIO7), mit aktiviertem Switch 6 unabhängige (`HV_TUBE_PIN_0`–`HV_TUBE_PIN_5`) — nicht mehr
 per Software-PWM auf den Kathoden. Ein separater Blitzschutz für Sekundenwechsel ist nicht
 mehr nötig, da die Kathoden-Ansteuerung unabhängig von der Anodendimmung läuft.
+
+**Warum 100 Hz:** Der TLP627 ist ein Darlington-Optokoppler, der deutlich langsamer ab- als
+einschaltet — beim Pro-Röhre-Dimmer besonders stark, weil jeder Koppler nur ~1,5 mA
+Röhrenstrom schaltet und bei ~20 mA LED-Strom (R71–R76 = 100 Ω) tief übersteuert ist. Die
+Abschaltverzögerung verlängert jeden Ein-Puls um einige Millisekunden; bei 200 Hz (5 ms
+Periode) wurden die Röhren zwischen 60 % und 2 % dadurch kaum dunkler. Bei 100 Hz wirkt
+die Verzögerung nur halb so stark, die Dimmung ist ausreichend. Weil der ESP32-S3-Core LEDC
+mit 40 MHz (XTAL) taktet und mit 8 Bit erst ab ~153 Hz einrichten kann, läuft die PWM mit
+10 Bit; `hvDuty()` in `hv_dimmer.ino` skaliert die firmwareweit verwendeten Werte 0–255
+auf 0–1023. Soll es noch dunkler werden, wäre der nächste Schritt, R71–R76 auf ~1 kΩ zu
+erhöhen (LED-Strom ~2 mA, schnelleres Abschalten, ~100 mA weniger Stromaufnahme).
 
 ## Weicher Ziffernwechsel (`digit_fade.ino`)
 
@@ -360,7 +371,7 @@ void hvDimmerSetDutyTube(uint8_t tube, uint8_t duty0to255) { /* nur dieser Kanal
 #else
 // Ein gemeinsamer Kanal (heutige Hardware)
 void hvDimmerInit() {
-  ledcAttach(HV_SWITCH_PIN, HV_PWM_FREQ_HZ, 8);
+  ledcAttach(HV_SWITCH_PIN, HV_PWM_FREQ_HZ, HV_PWM_RES_BITS);
   ledcWrite(HV_SWITCH_PIN, 0);     // Anoden zu – Aufblenden per hvDimmerSoftStart()
 }
 void hvDimmerSoftStart() { /* alle gemeinsam 0 → 255 in 6 × HV_SOFTSTART_TUBE_MS */ }

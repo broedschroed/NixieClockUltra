@@ -10,6 +10,15 @@
 
 #include "digit_fade_math.h"
 
+// 10 Bit statt 8: Der ESP32-S3-Core taktet LEDC mit 40 MHz (XTAL); mit 8 Bit
+// sind darunter nur Frequenzen ab ~153 Hz einrichtbar. Die Firmware arbeitet
+// weiter mit Helligkeitswerten 0–255, hvDuty() skaliert auf die Auflösung.
+#define HV_PWM_RES_BITS  10
+
+static inline uint32_t hvDuty(uint8_t duty0to255) {
+  return (uint32_t)duty0to255 * ((1u << HV_PWM_RES_BITS) - 1) / 255;
+}
+
 #ifdef HV_PER_TUBE_DIMMER
 
 static const uint8_t hvTubePin[6] = {
@@ -24,9 +33,11 @@ void hvDimmerInit() {
   pinMode(HV_SWITCH_PIN, OUTPUT);
   digitalWrite(HV_SWITCH_PIN, HIGH);
   for (uint8_t i = 0; i < 6; i++) {
-    ledcAttach(hvTubePin[i], HV_PWM_FREQ_HZ, 8);
+    if (!ledcAttach(hvTubePin[i], HV_PWM_FREQ_HZ, HV_PWM_RES_BITS))
+      Serial.printf("[HV] FEHLER: LEDC %u Hz an GPIO %u nicht einrichtbar\n", HV_PWM_FREQ_HZ, hvTubePin[i]);
     ledcWrite(hvTubePin[i], 0);     // Anode zu – Aufblenden per hvDimmerSoftStart()
   }
+  Serial.printf("[HV] PWM %u Hz, tatsaechlich: %lu Hz\n", HV_PWM_FREQ_HZ, (unsigned long)ledcReadFreq(hvTubePin[0]));
 }
 
 // Blockierend, nur aus setup(): Röhren nacheinander von 0 auf 255 rampen,
@@ -35,25 +46,27 @@ void hvDimmerSoftStart() {
   const uint8_t steps = HV_SOFTSTART_TUBE_MS / HV_SOFTSTART_STEP_MS;
   for (uint8_t i = 0; i < 6; i++) {
     for (uint8_t s = 1; s <= steps; s++) {
-      ledcWrite(hvTubePin[i], fadeDutyForStep(true, s, steps, 0, 255));
+      ledcWrite(hvTubePin[i], hvDuty(fadeDutyForStep(true, s, steps, 0, 255)));
       delay(HV_SOFTSTART_STEP_MS);
     }
   }
 }
 
 void hvDimmerSetDutyAll(uint8_t duty0to255) {
-  for (uint8_t i = 0; i < 6; i++) ledcWrite(hvTubePin[i], duty0to255);
+  for (uint8_t i = 0; i < 6; i++) ledcWrite(hvTubePin[i], hvDuty(duty0to255));
 }
 
 void hvDimmerSetDutyTube(uint8_t tube, uint8_t duty0to255) {
-  ledcWrite(hvTubePin[tube], duty0to255);
+  ledcWrite(hvTubePin[tube], hvDuty(duty0to255));
 }
 
 #else  // heutige Hardware: ein gemeinsamer Schalter
 
 void hvDimmerInit() {
-  ledcAttach(HV_SWITCH_PIN, HV_PWM_FREQ_HZ, 8);
+  if (!ledcAttach(HV_SWITCH_PIN, HV_PWM_FREQ_HZ, HV_PWM_RES_BITS))
+    Serial.printf("[HV] FEHLER: LEDC %u Hz an GPIO %u nicht einrichtbar\n", HV_PWM_FREQ_HZ, HV_SWITCH_PIN);
   ledcWrite(HV_SWITCH_PIN, 0);     // Anoden zu – Aufblenden per hvDimmerSoftStart()
+  Serial.printf("[HV] PWM %u Hz, tatsaechlich: %lu Hz\n", HV_PWM_FREQ_HZ, (unsigned long)ledcReadFreq(HV_SWITCH_PIN));
 }
 
 // Blockierend, nur aus setup(): mit nur einem gemeinsamen Schalter können
@@ -62,20 +75,20 @@ void hvDimmerInit() {
 void hvDimmerSoftStart() {
   const uint8_t steps = 6 * HV_SOFTSTART_TUBE_MS / HV_SOFTSTART_STEP_MS;
   for (uint8_t s = 1; s <= steps; s++) {
-    ledcWrite(HV_SWITCH_PIN, fadeDutyForStep(true, s, steps, 0, 255));
+    ledcWrite(HV_SWITCH_PIN, hvDuty(fadeDutyForStep(true, s, steps, 0, 255)));
     delay(HV_SOFTSTART_STEP_MS);
   }
 }
 
 void hvDimmerSetDutyAll(uint8_t duty0to255) {
-  ledcWrite(HV_SWITCH_PIN, duty0to255);
+  ledcWrite(HV_SWITCH_PIN, hvDuty(duty0to255));
 }
 
 // Ohne Pro-Röhre-Hardware gibt es nur den einen gemeinsamen Schalter — der
 // Röhrenindex wird ignoriert, jeder Aufruf dimmt alle Anoden gemeinsam
 // (reproduziert exakt das bisherige Verhalten).
 void hvDimmerSetDutyTube(uint8_t /*tube*/, uint8_t duty0to255) {
-  ledcWrite(HV_SWITCH_PIN, duty0to255);
+  ledcWrite(HV_SWITCH_PIN, hvDuty(duty0to255));
 }
 
 #endif
