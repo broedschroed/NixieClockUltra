@@ -29,7 +29,6 @@ void hvDimmerInit() {
       Serial.printf("[HV] FEHLER: LEDC %u Hz an GPIO %u nicht einrichtbar\n", HV_PWM_FREQ_HZ, hvTubePin[i]);
     ledcWrite(hvTubePin[i], 0);     // Anode zu – Aufblenden per hvDimmerSoftStart()
   }
-  Serial.printf("[HV] PWM %u Hz, tatsaechlich: %lu Hz\n", HV_PWM_FREQ_HZ, (unsigned long)ledcReadFreq(hvTubePin[0]));
 }
 
 // Blockierend, nur aus setup(): Röhren nacheinander von 0 auf 255 rampen,
@@ -42,6 +41,8 @@ void hvDimmerSoftStart() {
       delay(HV_SOFTSTART_STEP_MS);
     }
   }
+  // Erst hier abfragen: ledcReadFreq() meldet 0, solange der Duty 0 ist.
+  Serial.printf("[HV] PWM %u Hz, tatsaechlich: %lu Hz\n", HV_PWM_FREQ_HZ, (unsigned long)ledcReadFreq(hvTubePin[0]));
 }
 
 void hvDimmerSetDutyAll(uint8_t duty0to255) {
@@ -62,7 +63,6 @@ void hvDimmerInit() {
   if (!ledcAttach(HV_SWITCH_PIN, HV_PWM_FREQ_HZ, HV_PWM_RES_BITS))
     Serial.printf("[HV] FEHLER: LEDC %u Hz an GPIO %u nicht einrichtbar\n", HV_PWM_FREQ_HZ, HV_SWITCH_PIN);
   ledcWrite(HV_SWITCH_PIN, 0);     // Anoden zu – Aufblenden per hvDimmerSoftStart()
-  Serial.printf("[HV] PWM %u Hz, tatsaechlich: %lu Hz\n", HV_PWM_FREQ_HZ, (unsigned long)ledcReadFreq(HV_SWITCH_PIN));
 }
 
 // Blockierend, nur aus setup(): mit nur einem gemeinsamen Schalter können
@@ -74,6 +74,8 @@ void hvDimmerSoftStart() {
     ledcWrite(HV_SWITCH_PIN, hvDuty(fadeDutyForStep(true, s, steps, 0, 255)));
     delay(HV_SOFTSTART_STEP_MS);
   }
+  // Erst hier abfragen: ledcReadFreq() meldet 0, solange der Duty 0 ist.
+  Serial.printf("[HV] PWM %u Hz, tatsaechlich: %lu Hz\n", HV_PWM_FREQ_HZ, (unsigned long)ledcReadFreq(HV_SWITCH_PIN));
 }
 
 void hvDimmerSetDutyAll(uint8_t duty0to255) {
