@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <math.h>
 
 // Reine Interpolations-Mathematik für den HV-Dimmer-Crossfade beim
 // weichen Ziffernwechsel. Keine Arduino-Abhängigkeiten, damit sie mit
@@ -15,6 +16,25 @@ inline uint8_t fadeDutyForStep(bool risingUp, uint8_t stepsDone, uint8_t stepsTo
   if (minDuty > maxDuty) minDuty = maxDuty;
   uint16_t span = (uint16_t)(maxDuty - minDuty) * stepsDone / stepsTotal;
   return risingUp ? (uint8_t)(minDuty + span) : (uint8_t)(maxDuty - span);
+}
+
+// Potenzkurve für den weichen Ziffernwechsel, 10-Bit-Duty (0–1023).
+// Nixies werden erst bei kleinem Tastverhältnis sichtbar dunkler (Auge
+// logarithmisch, TLP627-Abschaltverzögerung) — eine lineare Rampe wirkt
+// deshalb wie ein kurzes Wegtauchen. Mit gamma > 1 verbringt die Kurve mehr
+// Zeit im dunklen Bereich:
+//   risingUp=false (Fade-Down): min + (max-min)·(1-t)^gamma, t = stepsDone/stepsTotal
+//   risingUp=true  (Fade-Up):   min + (max-min)·t^gamma
+// gamma = 1 entspricht der linearen Rampe. Endwerte sind exakt min bzw. max.
+inline uint16_t fadeDutyCurve(bool risingUp, uint16_t stepsDone, uint16_t stepsTotal,
+                              uint16_t minDuty, uint16_t maxDuty, float gamma) {
+  if (stepsTotal == 0) stepsTotal = 1;
+  if (stepsDone > stepsTotal) stepsDone = stepsTotal;
+  if (minDuty > maxDuty) minDuty = maxDuty;
+  float t     = (float)stepsDone / (float)stepsTotal;
+  float level = risingUp ? t : 1.0f - t;
+  float f     = powf(level, gamma);
+  return (uint16_t)(minDuty + (float)(maxDuty - minDuty) * f + 0.5f);
 }
 
 // Vergleicht alte gegen neue Ziffern und liefert eine Bitmaske der Röhren,

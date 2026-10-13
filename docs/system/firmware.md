@@ -12,20 +12,22 @@ deshalb in `NixieClockUltra.ino` deklariert werden.
 
 | Datei                | Zeilen | Inhalt                                                                  |
 |----------------------|--------|-------------------------------------------------------------------------|
-| `NixieClockUltra.ino`| 518    | Globals, `setup()`, `loop()`, Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals, Röhrentest-Globals |
+| `NixieClockUltra.ino`| 528    | Globals, `setup()`, `loop()`, Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals, Röhrentest-Globals |
 | `nixie_driver.ino`   | 91     | `nixieInit()`, `nixieWrite()`, MCP23017-Abstraktion, FreeRTOS-Mutex     |
 | `display.ino`        | 91     | `setDisplayTime()`, `setDisplayDate()`, `commitDigits()` (weicher Ziffernwechsel, Bitmaske via `computeChangedMask()`), Slot-Animation |
-| `digit_fade.ino`     | 95     | `startDigitFade()`, `updateDigitFade()`, `cancelDigitFade()` — non-blocking Crossfade über HV-Dimmer-Duty, pro Röhre per Bitmaske |
+| `digit_fade.ino`     | 100    | `startDigitFade()`, `updateDigitFade()`, `cancelDigitFade()` — non-blocking Crossfade über HV-Dimmer-Duty, pro Röhre per Bitmaske |
 | `buttons.ino`        | 127    | Entprell-FSM für 4 Taster, Kurz-/Langdruck, Edit-Mode Zeit+Datum       |
 | `rtc.ino`            | 18     | `readRTC()`, `writeRTC()` via DS1302/ThreeWire, liest auch Tag/Monat/Jahr |
 | `night_mode.ino`     | 34     | LDR-Abtastung (GPIO6, ADC1), `updateNightMode()`, Zeitbereich-Logik    |
-| `hv_dimmer.ino`      | 94     | `hvDimmerInit()`, `hvDimmerSoftStart()`, `hvDimmerSetDutyAll()`, `hvDimmerSetDutyTube()` — LEDC-Hardware-PWM für TLP627 auf Anodenspannung; bei `HV_PER_TUBE_DIMMER` 6 unabhängige Kanäle statt einem gemeinsamen |
+| `hv_dimmer.ino`      | 94     | `hvDimmerInit()`, `hvDimmerSoftStart()`, `hvDimmerSetDutyAll()`, `hvDimmerSetDutyTube()`, `hvDimmerSetDutyTube10()` — LEDC-Hardware-PWM für TLP627 auf Anodenspannung; bei `HV_PER_TUBE_DIMMER` 6 unabhängige Kanäle statt einem gemeinsamen |
 | `neo_animation.ino`  | 107    | Rainbow, Statisch, Puls, Slot, Nacht-Modus-Dimming, Datumsanzeige-Override |
 | `ir_remote.ino`      | 107    | `executeAction()`, `dispatchIRAction()`, `handleIR()`, 8 IR-Aktionen   |
 | `tube_test.ino`      | 50     | `startTubeTest()`, `updateTubeTest()`, `stopTubeTest()` — non-blocking Röhrentest-State-Machine |
 | `web_server.ino`     | 787    | Eingebettetes HTML/JS, alle API-Handler, WiFi-Setup (`setupWifiRadio()` + `setupWifi()`), NTP, mDNS |
 | `boot_diag.ino`      | 128    | Dauerhaftes Startprotokoll im NVS (Namespace `bootlog`): Reset-Grund, zuletzt erreichter Start-Schritt und Laufzeit der letzten 20 Starts, Ausgabe beim Booten; Start-Schritte in `boot_diag.h` |
 
+PWM-Auflösung (`HV_PWM_RES_BITS` = 10), `HV_DUTY_MAX` und die Umrechnung `hvDuty()` liegen in
+`hv_dimmer.h`, damit auch `digit_fade.ino` in 10 Bit rechnen kann.
 Reine Interpolationsmathematik für den Crossfade liegt zusätzlich in `digit_fade_math.h`
 (header-only, host-testbar ohne Arduino-Framework, siehe `test/digit_fade_math_test.cpp`).
 Analog dazu liegt die reine Ziffern-/Testende-Logik des Röhrentests in `tube_test_math.h`
@@ -94,6 +96,10 @@ Die `setup()`-Funktion läuft einmalig nach dem Start in dieser Reihenfolge:
 #define EDIT_TIMEOUT_MS  15000    // 15 s Timeout im Einstellmodus
 #define DATE_SHOW_MS      5000    // Datumsanzeige-Dauer nach Slot-Animation
 #define TUBE_TEST_STEP_MS 2000    // Anzeigedauer je Ziffer im Röhrentest
+
+// Weicher Ziffernwechsel / Sekundentakt
+#define DIGIT_FADE_MS  900        // Gesamtdauer des Ziffernwechsels (< 1000 ms)
+#define RTC_POLL_MS    50         // RTC-Abfrage: Genauigkeit der Sekundenerkennung
 
 // Nacht-Modus: NeoPixel-Skalierung (Nixie-Dimmung: siehe HV-Dimmer unten)
 #define NIGHT_DIM_NEO_PCT     15  // NeoPixel-Helligkeit im Dimm-Modus in %
@@ -223,9 +229,21 @@ Abschaltverzögerung verlängert jeden Ein-Puls um einige Millisekunden; bei 200
 Periode) wurden die Röhren zwischen 60 % und 2 % dadurch kaum dunkler. Bei 100 Hz wirkt
 die Verzögerung nur halb so stark, die Dimmung ist ausreichend. Weil der ESP32-S3-Core LEDC
 mit 40 MHz (XTAL) taktet und mit 8 Bit erst ab ~153 Hz einrichten kann, läuft die PWM mit
-10 Bit; `hvDuty()` in `hv_dimmer.ino` skaliert die firmwareweit verwendeten Werte 0–255
-auf 0–1023. Soll es noch dunkler werden, wäre der nächste Schritt, R71–R76 auf ~1 kΩ zu
-erhöhen (LED-Strom ~2 mA, schnelleres Abschalten, ~100 mA weniger Stromaufnahme).
+10 Bit; `hvDuty()` in `hv_dimmer.h` skaliert die firmwareweit verwendeten Werte 0–255
+auf 0–1023.
+
+Der größere Hebel ist der LED-Vorwiderstand: Bei der Sekundeneiner-Röhre ist R76 auf
+**1,5 kΩ** erhöht (LED-Strom ~1,4 mA statt ~20 mA). Der Koppler schaltet die Röhre damit
+weiterhin voll durch, ist aber nicht mehr übersteuert und schaltet schnell ab — getestet:
+volle Maximalhelligkeit, deutlich weicherer Ziffernwechsel.
+
+**R71–R75 bleiben bewusst bei 100 Ω.** Die unterschiedliche Bestückung ist gewollt: Wechseln
+mehrere Röhren gleichzeitig (bei 0, 10, 20 … Sekunden), blenden die Röhren mit 100 Ω schneller
+ganz ab als die Sekundeneiner, dann wechselt die Sekundeneiner weich, und die übrigen schießen
+anschließend auf ihre Zielhelligkeit — ein gestaffelter Effekt, der an der Uhr sehr gut wirkt.
+Wer alle sechs auf 1,5 kΩ setzt, verliert ihn. Bekannte Nebenwirkung: Im gedimmten
+Nacht-Modus kann die Sekundeneiner bei kleinen Dimmwerten etwas dunkler wirken als die
+übrigen Röhren.
 
 ## Weicher Ziffernwechsel (`digit_fade.ino`)
 
@@ -242,22 +260,43 @@ laufen (`setDisplayTime()`, `setDisplayDate()` sowie die Soft-Varianten
 
 `startDigitFade()`/`updateDigitFade()` bilden eine non-blocking State-Machine (angetrieben aus
 `loop()`), die den HV-Dimmer-Duty **nur für die Röhren in der Fade-Maske**
-(`hvDimmerSetDutyTube()`) in `DIGIT_FADE_STEP_MS`-Schritten (5 ms) erst auf
-`DIGIT_FADE_MIN_DUTY` (13, ≈5 %) abblendet, bei Minimalhelligkeit die Zielziffern schreibt
+(`hvDimmerSetDutyTube10()`, 10 Bit) in `DIGIT_FADE_STEP_MS`-Schritten (5 ms) erst auf
+`DIGIT_FADE_MIN_DUTY` (0) abblendet, bei Minimalhelligkeit die Zielziffern schreibt
 (`nixieWrite()`), und wieder auf die Ziel-Helligkeit (`fadeMaxDuty`) aufblendet. `fadeMaxDuty`
-wird beim Fade-Start einmalig ermittelt: 255 bei `NIGHT_NORMAL`, `hvDimPct * 255 / 100` bei
-`NIGHT_DIM` — der Fade wirkt im Dimm-Modus also konsistent gedimmt statt kurz auf 100 %
+wird beim Fade-Start einmalig ermittelt: 1023 bei `NIGHT_NORMAL`, `hvDuty(hvDimPct * 255 / 100)`
+bei `NIGHT_DIM` — der Fade wirkt im Dimm-Modus also konsistent gedimmt statt kurz auf 100 %
 aufzublitzen. Röhren außerhalb der Maske werden während des gesamten Fades nicht angefasst —
 mit aktiviertem `HV_PER_TUBE_DIMMER` (`hv_dimmer.ino`) bleiben sie sichtbar unverändert hell,
-ohne die Hardware-Option dimmt `hvDimmerSetDutyTube()` ohnehin den einen gemeinsamen Schalter
-(siehe [hv_dimmer.ino](#hv-anodendimmung-hv_dimmerino)), sodass sich am heutigen
-Erscheinungsbild (alle 6 dimmen gemeinsam) nichts ändert.
+ohne die Hardware-Option dimmt `hvDimmerSetDutyTube10()` ohnehin den einen gemeinsamen
+Schalter (siehe [hv_dimmer.ino](#hv-anodendimmung-hv_dimmerino)), sodass alle 6 gemeinsam
+dimmen.
 
-Die Dauer wird über `fadeMs` gesteuert (je zur Hälfte Ab-/Aufblenden); aktuell fest verdrahtet
-auf 400 ms, siehe `NixieClockUltra.ino` (`softFadeSecondEnabled ? 400 : 0` bzw.
-`softFadeDateEnabled ? 400 : 0`). Die reine Interpolationsmathematik (`fadeDutyForStep()`) und
-die Masken-Berechnung (`computeChangedMask()`) liegen in `digit_fade_math.h` und sind per
-Host-Unit-Test (`test/digit_fade_math_test.cpp`) ohne Arduino-Framework testbar.
+**Helligkeitskurve:** Der Duty folgt keiner linearen Rampe, sondern einer Potenzkurve
+(`fadeDutyCurve()`, Exponent `DIGIT_FADE_GAMMA` = 4,0, an der Hardware abgestimmt): Abblenden `max·(1−t)^γ`, Aufblenden
+`max·t^γ`. Nixies werden erst bei kleinem Tastverhältnis sichtbar dunkler (logarithmische
+Wahrnehmung, Abschaltverzögerung der TLP627) — eine lineare Rampe wirkte deshalb wie ein
+kurzes Wegtauchen am Ende. Die Kurve verlässt den „unsichtbaren“ Bereich schnell und
+verbringt den Großteil der Zeit bei kleinen Tastgraden. γ = 1 entspräche der linearen Rampe,
+größere Werte verlängern die dunkle Phase. Gerechnet wird in 10 Bit, damit es am dunklen Ende
+keine sichtbaren Stufen gibt.
+
+**Grenze:** Wegen der Abschaltverzögerung der TLP627 hat jeder Tastgrad > 0 eine
+Mindesthelligkeit (wirksam ≈ Tastgrad + Verzögerung/Periode). Die Kurve blendet weich bis
+dorthin, der letzte Schritt auf 0 bleibt ein kleiner Sprung — ein höherer Exponent ändert
+daran nichts. Abhilfe schafft nur schnelleres Abschalten der Koppler: Bei der
+Sekundeneiner (wechselt jede Sekunde) ist dafür der LED-Vorwiderstand R76 auf 1,5 kΩ erhöht,
+der Sprung ist dort praktisch verschwunden (siehe
+[HV-Anodendimmung](#hv-anodendimmung-hv_dimmerino)). Bei den übrigen Röhren (R71–R75 = 100 Ω)
+fällt er wegen der seltenen Wechsel nicht auf.
+
+Die Dauer wird über `fadeMs` gesteuert (je zur Hälfte Ab-/Aufblenden): `DIGIT_FADE_MS` = 900 ms
+für Sekundentakt und Zeit/Datum-Wechsel gleichermaßen. Damit ein Wechsel abgeschlossen ist,
+bevor die nächste Sekunde kommt, liest `loop()` die RTC alle `RTC_POLL_MS` = 50 ms (vorher
+500 ms — der Sekundenwechsel wurde dadurch um bis zu eine halbe Sekunde verspätet erkannt,
+und der Takt schwankte sichtbar). Die reine Kurvenmathematik (`fadeDutyCurve()`, sowie die
+lineare `fadeDutyForStep()` für den Sanftanlauf) und die Masken-Berechnung
+(`computeChangedMask()`) liegen in `digit_fade_math.h` und sind per Host-Unit-Test
+(`test/digit_fade_math_test.cpp`) ohne Arduino-Framework testbar.
 
 `cancelDigitFade()` schließt einen laufenden Fade sofort ab: Zielziffern schreiben und die
 betroffenen Röhren (Fade-Maske) auf `fadeMaxDuty` zurücksetzen (`applyDutyToMask()`) — und wird

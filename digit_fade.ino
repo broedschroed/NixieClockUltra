@@ -5,16 +5,18 @@
 //  (Ziffern schreiben). Reine Interpolations-/Masken-Mathematik
 //  in digit_fade_math.h (host-testbar, siehe test/).
 //
-//  Ohne HV_PER_TUBE_DIMMER dimmt hvDimmerSetDutyTube() ohnehin den
+//  Ohne HV_PER_TUBE_DIMMER dimmt hvDimmerSetDutyTube10() ohnehin den
 //  einen gemeinsamen Schalter (siehe hv_dimmer.ino) — dieser Code
 //  bleibt für beide Hardware-Varianten identisch.
 // ═══════════════════════════════════════════════════════════
 
 #include <string.h>
 #include "digit_fade_math.h"
+#include "hv_dimmer.h"
 
-#define DIGIT_FADE_MIN_DUTY   0   // ~5% von 255
-#define DIGIT_FADE_STEP_MS    5    // Schrittintervall
+#define DIGIT_FADE_MIN_DUTY   0      // untere Helligkeit beim Ziffernwechsel (0–255)
+#define DIGIT_FADE_STEP_MS    5      // Schrittintervall
+#define DIGIT_FADE_GAMMA      4.0f   // Helligkeitskurve: 1 = linear, größer = länger im dunklen Bereich (an der Hardware abgestimmt)
 
 enum FadeDir { FADE_DOWN, FADE_UP };
 
@@ -22,16 +24,16 @@ static bool     fadeRunning    = false;
 static FadeDir  fadeDir        = FADE_DOWN;
 static uint8_t  fadeTargetDigits[6];
 static uint8_t  fadeMask       = 0;     // Bitmaske der Röhren, die diesen Fade durchlaufen
-static uint8_t  fadeMaxDuty    = 255;   // Ziel-Helligkeit oben (255 normal, hvDimPct-skaliert im Dimm-Modus)
-static uint8_t  fadeMinDuty    = DIGIT_FADE_MIN_DUTY;  // Ziel-Helligkeit unten, proportional zu fadeMaxDuty
+static uint16_t fadeMaxDuty    = HV_DUTY_MAX;  // Ziel-Helligkeit oben, 10 Bit (hvDimPct-skaliert im Dimm-Modus)
+static uint16_t fadeMinDuty    = 0;            // Ziel-Helligkeit unten, 10 Bit, proportional zu fadeMaxDuty
 static uint32_t fadeLastStepMs = 0;
-static uint8_t  fadeStepsTotal = 1;
-static uint8_t  fadeStepsDone  = 0;
+static uint16_t fadeStepsTotal = 1;
+static uint16_t fadeStepsDone  = 0;
 
-// Setzt jede Röhre aus mask auf duty.
-static void applyDutyToMask(uint8_t mask, uint8_t duty) {
+// Setzt jede Röhre aus mask auf duty (10 Bit).
+static void applyDutyToMask(uint8_t mask, uint16_t duty10) {
   for (uint8_t tube = 0; tube < 6; tube++) {
-    if (mask & (uint8_t)(1u << tube)) hvDimmerSetDutyTube(tube, duty);
+    if (mask & (uint8_t)(1u << tube)) hvDimmerSetDutyTube10(tube, duty10);
   }
 }
 
@@ -65,9 +67,9 @@ void startDigitFade(uint8_t newDigits[6], uint8_t changedMask, uint16_t fadeMs) 
   fadeFinishImmediately();
   memcpy(fadeTargetDigits, newDigits, 6);
   fadeMask       = changedMask;
-  fadeMaxDuty    = (nightState == NIGHT_DIM) ? (uint8_t)(hvDimPct * 255 / 100) : 255;
-  fadeMinDuty    = (uint8_t)((uint16_t)fadeMaxDuty * DIGIT_FADE_MIN_DUTY / 255);
-  fadeStepsTotal = (uint8_t)((fadeMs / 2) / DIGIT_FADE_STEP_MS);
+  fadeMaxDuty    = (uint16_t)hvDuty((nightState == NIGHT_DIM) ? (uint8_t)(hvDimPct * 255 / 100) : 255);
+  fadeMinDuty    = (uint16_t)((uint32_t)fadeMaxDuty * DIGIT_FADE_MIN_DUTY / 255);
+  fadeStepsTotal = (uint16_t)((fadeMs / 2) / DIGIT_FADE_STEP_MS);
   if (fadeStepsTotal < 1) fadeStepsTotal = 1;
   fadeStepsDone  = 0;
   fadeDir        = FADE_DOWN;
@@ -82,8 +84,8 @@ void updateDigitFade() {
   fadeLastStepMs = millis();
   fadeStepsDone++;
 
-  uint8_t duty = fadeDutyForStep(fadeDir == FADE_UP, fadeStepsDone, fadeStepsTotal,
-                                  fadeMinDuty, fadeMaxDuty);
+  uint16_t duty = fadeDutyCurve(fadeDir == FADE_UP, fadeStepsDone, fadeStepsTotal,
+                                fadeMinDuty, fadeMaxDuty, DIGIT_FADE_GAMMA);
   applyDutyToMask(fadeMask, duty);
 
   if (fadeStepsDone >= fadeStepsTotal) {

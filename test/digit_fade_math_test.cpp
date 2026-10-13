@@ -85,6 +85,44 @@ int main() {
   assert(fadeDutyForStep(false, 5, 10, 20, 20) == 20);
   assert(fadeDutyForStep(true, 5, 10, 20, 20) == 20);
 
+  // ── fadeDutyCurve: Potenzkurve in 10 Bit ──────────────────────────────
+  // Endwerte exakt (Fade-down: max → min, Fade-up: min → max)
+  assert(fadeDutyCurve(false, 0,  90, 0, 1023, 2.5f) == 1023);
+  assert(fadeDutyCurve(false, 90, 90, 0, 1023, 2.5f) == 0);
+  assert(fadeDutyCurve(true,  0,  90, 0, 1023, 2.5f) == 0);
+  assert(fadeDutyCurve(true,  90, 90, 0, 1023, 2.5f) == 1023);
+  // mit minDuty > 0 und gedimmtem maxDuty (Nacht-Modus)
+  assert(fadeDutyCurve(false, 90, 90, 40, 400, 2.5f) == 40);
+  assert(fadeDutyCurve(true,  90, 90, 40, 400, 2.5f) == 400);
+
+  // Monoton über alle Schritte
+  {
+    uint16_t prevDown = 1023, prevUp = 0;
+    for (uint16_t s = 1; s <= 90; s++) {
+      uint16_t d = fadeDutyCurve(false, s, 90, 0, 1023, 2.5f);
+      uint16_t u = fadeDutyCurve(true,  s, 90, 0, 1023, 2.5f);
+      assert(d <= prevDown);
+      assert(u >= prevUp);
+      prevDown = d;
+      prevUp   = u;
+    }
+  }
+
+  // Kurve verbringt mehr Zeit im dunklen Bereich: zur Halbzeit deutlich
+  // unter der linearen Mitte (0,5^2,5 ≈ 0,177 → ~181 von 1023)
+  {
+    uint16_t mid = fadeDutyCurve(true, 45, 90, 0, 1023, 2.5f);
+    assert(mid > 150 && mid < 210);
+  }
+
+  // gamma = 1 entspricht der linearen Rampe
+  assert(fadeDutyCurve(true, 45, 90, 0, 1000, 1.0f) == 500);
+
+  // Guards: stepsTotal=0, stepsDone > stepsTotal, minDuty > maxDuty
+  assert(fadeDutyCurve(false, 0, 0, 0, 1023, 2.5f) == 1023);
+  assert(fadeDutyCurve(true, 200, 90, 0, 1023, 2.5f) == 1023);
+  assert(fadeDutyCurve(true, 0, 90, 500, 100, 2.5f) == 100);
+
   printf("digit_fade_math_test: alle Assertions OK\n");
   return 0;
 }

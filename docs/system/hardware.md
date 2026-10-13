@@ -74,6 +74,8 @@ ausgebaut wird.
 | D2–D6    | WS2812B-SMD          | 5      | Zusätzliche LEDs / Trennpunkte (SMD)             |
 | D7–D9    | WS2812B-THT (YF923)  | 3      | Trennpunkt-LEDs (Durchsteck, RGB)                |
 | R1–R64   | 3,3 kΩ (0805)        | 64     | Basis-Vorwiderstände für Q1–Q60                  |
+| R71–R75  | 100 Ω (0805)         | 5 (optional) | LED-Vorwiderstände der Pro-Röhre-TLP627 U5–U9 (~20 mA LED-Strom) |
+| R76      | 1,5 kΩ (0805)        | 1 (optional) | LED-Vorwiderstand des TLP627 U10 (Sekundeneiner, ~1,4 mA) — schaltet schnell ab und macht den sekündlichen Ziffernwechsel weich. **Abweichung von R71–R75 ist gewollt** (gestaffelter Wechsel-Effekt), siehe [firmware.md](firmware.md#hv-anodendimmung-hv_dimmerino) |
 | R65–R70  | 22 kΩ (THT, axial)   | 6      | Anodenwiderstände (Strombegrenzung je Röhre, ~1,5 mA bei ~175 V) — nicht kleiner wählen, sonst steigt die 5-V-Stromaufnahme über 1 A (Brownouts) |
 | C1–C4    | 100 nF (0805)        | 4      | Abblockkondensatoren je MCP23017                 |
 | J1       | Logic (8-polig)      | 1      | Inter-Board: Logik-Signale ← Logic Board         |

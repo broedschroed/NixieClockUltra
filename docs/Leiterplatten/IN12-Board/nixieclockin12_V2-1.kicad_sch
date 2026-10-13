@@ -22722,7 +22722,7 @@
 				)
 			)
 		)
-		(property "Value" "100Ω"
+		(property "Value" "1k5"
 			(at 299.72 48.006 90)
 			(show_name no)
 			(do_not_autoplace no)

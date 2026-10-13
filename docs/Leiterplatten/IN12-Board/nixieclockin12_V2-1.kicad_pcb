@@ -27311,7 +27311,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Value" "100Ω"
+		(property "Value" "1k5"
 			(at -0.0254 -1.8288 0)
 			(layer "B.SilkS")
 			(uuid "6499b087-1140-4f98-a1b9-067dece9ccec")

@@ -443,6 +443,8 @@ def build_content():
             ["D1–D6",   "WS2812B-SMD",               "6",  "Röhrenhintergrundbeleuchtung, Pixel 0–5 (GRB)"],
             ["D7–D10",  "WS2812B-THT (YF923)",       "4",  "Trennpunkt-LEDs, Pixel 6–9 (RGB-Farbreihenfolge)"],
             ["R1–R64",  "3,3 kΩ (0805)",             "64", "Basis-Vorwiderstände für SMBTA42"],
+            ["R71–R75", "100 Ω (0805)",              "5 (opt.)", "LED-Vorwiderstände Pro-Röhre-TLP627 U5–U9 (~20 mA)"],
+            ["R76",     "1,5 kΩ (0805)",             "1 (opt.)", "LED-Vorwiderstand TLP627 U10 (Sekundeneiner, ~1,4 mA) — schnelles Abschalten, weicher Sekundenwechsel; Abweichung von R71–R75 gewollt"],
             ["R65–R70", "22 kΩ (THT axial)",         "6",  "Anodenwiderstände (Strombegrenzung je Röhre) — nicht kleiner wählen, sonst > 1 A an 5 V"],
             ["C1–C4",   "100 nF (0805)",              "4",  "Abblockkondensatoren je MCP23017 (VCC gegen GND)"],
             ["J1",      "PinHeader 1×8 (2,54 mm)",   "1",  "Inter-Board Logik-Signale ← Logic Board J3"],
@@ -527,14 +529,14 @@ def build_content():
     c.append(table(
         ["Datei", "Zeilen", "Inhalt / Verantwortlichkeit"],
         [
-            ["NixieClockUltra.ino", "518", "Globals, setup(), loop(), Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals, Röhrentest-Globals"],
+            ["NixieClockUltra.ino", "528", "Globals, setup(), loop(), Edit-Mode-FSM (Zeit+Datum), Nacht-Modus-Globals, Röhrentest-Globals"],
             ["nixie_driver.ino",    "91",  "nixieInit(), nixieWrite(), MCP23017-I²C-Abstraktion, Shadow-Register, Mutex"],
             ["display.ino",         "91",  "setDisplayTime(), setDisplayDate(), commitDigits() (weicher Ziffernwechsel, Bitmaske via computeChangedMask()), Slot-Animation"],
-            ["digit_fade.ino",      "95",  "startDigitFade(), updateDigitFade(), cancelDigitFade() — non-blocking Crossfade über HV-Dimmer-Duty, pro Röhre per Bitmaske"],
+            ["digit_fade.ino",      "100",  "startDigitFade(), updateDigitFade(), cancelDigitFade() — non-blocking Crossfade über HV-Dimmer-Duty, pro Röhre per Bitmaske"],
             ["buttons.ino",         "127", "Entprell-FSM für 4 Taster, Kurz-/Langdruck, Edit-Mode Zeit+Datum"],
             ["rtc.ino",             "18",  "readRTC(), writeRTC() via DS1302/ThreeWire, liest auch Tag/Monat/Jahr"],
             ["night_mode.ino",      "34",  "LDR-Abtastung (GPIO6, ADC1), updateNightMode(), Zeitbereich-Logik"],
-            ["hv_dimmer.ino",       "94",  "hvDimmerInit(), hvDimmerSoftStart(), hvDimmerSetDutyAll(), hvDimmerSetDutyTube() — LEDC-Hardware-PWM für TLP627 auf Anodenspannung; bei HV_PER_TUBE_DIMMER 6 unabhängige Kanäle statt einem gemeinsamen"],
+            ["hv_dimmer.ino",       "94",  "hvDimmerInit(), hvDimmerSoftStart(), hvDimmerSetDutyAll(), hvDimmerSetDutyTube(), hvDimmerSetDutyTube10() — LEDC-Hardware-PWM für TLP627 auf Anodenspannung; bei HV_PER_TUBE_DIMMER 6 unabhängige Kanäle statt einem gemeinsamen"],
             ["neo_animation.ino",   "107", "Rainbow, Statisch, Puls, Slot, Nacht-Modus-Dimming, Datumsanzeige-Override"],
             ["ir_remote.ino",       "107", "executeAction(), dispatchIRAction(), handleIR(), 8 IR-Aktionen"],
             ["tube_test.ino",       "50",  "startTubeTest(), updateTubeTest(), stopTubeTest() — non-blocking Röhrentest-State-Machine"],
@@ -657,8 +659,19 @@ def build_content():
                   "LED-Strom → tief übersteuert). Bei 200 Hz wurden die Röhren zwischen 60 % und "
                   "2 % kaum dunkler; bei 100 Hz wirkt die Verzögerung nur halb so stark. Für "
                   "100 Hz läuft die PWM mit 10 Bit (der Core taktet LEDC mit 40 MHz, mit 8 Bit "
-                  "erst ab ~153 Hz möglich); hvDuty() skaliert die Werte 0–255 auf 0–1023. "
-                  "Noch dunkler: R71–R76 auf ~1 kΩ erhöhen."))
+                  "erst ab ~153 Hz möglich); hvDuty() skaliert die Werte 0–255 auf 0–1023."))
+    c.append(p("Der größere Hebel ist der LED-Vorwiderstand: Bei der Sekundeneiner-Röhre ist "
+               "R76 auf 1,5 kΩ erhöht (LED-Strom ~1,4 mA statt ~20 mA). Der Koppler schaltet "
+               "die Röhre weiterhin voll durch, ist aber nicht mehr übersteuert und schaltet "
+               "schnell ab — getestet: volle Maximalhelligkeit, deutlich weicherer "
+               "Ziffernwechsel."))
+    c.append(note("R71–R75 bleiben bewusst bei 100 Ω — die unterschiedliche Bestückung ist "
+                  "gewollt: Wechseln mehrere Röhren gleichzeitig (bei 0, 10, 20 … Sekunden), "
+                  "blenden die Röhren mit 100 Ω schneller ganz ab als die Sekundeneiner, dann "
+                  "wechselt die Sekundeneiner weich, und die übrigen schießen anschließend auf "
+                  "ihre Zielhelligkeit — ein gestaffelter Effekt, der sehr gut wirkt. Wer alle "
+                  "sechs auf 1,5 kΩ setzt, verliert ihn. Bekannte Nebenwirkung: Im gedimmten "
+                  "Nacht-Modus kann die Sekundeneiner bei kleinen Dimmwerten etwas dunkler wirken."))
     c.append(code_block(
         "#ifdef HV_PER_TUBE_DIMMER",
         "// 6 unabhängige Kanäle, einer pro Röhre",
@@ -703,11 +716,11 @@ def build_content():
                "NIGHT_DIM) → startDigitFade() mit der berechneten Maske als Parameter."))
     c.append(p("startDigitFade()/updateDigitFade() bilden eine non-blocking "
                "State-Machine (angetrieben aus loop()), die den HV-Dimmer-Duty nur für "
-               "die Röhren in der Fade-Maske (hvDimmerSetDutyTube()) in 5-ms-Schritten "
+               "die Röhren in der Fade-Maske (hvDimmerSetDutyTube10(), 10 Bit) in 5-ms-Schritten "
                "(DIGIT_FADE_STEP_MS) erst auf einen Minimalwert abblendet, bei "
                "Minimalhelligkeit die Zielziffern schreibt (nixieWrite()), und wieder auf "
                "die Ziel-Helligkeit (fadeMaxDuty) aufblendet. fadeMaxDuty wird beim "
-               "Fade-Start einmalig ermittelt: 255 bei NIGHT_NORMAL, hvDimPct*255/100 bei "
+               "Fade-Start einmalig ermittelt: 1023 bei NIGHT_NORMAL, hvDuty(hvDimPct*255/100) bei "
                "NIGHT_DIM — der Fade wirkt im Dimm-Modus also konsistent gedimmt statt "
                "kurz auf 100 % aufzublitzen. Der Minimalwert (fadeMinDuty) wird "
                "proportional zu fadeMaxDuty berechnet, nicht als fixer Wert — das "
@@ -718,12 +731,30 @@ def build_content():
                "ohne die Hardware-Option dimmt hvDimmerSetDutyTube() ohnehin den einen "
                "gemeinsamen Schalter, sodass sich am heutigen Erscheinungsbild (alle 6 "
                "dimmen gemeinsam) nichts ändert."))
-    c.append(p("Die Dauer wird über fadeMs gesteuert (je zur Hälfte Ab-/Aufblenden); "
-               "aktuell fest verdrahtet auf 400 ms (softFadeSecondEnabled bzw. "
-               "softFadeDateEnabled in NixieClockUltra.ino). Die reine "
-               "Interpolationsmathematik (fadeDutyForStep()) und die Masken-Berechnung "
-               "(computeChangedMask()) liegen in digit_fade_math.h und sind per "
-               "Host-Unit-Test ohne Arduino-Framework testbar."))
+    c.append(p("Helligkeitskurve: Der Duty folgt keiner linearen Rampe, sondern einer "
+               "Potenzkurve (fadeDutyCurve(), Exponent DIGIT_FADE_GAMMA = 4,0, an der Hardware abgestimmt): Abblenden "
+               "max·(1−t)^γ, Aufblenden max·t^γ. Nixies werden erst bei kleinem "
+               "Tastverhältnis sichtbar dunkler (logarithmische Wahrnehmung, "
+               "Abschaltverzögerung der TLP627) — eine lineare Rampe wirkte wie ein kurzes "
+               "Wegtauchen am Ende. Die Kurve verbringt den Großteil der Zeit bei kleinen "
+               "Tastgraden; γ = 1 entspräche der linearen Rampe, größere Werte verlängern "
+               "die dunkle Phase. Gerechnet wird in 10 Bit, damit es am dunklen Ende keine "
+               "sichtbaren Stufen gibt."))
+    c.append(note("Grenze: Wegen der Abschaltverzögerung der TLP627 hat jeder Tastgrad > 0 eine "
+                  "Mindesthelligkeit (wirksam ≈ Tastgrad + Verzögerung/Periode). Die Kurve blendet "
+                  "weich bis dorthin, der letzte Schritt auf 0 bleibt ein kleiner Sprung — ein "
+                  "höherer Exponent ändert daran nichts. Abhilfe: schnelleres Abschalten der "
+                  "Koppler — bei der Sekundeneiner ist dafür R76 auf 1,5 kΩ erhöht, der Sprung "
+                  "ist dort praktisch verschwunden; bei den übrigen Röhren (100 Ω) fällt er "
+                  "wegen der seltenen Wechsel nicht auf."))
+    c.append(p("Die Dauer wird über fadeMs gesteuert (je zur Hälfte Ab-/Aufblenden): "
+               "DIGIT_FADE_MS = 900 ms für Sekundentakt und Zeit/Datum-Wechsel. Damit ein "
+               "Wechsel fertig ist, bevor die nächste Sekunde kommt, liest loop() die RTC "
+               "alle RTC_POLL_MS = 50 ms (vorher 500 ms — der Sekundenwechsel wurde um bis "
+               "zu eine halbe Sekunde verspätet erkannt, der Takt schwankte sichtbar). Die "
+               "Kurvenmathematik (fadeDutyCurve(), lineare fadeDutyForStep() für den "
+               "Sanftanlauf) und die Masken-Berechnung (computeChangedMask()) liegen in "
+               "digit_fade_math.h und sind per Host-Unit-Test ohne Arduino-Framework testbar."))
     c.append(p("cancelDigitFade() schließt einen laufenden Fade sofort ab: Zielziffern "
                "schreiben und die betroffenen Röhren (Fade-Maske) auf fadeMaxDuty "
                "zurücksetzen — und wird vor startSlotAnimation() sowie beim Eintritt in "

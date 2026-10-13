@@ -9,15 +9,7 @@
 // ═══════════════════════════════════════════════════════════
 
 #include "digit_fade_math.h"
-
-// 10 Bit statt 8: Der ESP32-S3-Core taktet LEDC mit 40 MHz (XTAL); mit 8 Bit
-// sind darunter nur Frequenzen ab ~153 Hz einrichtbar. Die Firmware arbeitet
-// weiter mit Helligkeitswerten 0–255, hvDuty() skaliert auf die Auflösung.
-#define HV_PWM_RES_BITS  10
-
-static inline uint32_t hvDuty(uint8_t duty0to255) {
-  return (uint32_t)duty0to255 * ((1u << HV_PWM_RES_BITS) - 1) / 255;
-}
+#include "hv_dimmer.h"
 
 #ifdef HV_PER_TUBE_DIMMER
 
@@ -60,6 +52,10 @@ void hvDimmerSetDutyTube(uint8_t tube, uint8_t duty0to255) {
   ledcWrite(hvTubePin[tube], hvDuty(duty0to255));
 }
 
+void hvDimmerSetDutyTube10(uint8_t tube, uint16_t duty10) {
+  ledcWrite(hvTubePin[tube], duty10 > HV_DUTY_MAX ? HV_DUTY_MAX : duty10);
+}
+
 #else  // heutige Hardware: ein gemeinsamer Schalter
 
 void hvDimmerInit() {
@@ -89,6 +85,10 @@ void hvDimmerSetDutyAll(uint8_t duty0to255) {
 // (reproduziert exakt das bisherige Verhalten).
 void hvDimmerSetDutyTube(uint8_t /*tube*/, uint8_t duty0to255) {
   ledcWrite(HV_SWITCH_PIN, hvDuty(duty0to255));
+}
+
+void hvDimmerSetDutyTube10(uint8_t /*tube*/, uint16_t duty10) {
+  ledcWrite(HV_SWITCH_PIN, duty10 > HV_DUTY_MAX ? HV_DUTY_MAX : duty10);
 }
 
 #endif

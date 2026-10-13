@@ -128,6 +128,15 @@ const uint8_t BRIGHTNESS_LEVELS[4] = {10, 40, 80, 200};
 // Datum-Anzeige Dauer nach Slot-Animation
 #define DATE_SHOW_MS  5000
 
+// Weicher Ziffernwechsel (Sekundentakt und Zeit/Datum): Gesamtdauer
+// (halb Abblenden, halb Aufblenden). Muss < 1000 ms bleiben, damit ein
+// Wechsel fertig ist, bevor die nächste Sekunde kommt.
+#define DIGIT_FADE_MS  900
+
+// RTC-Abfrageintervall: bestimmt, wie genau der Sekundenwechsel erkannt
+// wird (bei 500 ms schwankte der Takt um bis zu eine halbe Sekunde).
+#define RTC_POLL_MS    50
+
 // ═══════════════════════════════════════════════════════════
 //  OBJEKTE
 // ═══════════════════════════════════════════════════════════
@@ -301,6 +310,7 @@ void updateTubeTest();
 void stopTubeTest();
 void hvDimmerSetDutyTube(uint8_t tube, uint8_t duty0to255);
 void hvDimmerSoftStart();
+void hvDimmerSetDutyTube10(uint8_t tube, uint16_t duty10);
 
 // ═══════════════════════════════════════════════════════════
 //  SETUP
@@ -455,8 +465,8 @@ void loop() {
   updateDigitFade();
   updateTubeTest();
 
-  // --- RTC alle 500ms lesen (außerhalb Einstellmodus) ---
-  if (editState == EDIT_NONE && millis() - lastRtcRead >= 500) {
+  // --- RTC alle RTC_POLL_MS lesen (außerhalb Einstellmodus) ---
+  if (editState == EDIT_NONE && millis() - lastRtcRead >= RTC_POLL_MS) {
     lastRtcRead = millis();
     readRTC();
 
@@ -473,7 +483,7 @@ void loop() {
       }
       if (!slotActive && !dateShowActive && !tubeTestActive) {
         if (triggerSlot) startSlotAnimation(curHour, curMin, curSec);
-        else             setDisplayTimeSoft(curHour, curMin, curSec, softFadeSecondEnabled ? 800 : 0);
+        else             setDisplayTimeSoft(curHour, curMin, curSec, softFadeSecondEnabled ? DIGIT_FADE_MS : 0);
       }
     }
   }
@@ -484,13 +494,13 @@ void loop() {
   if (wasSlotActive && !slotActive) {
     dateShowActive = true;
     dateShowStart  = millis();
-    setDisplayDateSoft(softFadeDateEnabled ? 800 : 0);
+    setDisplayDateSoft(softFadeDateEnabled ? DIGIT_FADE_MS : 0);
   }
 
   // Datum-Anzeige beenden
   if (dateShowActive && millis() - dateShowStart >= DATE_SHOW_MS) {
     dateShowActive = false;
-    setDisplayTimeSoft(curHour, curMin, curSec, softFadeDateEnabled ? 800 : 0);
+    setDisplayTimeSoft(curHour, curMin, curSec, softFadeDateEnabled ? DIGIT_FADE_MS : 0);
   }
 
   // --- NeoPixel ---
