@@ -35,7 +35,7 @@ und alle Nutzerschnittstellen (Taster, IR, USB). Es versorgt das Nixie Display B
 
 | Schiene | Spannung  | Quelle   | Verbraucher                          |
 |---------|-----------|----------|--------------------------------------|
-| VCC     | 5V        | J2 USB   | U4 HV-MOD, U5 AMS1117               |
+| VCC     | 5V        | J2 USB   | U4 HV-MOD, U5 AMS1117, Display Board via J3 (MCP23017, WS2812B) |
 | +3,3V   | 3,3V      | U5       | ESP32-S3, DS1302, VS1838B, Pull-ups  |
 | HV      | ~170V DC  | U4       | Nixie-Anoden (via J4)                |
 | HVgnd   | GND (HV)  | U4       | HV-Rückleiter (galvanisch getrennt)  |
@@ -115,16 +115,22 @@ Die 10 LEDs sind als verkettete Kette an GPIO21 angeschlossen:
 
 ### J3 (Logic Board) ↔ J1 (Nixie Display Board) — 8-polig „Logic"
 
-> Exakte Pin-Reihenfolge aus `nixieclocklogic_V2_BPHL.pdf` verifizieren.
+Pin-Reihenfolge laut KiCad-Netzliste (Logic Board V2-2, Display Board V2-1):
 
-| Signal  | Richtung          | Beschreibung                            |
-|---------|-------------------|-----------------------------------------|
-| VCC     | Logic → Display   | 3,3V Logikversorgung                    |
-| GND     | —                 | Digitalmasse                            |
-| SDA     | ESP32 ↔ MCP23017  | I²C Daten (GPIO8)                       |
-| SCL     | ESP32 → MCP23017  | I²C Takt (GPIO9)                        |
-| NEO     | ESP32 → D1        | WS2812B Datenleitung (GPIO21)           |
-| —       | —                 | (reserviert)                            |
+| Pin | Signal  | Richtung          | Beschreibung                            |
+|-----|---------|-------------------|-----------------------------------------|
+| 1, 2 | VCC    | Logic → Display   | **5 V** (USB-Schiene) – versorgt MCP23017 und WS2812B |
+| 3   | SCL     | ESP32 → MCP23017  | I²C Takt (GPIO9)                        |
+| 4   | SDA     | ESP32 ↔ MCP23017  | I²C Daten (GPIO8)                       |
+| 5   | —       | —                 | nicht belegt                            |
+| 6   | NEO     | ESP32 → D1        | WS2812B Datenleitung (GPIO21, über R20) |
+| 7, 8 | GND    | —                 | Digitalmasse                            |
+
+> **I²C ohne externe Pull-ups:** Auf keiner der beiden Platinen sind Pull-up-Widerstände
+> an SDA/SCL bestückt (R61–R64 auf dem Display Board sind die Reset-Pull-ups der
+> MCP23017). Der Bus läuft nur über die internen Pull-ups des ESP32 und ist deshalb nur
+> mit 100 kHz (Standard von `Wire`) zuverlässig. Bei 400 kHz und 1 MHz scheitert jeder
+> Schreibvorgang (gemessen 2026-10-15), obwohl ein Adress-Scan die Bausteine findet.
 
 ### J4 (Logic Board) ↔ J2 (Nixie Display Board) — 4-polig „HV"
 

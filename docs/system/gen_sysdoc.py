@@ -272,7 +272,7 @@ def build_content():
     c.append(table(
         ["Steckverbinder", "Polig", "Signale"],
         [
-            ["J3 ↔ J1  (Logic)", "8", "VCC 3,3V, GND, SDA (GPIO8), SCL (GPIO9), NEO-Daten (GPIO21)"],
+            ["J3 ↔ J1  (Logic)", "8", "VCC 5 V (×2), SCL (GPIO9), SDA (GPIO8), frei, NEO-Daten (GPIO21), GND (×2)"],
             ["J4 ↔ J2  (HV)", "4", "HV ~170V DC (×2), HVgnd (×2)"],
         ],
         [3.0, 1.5, 11.5]
@@ -456,7 +456,11 @@ def build_content():
 
     c.append(h2("MCP23017 Ansteuerungskonzept"))
     c.append(p("Die vier MCP23017 (U1–U4) sind am gemeinsamen I²C-Bus "
-               "(SDA=GPIO8, SCL=GPIO9) angeschlossen. Die I²C-Adressen werden "
+               "(SDA=GPIO8, SCL=GPIO9) angeschlossen. Externe Pull-up-Widerstände an "
+               "SDA/SCL gibt es auf keiner der beiden Platinen; der Bus läuft über die "
+               "internen Pull-ups des ESP32 und ist deshalb nur mit 100 kHz zuverlässig "
+               "(bei 400 kHz und 1 MHz scheitert jeder Schreibvorgang). Versorgt werden "
+               "die MCP23017 mit 5 V über J3. Die I²C-Adressen werden "
                "durch die Hardware-Adresspins A0, A1, A2 festgelegt:"))
     c.append(table(
         ["IC", "I²C-Adresse", "A2", "A1", "A0", "Zuständige Röhre(n)"],
@@ -1058,7 +1062,7 @@ def build_content():
         [
             ["Röhren leuchten nicht",     "HV-MOD liefert keine Spannung",    "5-V-Versorgung und HV-MOD prüfen; Spannungsmessung an J4"],
             ["Uhr startet nur an manchen Netzteilen, blinkt, bleibt stehen oder Röhren blitzen auf", "Stromaufnahme zu hoch → Unterspannung (BROWNOUT)", "Startprotokoll prüfen; Stromaufnahme messen (Richtwert ~760 mA mit 6 Röhren); Anodenwiderstände R65–R70 müssen 22 kΩ haben"],
-            ["Ghosting / Doppelziffern",  "I²C-Fehler, MCP nicht antwortend", "I²C-Bus prüfen (Pull-ups R1/R3 auf dem Logic Board), Serial Monitor auf Fehlermeldungen"],
+            ["Ghosting / Doppelziffern",  "I²C-Fehler, MCP nicht antwortend", "I²C-Bus prüfen (Lötstellen SDA/SCL, Steckverbinder J3); Takt muss 100 kHz bleiben, da keine externen Pull-ups bestückt sind"],
             ["Web-UI nicht erreichbar",   "WiFi AP nicht gestartet",           "Serial Monitor prüfen; auf 192.168.4.1 verbinden"],
             ["Uhrzeit falsch nach Reset", "RTC leer / Batterie schwach",       "Zeit über Web-UI stellen; CR2032 BT1 prüfen"],
             ["Kompilierungsfehler JSON",  "ArduinoJson v7 installiert",        "ArduinoJson auf v6.x downgraden"],
