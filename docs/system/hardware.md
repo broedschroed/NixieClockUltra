@@ -126,11 +126,12 @@ Pin-Reihenfolge laut KiCad-Netzliste (Logic Board V2-2, Display Board V2-1):
 | 6   | NEO     | ESP32 → D1        | WS2812B Datenleitung (GPIO21, über R20) |
 | 7, 8 | GND    | —                 | Digitalmasse                            |
 
-> **I²C ohne externe Pull-ups:** Auf keiner der beiden Platinen sind Pull-up-Widerstände
-> an SDA/SCL bestückt (R61–R64 auf dem Display Board sind die Reset-Pull-ups der
-> MCP23017). Der Bus läuft nur über die internen Pull-ups des ESP32 und ist deshalb nur
-> mit 100 kHz (Standard von `Wire`) zuverlässig. Bei 400 kHz und 1 MHz scheitert jeder
-> Schreibvorgang (gemessen 2026-10-15), obwohl ein Adress-Scan die Bausteine findet.
+> **I²C-Pull-ups und Takt:** Die Pull-ups sitzen auf dem Logic Board: R1 (SCL) und R3 (SDA),
+> je 3,3 kΩ nach +3,3 V (R61–R64 auf dem Display Board sind die Reset-Pull-ups der MCP23017).
+> Der Bus läuft mit 100 kHz (Standard von `Wire`). Bei 400 kHz und 1 MHz scheiterte jeder
+> Schreibvorgang (gemessen 2026-10-15), obwohl ein Adress-Scan die Bausteine fand. Die
+> Ursache ist nicht geklärt. Verdacht: Die MCP23017 laufen an 5 V und verlangen an SDA/SCL
+> einen High-Pegel von mindestens 0,8 × VDD = 4 V, die Pull-ups ziehen aber nur auf 3,3 V.
 
 ### J4 (Logic Board) ↔ J2 (Nixie Display Board) — 4-polig „HV"
 
