@@ -105,7 +105,7 @@ Die `setup()`-Funktion läuft einmalig nach dem Start in dieser Reihenfolge:
 #define NIGHT_DIM_NEO_PCT     15  // NeoPixel-Helligkeit im Dimm-Modus in %
 
 // LDR (night_mode.ino)
-#define LDR_PIN        6          // ADC1-Kanal (GPIO6), LDR→VCC, 100kΩ→GND
+#define LDR_PIN        6          // ADC1-Kanal (GPIO6), LDR R6→+3,3 V, 100kΩ→GND
 #define LDR_SAMPLE_MS  500        // Abtastintervall
 
 // HV-Dimmer (TLP627, LEDC-Hardware-PWM auf Anodenspannung)
@@ -198,7 +198,7 @@ enum IrAction {
 `updateNightMode()` wird jeden Loop-Durchlauf aufgerufen:
 
 1. **LDR-Abtastung** (immer, alle 500 ms): 4-fache Mittelung von `analogRead(LDR_PIN)` →
-   `ldrReading`. Licht = hoher ADC-Wert (LDR→VCC, 100 kΩ→GND), Dunkel = niedriger Wert.
+   `ldrReading`. Licht = hoher ADC-Wert (LDR→+3,3 V, 100 kΩ→GND), Dunkel = niedriger Wert.
 2. **Priorität Zeitbereich:** Ist `nightTimeEnabled` und `curHour` im konfigurierten Bereich
    (Mitternachtsübergang wird korrekt behandelt) → `nightState` = DIM oder DARK.
 3. **Fallback LDR:** Greift kein Zeitbereich, aber `ldrEnabled` und `ldrReading <= ldrThreshold`

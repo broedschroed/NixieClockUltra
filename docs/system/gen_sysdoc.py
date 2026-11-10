@@ -266,14 +266,17 @@ def build_content():
     ))
 
     c.append(h2("Inter-Board-Steckverbinder"))
-    c.append(p("Die beiden Platinen sind über zwei Steckverbinder verbunden. "
+    c.append(p("Die beiden Platinen sind über drei Steckverbinder verbunden. "
                "J3 (Logic Board) ↔ J1 (Display Board) führt Logik- und Steuersignale, "
-               "J4 (Logic Board) ↔ J2 (Display Board) die Hochspannungsversorgung."))
+               "J4 (Logic Board) ↔ J2 (Display Board) die Hochspannungsversorgung und "
+               "J5 (Logic Board) ↔ J3 (Display Board) die Steuersignale der "
+               "Pro-Röhre-Anodenschalter."))
     c.append(table(
         ["Steckverbinder", "Polig", "Signale"],
         [
             ["J3 ↔ J1  (Logic)", "8", "VCC 5 V (×2), SCL (GPIO9), SDA (GPIO8), frei, NEO-Daten (GPIO21), GND (×2)"],
             ["J4 ↔ J2  (HV)", "4", "HV ~170V DC (×2), HVgnd (×2)"],
+            ["J5 ↔ J3  (AnodeSW)", "8", "GPIO38, 47, 15, 16, 17, 18 (Anodenschalter HZ…SE), GND (×2)"],
         ],
         [3.0, 1.5, 11.5]
     ))
@@ -285,13 +288,13 @@ def build_content():
                "(U1), die DS1302 Echtzeituhr (U2), den VS1838B IR-Empfänger (U3), "
                "das HV-Boost-Modul (U4, 10 V → ~170 V), den AMS1117-3.3 LDO-Regler "
                "(U5, 5 V → 3,3 V), den DC-DC-Boost-Konverter (U6, 5 V → 10 V), "
-               "den USB-ESD-Schutz (U22), einen LDR-Helligkeitssensor (J5), "
+               "den USB-ESD-Schutz (U22), einen LDR-Helligkeitssensor (R6), "
                "vier Taster sowie den Micro-USB-Anschluss (J2)."))
     c.append(p("Gegenüber Rev 2.0 wurden zwei Änderungen vorgenommen: Das HV-Modul "
                "benötigt mindestens 10 V Eingangsspannung, um stabile 170 V für die "
                "IN-12A-Röhren zu liefern — direkt aus USB-5 V war dies nicht "
                "erreichbar. Daher wurde ein DC-DC-Konverter (5 V → 10 V) ergänzt. "
-               "Außerdem wurde der LDR-Helligkeitssensor (J5) neu bestückt, der in "
+               "Außerdem wurde der LDR-Helligkeitssensor (R6) neu bestückt, der in "
                "Rev 2.0 noch nicht vorhanden war."))
 
     c.append(h2("Schaltplan"))
@@ -321,7 +324,8 @@ def build_content():
             ["J2",  "USB Micro-B",         "Custom",     "5 V-Einspeisung & Firmware-Upload"],
             ["J3",  "PinHeader 1×8",       "2,54 mm",    "Inter-Board Logik-Signale"],
             ["J4",  "PinHeader 1×4",       "2,54 mm",    "Inter-Board HV-Versorgung"],
-            ["J5",  "PinHeader 1×2",       "2,54 mm",    "LDR-Helligkeitssensor (neu in Rev 2.1): LDR→VCC, 100 kΩ→GND, Messung GPIO6"],
+            ["J5",  "PinHeader 1×8",       "2,54 mm",    "Inter-Board Anodenschalter-Signale (GPIO 38/47/15/16/17/18) → Display J3"],
+            ["R6",  "LDR TKN PGM5637D",    "THT",        "Helligkeitssensor (neu in Rev 2.1): LDR R6 → +3,3 V, R5 100 kΩ → GND, C6 10 µF Glättung, über R4 1 kΩ an GPIO6"],
         ],
         [1.2, 3.5, 2.5, 8.8]
     ))
@@ -375,7 +379,7 @@ def build_content():
             ["2",  "RTC_CE",    "Output", "DS1302 Chip Enable (ThreeWire)"],
             ["4",  "RTC_IO",    "Bi-Dir.", "DS1302 Datenleitung (ThreeWire)"],
             ["5",  "RTC_CLK",   "Output", "DS1302 Takt (ThreeWire)"],
-            ["6",  "LDR_ADC",   "Input",  "LDR-Helligkeitssensor (ADC1, LDR→VCC, 100 kΩ→GND)"],
+            ["6",  "LDR_ADC",   "Input",  "LDR-Helligkeitssensor R6 (ADC1, LDR→+3,3 V, 100 kΩ→GND, über 1 kΩ)"],
             ["7",  "HV_SWITCH", "Output", "TLP627-Optokoppler: Hardware-PWM (100 Hz, LEDC) schaltet Anodenspannung"],
             ["8",  "I2C_SDA",   "Bi-Dir.", "I²C Daten → 4× MCP23017"],
             ["9",  "I2C_SCL",   "Output", "I²C Takt → 4× MCP23017"],
@@ -449,6 +453,7 @@ def build_content():
             ["C1–C4",   "100 nF (0805)",              "4",  "Abblockkondensatoren je MCP23017 (VCC gegen GND)"],
             ["J1",      "PinHeader 1×8 (2,54 mm)",   "1",  "Inter-Board Logik-Signale ← Logic Board J3"],
             ["J2",      "PinHeader 1×4 (2,54 mm)",   "1",  "Inter-Board HV-Versorgung ← Logic Board J4"],
+            ["J3",      "PinHeader 1×8 (2,54 mm)",   "1",  "Inter-Board Anodenschalter-Signale ← Logic Board J5"],
             ["U5–U10",  "TLP627 (DIP-4)",            "6 (optional)", "Pro-Röhre-Anodenschalter — ersetzt bei Bestückung den gemeinsamen Logic-Board-Schalter U7 für unabhängiges Dimmen jeder Röhre"],
         ],
         [1.8, 4.5, 1.5, 8.2]
@@ -787,7 +792,7 @@ def build_content():
     ))
     c.append(p("Der LDR (GPIO6, ADC1) wird immer alle 500 ms abgetastet — unabhängig "
                "davon ob ldrEnabled gesetzt ist. So ist der Rohwert im Web-UI immer "
-               "aktuell. LDR→VCC, 100 kΩ→GND: Helligkeit = hoher ADC-Wert, Dunkelheit = niedriger Wert."))
+               "aktuell. LDR→+3,3 V, 100 kΩ→GND: Helligkeit = hoher ADC-Wert, Dunkelheit = niedriger Wert."))
 
     c.append(h2("Datumsanzeige"))
     c.append(p("Nach jeder Slot-Animation und bei IR-Taste DATUM wird dateShowActive=true gesetzt. "

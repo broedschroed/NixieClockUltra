@@ -6,7 +6,7 @@
 
 Das Logic Board beherbergt den Mikrocontroller, die Echtzeituhr, die Hochspannungserzeugung
 und alle Nutzerschnittstellen (Taster, IR, USB). Es versorgt das Nixie Display Board
-über zwei dedizierte Steckverbinder.
+über drei dedizierte Steckverbinder (J3 Logik, J4 Hochspannung, J5 Anodenschalter).
 
 ### Hauptkomponenten
 
@@ -29,7 +29,8 @@ und alle Nutzerschnittstellen (Taster, IR, USB). Es versorgt das Nixie Display B
 | J2   | USB Micro-B         | 5V-Einspeisung und Firmware-Upload              |
 | J3   | Logic (8-polig)     | Inter-Board: Logik-Signale → Nixie Display      |
 | J4   | HV (4-polig)        | Inter-Board: ~170V Anodenversorgung → Display   |
-| J5   | LDR (2-polig)       | Helligkeitssensor, bestückt: LDR→VCC, 100 kΩ→GND, Messung an GPIO6 |
+| J5   | Logic (8-polig)     | Inter-Board: Anodenschalter-Signale → Nixie Display (J3 „AnodeSW“), GPIO 38/47/15/16/17/18 |
+| R6   | LDR (TKN PGM5637D)  | Helligkeitssensor: LDR R6 → +3,3 V, R5 100 kΩ → GND, C6 10 µF Glättung, über R4 1 kΩ an GPIO6 |
 
 ### Versorgungsschienen
 
@@ -80,6 +81,7 @@ ausgebaut wird.
 | C1–C4    | 100 nF (0805)        | 4      | Abblockkondensatoren je MCP23017                 |
 | J1       | Logic (8-polig)      | 1      | Inter-Board: Logik-Signale ← Logic Board         |
 | J2       | HV (4-polig)         | 1      | Inter-Board: ~170V ← Logic Board                 |
+| J3       | AnodeSW (8-polig)    | 1      | Inter-Board: Anodenschalter-Signale ← Logic Board J5 |
 | U5–U10   | TLP627 (DIP-4)       | 6 (optional) | Pro-Röhre-Anodenschalter — ersetzt bei Bestückung den gemeinsamen Logic-Board-Schalter für unabhängiges Dimmen jeder Röhre |
 
 ### MCP23017 I²C-Adressen und Röhrenzuordnung
@@ -140,6 +142,20 @@ Pin-Reihenfolge laut KiCad-Netzliste (Logic Board V2-2, Display Board V2-1):
 | HV     | Logic → Display | ~170V DC Anodenversorgung (×2 Pins)   |
 | HVgnd  | —               | HV-Rückleiter (×2 Pins)              |
 
+### J5 (Logic Board) ↔ J3 (Nixie Display Board) — 8-polig „AnodeSW"
+
+Steuersignale der Pro-Röhre-Anodenschalter (TLP627 U5–U10 auf dem Display Board):
+
+| Pin | Signal | Richtung | Beschreibung |
+|-----|--------|----------|--------------|
+| 1 | HV_TUBE_PIN_0 | ESP32 → U5 | GPIO38, Stundenzehner |
+| 2 | HV_TUBE_PIN_1 | ESP32 → U6 | GPIO47, Stundeneiner |
+| 3 | HV_TUBE_PIN_2 | ESP32 → U7 | GPIO15, Minutenzehner |
+| 4 | HV_TUBE_PIN_3 | ESP32 → U8 | GPIO16, Minuteneiner |
+| 5 | HV_TUBE_PIN_4 | ESP32 → U9 | GPIO17, Sekundenzehner |
+| 6 | HV_TUBE_PIN_5 | ESP32 → U10 | GPIO18, Sekundeneiner |
+| 7, 8 | GND | — | Digitalmasse |
+
 ---
 
 ## ESP32-S3 Pin-Belegung (vollständig)
@@ -149,7 +165,7 @@ Pin-Reihenfolge laut KiCad-Netzliste (Logic Board V2-2, Display Board V2-1):
 | 2    | RTC_CE    | DS1302 Chip Enable (ThreeWire)         |
 | 4    | RTC_IO    | DS1302 Data (ThreeWire)                |
 | 5    | RTC_CLK   | DS1302 Clock (ThreeWire)               |
-| 6    | LDR_ADC   | LDR-Helligkeitssensor (ADC1, LDR→VCC, 100 kΩ→GND) |
+| 6    | LDR_ADC   | LDR-Helligkeitssensor R6 (ADC1, LDR→+3,3 V, 100 kΩ→GND, über 1 kΩ) |
 | 7    | HV_SWITCH | TLP627-Optokoppler: Hardware-PWM (100 Hz, LEDC) schaltet Anodenspannung für Nacht-Modus-Dimmung |
 | 8    | I2C_SDA   | I²C Daten → 4× MCP23017               |
 | 9    | I2C_SCL   | I²C Takt → 4× MCP23017                |
