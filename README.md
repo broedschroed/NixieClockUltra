@@ -50,7 +50,7 @@ under `docs/system/`.
 Open the sketch in the Arduino IDE (or arduino-cli) with the ESP32 core
 installed, board set to an ESP32-S3 module with **USB CDC on Boot: Enabled**,
 and the required libraries (ArduinoJson, ESPAsyncWebServer, IRremoteESP8266,
-Adafruit NeoPixel). Flash and connect to the `NixieClockCS` WiFi hotspot (or
+Adafruit NeoPixel). Flash and connect to the `NixieClock` WiFi hotspot (or
 your home network once configured) to reach the web interface.
 
 ## License

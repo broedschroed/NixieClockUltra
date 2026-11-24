@@ -46,7 +46,7 @@ const I18N_EN = {
   "features.konnektivitaet.li2": "Simultaneously its own WiFi access point (no home network required) and WiFi client",
   "features.konnektivitaet.li3": "Automatic time synchronization via NTP",
   "features.konnektivitaet.li4": "Full web interface in the browser &mdash; no app download, works on smartphone, tablet, and PC",
-  "features.konnektivitaet.li5": "Reachable by IP or as <code>nixieclockcs.local</code> on the home network (mDNS)",
+  "features.konnektivitaet.li5": "Reachable by IP or as <code>nixieclock.local</code> on the home network (mDNS)",
   "features.konnektivitaet.li6": "IR remote control: 8 functions freely trainable onto any off-the-shelf remote",
   "features.konnektivitaet.li7": "4 control buttons directly on the clock",
   "features.group.nachtmodus": "Night Mode",
@@ -119,7 +119,7 @@ const I18N_EN = {
   "geschichte.acc6.content": "<code>pressed</code> was never <code>true</code>. Cause: a logic error in the button FSM &mdash; the <code>debounced</code> flag was never set because the condition <code>lastState == HIGH</code> within the debounce window was never true. Fix: the <code>Button</code> struct was extended with a <code>debounced</code> flag.",
 
   "geschichte.phase7.title": "Phase 7 &mdash; WiFi Fixes &amp; mDNS",
-  "geschichte.phase7.body": "WiFi scan removed (blocking problems with ESPAsyncWebServer), STA timeout increased to 20 s, DHCP hostname and mDNS implemented. The clock is now reachable as <code>nixieclockcs.local</code> on the home network.",
+  "geschichte.phase7.body": "WiFi scan removed (blocking problems with ESPAsyncWebServer), STA timeout increased to 20 s, DHCP hostname and mDNS implemented. The clock is now reachable as <code>nixieclock.local</code> on the home network.",
   "geschichte.acc7.label": "Problem: WiFi Scan Returned No Results",
   "geschichte.acc7.content": "Two causes: (1) <code>WiFi.mode(WIFI_AP)</code> disables the STA radio &mdash; no scan possible. (2) a synchronous <code>scanNetworks()</code> call inside the ESPAsyncWebServer handler blocks the LWIP/WiFi task. Fix: the scan function was removed entirely; the SSID is entered manually.",
 
@@ -141,7 +141,8 @@ const I18N_EN = {
   "dokumentation.systemdoku.title": "System Documentation",
   "dokumentation.systemdoku.desc": "Complete technical documentation: hardware design of both boards, schematics, firmware architecture, API endpoints, NVS persistence, and developer workflow.",
   "dokumentation.anleitung.title": "User Manual",
-  "dokumentation.anleitung.desc": "Complete user manual in steampunk design: setup, button operation, time setting, lighting control, IR remote, WiFi setup, and technical specifications.",
+  "dokumentation.anleitung.desc": "User manual as a 12-page A5 booklet in steampunk design: setup, button operation, time setting, lighting, IR remote, WiFi setup, and technical specifications. The booklet-print version is imposed for double-sided A4 printing, folding and stapling.",
+  "dokumentation.anleitung.heft": "Booklet print",
   "dokumentation.germanonly": "(German only)",
   "dokumentation.gehaeuse.title": "Enclosure Files",
   "dokumentation.gehaeuse.desc": "3D print model (STL/OBJ) and laser-cut panels (SVG) for the complete enclosure.",

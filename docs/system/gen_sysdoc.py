@@ -870,7 +870,7 @@ def build_content():
 
     c.append(h2("Web-API"))
     c.append(p("Der HTTP-Server läuft auf Port 80, erreichbar über 192.168.4.1 (AP) "
-               "oder http://nixieclockcs.local (Heimnetz via mDNS). "
+               "oder http://nixieclock.local (Heimnetz via mDNS). "
                "POST-Endpunkte erwarten JSON (Content-Type: application/json)."))
     c.append(table(
         ["Pfad", "Methode", "Request-Body / Antwort"],
@@ -1017,10 +1017,10 @@ def build_content():
         "[Boot]  ...                       (Historie, siehe unten)",
         "[Boot] Aktueller Start #12, Reset-Grund: POWERON",
         "[Nixie] MCP23017 initialisiert.",
-        "[WiFi] AP gestartet: NixieClockCS  IP: 192.168.4.1",
+        "[WiFi] AP gestartet: NixieClock  IP: 192.168.4.1",
         "[WiFi] Verbinde mit 'MeinWLAN'...",
         "[WiFi] STA verbunden. IP: 192.168.1.42",
-        "[mDNS] Erreichbar als http://nixieclockcs.local",
+        "[mDNS] Erreichbar als http://nixieclock.local",
         "[NTP] Synchronisierung gestartet...",
         "[IR] Empfänger gestartet auf Pin 48",
         "[NixieClock] Bereit.",

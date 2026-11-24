@@ -199,7 +199,7 @@ def build_content():
     c.append(bullet("Gleichzeitig eigener WLAN-Accesspoint (kein Heimnetz notwendig) und WLAN-Client"))
     c.append(bullet("Automatische Zeitsynchronisation per NTP"))
     c.append(bullet("Vollständiges Web-Interface im Browser — kein App-Download, funktioniert auf Smartphone, Tablet und PC"))
-    c.append(bullet("Erreichbar per IP oder als nixieclockcs.local im Heimnetz (mDNS)"))
+    c.append(bullet("Erreichbar per IP oder als nixieclock.local im Heimnetz (mDNS)"))
     c.append(bullet("IR-Fernbedienung: 8 Funktionen frei auf jede handelsübliche Fernbedienung anlernbar"))
     c.append(bullet("4 Bedientaster direkt an der Uhr"))
 

@@ -464,7 +464,7 @@ unkritisch für den Flash.
 ## Web-API
 
 Der HTTP-Server läuft auf Port 80. Erreichbar über `192.168.4.1` (AP) bzw.
-`http://nixieclockcs.local` (Heimnetz via mDNS).
+`http://nixieclock.local` (Heimnetz via mDNS).
 
 Alle POST-Endpunkte erwarten JSON im Request-Body (`Content-Type: application/json`).
 Alle GET-Endpunkte liefern JSON zurück.
