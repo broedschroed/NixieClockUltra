@@ -15,17 +15,25 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+# Zwei Jobs wie in GitHubs Pages-Vorlage: Ein frisch hochgeladenes Paket ist
+# nicht sofort auffindbar – im selben Job scheiterte deploy-pages daher mit
+# „No artifacts named github-pages“.
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
           path: docs/website
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v5
