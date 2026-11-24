@@ -12,11 +12,12 @@ und alle Nutzerschnittstellen (Taster, IR, USB). Es versorgt das Nixie Display B
 
 | Ref  | Bauteil             | Funktion                                        |
 |------|---------------------|-------------------------------------------------|
-| U1   | ESP32-S3-WROOM-1    | Mikrocontroller, WiFi/BT, 4 MB Flash            |
+| U1   | ESP32-S3-WROOM-1-N4R8 | Mikrocontroller, WiFi/BT, 4 MB Flash, 8 MB Octal-PSRAM |
 | U2   | DS1302N+ (DIP-8)    | Batteriegepufferte Echtzeituhr                  |
 | U3   | VS1838B             | IR-Empfänger/-Demodulator 38 kHz                |
-| U4   | HV-MOD              | Boost-Converter, erzeugt ~170 V DC für Nixie-Anoden |
+| U4   | HV-MOD: Modul „DC 9V-12V to 150V-220V“ (MAX1771) | Boost-Converter, erzeugt aus 10 V ~170 V DC für die Nixie-Anoden (Eingang 9–12 V, Ausgang 150–220 V einstellbar) |
 | U5   | AMS1117-3.3 (SOT-223)| LDO-Linearregler 5V → 3,3V                    |
+| U6   | DC-DC-MOD: DEBO DCDC 20W | Boost-Converter 5 V → 10 V, Vorstufe für U4 |
 | U7   | TLP627 (DIP-4)      | Optokoppler schaltet Anodenspannung per Hardware-PWM (Nacht-Modus-Dimmung) |
 | U22  | USBLC6-2SC6 (SOT-23-6)| USB-ESD-/TVS-Schutz                          |
 | BT1  | CR2032              | RTC-Backup-Batterie                             |
@@ -36,7 +37,8 @@ und alle Nutzerschnittstellen (Taster, IR, USB). Es versorgt das Nixie Display B
 
 | Schiene | Spannung  | Quelle   | Verbraucher                          |
 |---------|-----------|----------|--------------------------------------|
-| VCC     | 5V        | J2 USB   | U4 HV-MOD, U5 AMS1117, Display Board via J3 (MCP23017, WS2812B) |
+| VCC     | 5V        | J2 USB   | U6 DC-DC-MOD, U5 AMS1117, Display Board via J3 (MCP23017, WS2812B) |
+| +10V    | 10V       | U6       | U4 HV-MOD (Eingang 9–12 V)           |
 | +3,3V   | 3,3V      | U5       | ESP32-S3, DS1302, VS1838B, Pull-ups  |
 | HV      | ~170V DC  | U4       | Nixie-Anoden (via J4)                |
 | HVgnd   | GND (HV)  | U4       | HV-Rückleiter (galvanisch getrennt)  |

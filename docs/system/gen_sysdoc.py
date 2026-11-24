@@ -309,12 +309,12 @@ def build_content():
     c.append(table(
         ["Ref.", "Bauteil", "Gehäuse", "Funktion"],
         [
-            ["U1",  "ESP32-S3-WROOM-1",   "Modul",      "Mikrocontroller, WiFi/BT, 4 MB Flash"],
+            ["U1",  "ESP32-S3-WROOM-1-N4R8", "Modul",   "Mikrocontroller, WiFi/BT, 4 MB Flash, 8 MB Octal-PSRAM"],
             ["U2",  "DS1302N+",            "DIP-8",      "Batteriegepufferte Echtzeituhr (ThreeWire)"],
             ["U3",  "VS1838B",             "TO-92",      "IR-Empfänger/-Demodulator 38 kHz"],
-            ["U4",  "HV-MOD",              "Custom",     "Boost-Converter 10 V → ~170 V DC für Nixie-Anoden"],
+            ["U4",  "HV-MOD (MAX1771)",    "Modul",      "Boost-Converter „DC 9V-12V to 150V-220V“: 10 V → ~170 V DC für Nixie-Anoden"],
             ["U5",  "AMS1117-3.3",         "SOT-223",    "LDO-Linearregler 5 V → 3,3 V"],
-            ["U6",  "DC-DC-MOD",           "Custom",     "Boost-Konverter 5 V → 10 V (Vorstufe für HV-Modul)"],
+            ["U6",  "DEBO DCDC 20W",       "Modul",      "Boost-Konverter 5 V → 10 V (Vorstufe für HV-Modul)"],
             ["U7",  "TLP627",              "DIP-4",      "Optokoppler schaltet Anodenspannung per Hardware-PWM (Nacht-Modus-Dimmung)"],
             ["U22", "USBLC6-2SC6",         "SOT-23-6",   "USB-ESD-/TVS-Schutz"],
             ["BT1", "CR2032",              "SMD-Halter", "RTC-Backup-Batterie (~3 V)"],
@@ -345,8 +345,10 @@ def build_content():
                "(U6) hebt die 5-V-USB-Schiene auf stabile 10 V an. "
                "Diese 10-V-Schiene speist ausschließlich das HV-Modul."))
     c.append(h3("Hochspannung ~170 V DC (HV-MOD)"))
-    c.append(p("Der HV-MOD (U4) ist ein Boost-Converter-Modul, das aus 10 V eine "
-               "geregelte Gleichspannung von ca. 170–180 V erzeugt. Diese Spannung "
+    c.append(p("Der HV-MOD (U4) ist ein fertiges Boost-Converter-Modul mit dem "
+               "Regler-IC MAX1771 (Handelsbezeichnung „DC 9V-12V to 150V-220V“, "
+               "Eingang 9–12 V, Ausgang 150–220 V einstellbar). Es erzeugt aus 10 V eine "
+               "geregelte Gleichspannung von ca. 170–180 V. Diese Spannung "
                "wird auf dem Logic Board über einen TLP627-Optokoppler geführt, bevor "
                "sie über J4 an die Anoden aller sechs Nixie-Röhren gelangt. "
                "Die Kathoden der jeweils anzuzeigenden Ziffer werden durch "
